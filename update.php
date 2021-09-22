@@ -21,7 +21,7 @@ Class Stock_Update_Version {
                 if(method_exists($this, $function)) $this->$function($model);
             }
         }
-        Option::update('stock_manager_version', SHIP_VERSION );
+        Option::update('stock_manager_version', STOCK_VERSION );
     }
     public function update_Version_1_1_0($model) {
         Stock_Update_Database::Version_1_1_0($model);
