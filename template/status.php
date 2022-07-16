@@ -1,4 +1,4 @@
-<p class="product-detail-code product-detail-inventory-status">
+<p class="product-detail-code product-detail-inventory-status" style="margin-top: 10px;">
     <?php echo __('Tình trạng', 'stock_product_detail_status');?>:
     <span class="stock_inventory_status <?php echo $object->stock_status;?>">
         <?php echo Inventory::status($object->stock_status,'label');?>

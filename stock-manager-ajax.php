@@ -6,29 +6,44 @@ Class Stock_Manager_Ajax {
 
         $result['status'] = 'error';
 
-        if (InputBuilder::Post()) {
+        if (Request::Post()) {
 
-            $current_item = (int)InputBuilder::Post('currentItem') - 1;
+            $current_item = (int)Request::Post('currentItem') - 1;
 
-            $page_size    = 20;
+            $limit = 20;
 
-            $args = [
-                'params' => ['limit' => $page_size, 'start' => $page_size*$current_item]
-            ];
+            $args = Qr::set();
 
-            $where = [];
+            $keyword = trim(Request::Post('keyword'));
 
-            $keyword = trim(InputBuilder::Post('keyword'));
-            if(!empty($keyword)) $args['where_like'] = ['product_name' => [$keyword]];
+            if(!empty($keyword)) {
+                $args->where('product_name', 'like', '%'.$keyword.'%');
+            }
 
-            $branch_id = (int)InputBuilder::Post('branch');
+            $branch_id = (int)Request::Post('branch');
+
             if($branch_id == 0) $branch_id = 1;
-            $where['branch_id'] = $branch_id;
 
-            $stock_status = InputBuilder::Post('status');
-            if(!empty($stock_status)) $where['status'] = $stock_status;
+            $args->where('branch_id', $branch_id);
 
-            $args['where'] = $where;
+            $stock_status = Request::Post('status');
+
+            if(!empty($stock_status)) {
+                $args->where('status', $stock_status);
+            }
+
+            $total = Inventory::count($args);
+
+            $config  = array (
+                'currentPage'   => $current_item + 1,
+                'totalRecords'  => $total,
+                'limit'		    => $limit,
+                'url'           => '',
+            );
+
+            $pagination = new Pagination($config);
+
+            $args->limit($limit)->offset($limit*$current_item);
 
             $inventories = Inventory::gets($args);
 
@@ -39,22 +54,7 @@ Class Stock_Manager_Ajax {
 
             $result['list'] = $inventories;
 
-            $result['pagination'] = '';
-
-            unset($args['params']);
-
-            $total = Inventory::count($args);
-
-            $config  = array (
-                'current_page'  => $current_item + 1,
-                'total_rows'    => $total,
-                'number'		=> $page_size,
-                'url'           => '',
-            );
-
-            $pagination = new paging($config);
-
-            $result['pagination'] = $pagination->html_fontend();
+            $result['pagination'] = $pagination->backend();
 
             $result['status'] = 'success';
 
@@ -72,7 +72,7 @@ Class Stock_Manager_Ajax {
 
         $result['message'] = __('Lưu dữ liệu không thành công');
 
-        if(InputBuilder::Post()) {
+        if(Request::Post()) {
 
             if(!Auth::hasCap('inventory_edit')) {
                 $result['message'] = 'Bạn không có quyền sử dụng chức năng này';
@@ -82,7 +82,7 @@ Class Stock_Manager_Ajax {
 
             $inventory_update = [];
 
-            $inventory      = InputBuilder::Post('inventory');
+            $inventory      = Request::Post('inventory');
 
             $id             = (int)$inventory['id'];
 
@@ -92,20 +92,16 @@ Class Stock_Manager_Ajax {
                 $result['message'] = __('Tồn kho chưa tồn tại'); echo json_encode($result); return false;
             }
 
-            $inventory_update['id'] = $inventory_old->id;
-
             if($inventory['type'] == 1) {
-
                 $inventory_update['stock'] = $inventory_old->stock + $inventory['stock'];
             }
             else {
-
                 $inventory_update['stock'] = $inventory['stock'];
             }
 
             if($inventory_update['stock'] < 0) $inventory_update['stock'] = 0;
 
-            if(!is_skd_error(Inventory::update($inventory_update))) {
+            if(!is_skd_error(Inventory::update($inventory_update, Qr::set($inventory_old->id)))) {
 
                 $result['inventory']     = Inventory::get($id);
 
@@ -119,8 +115,82 @@ Class Stock_Manager_Ajax {
 
         return false;
     }
+    static public function quickEditSave($ci, $model) {
+
+        $result['message'] = 'Cập nhật dữ liệu thất bại.';
+
+        $result['status'] = 'error';
+
+        if (Request::post()) {
+
+            $id = Request::post('id');
+
+            $product = Product::get($id);
+
+            if(have_posts($product)) {
+
+                $productStock = Request::post('productStock');
+
+                foreach ($productStock as $branchId => $dataStock) {
+
+                    $branch = Branch::get($branchId);
+
+                    foreach ($dataStock as $productId => $item) {
+
+                        $count = Inventory::count(Qr::set('product_id', $productId)->where('branch_id', $branchId));
+
+                        if($count == 0) {
+
+                            $inventoryAdd = [
+                                'product_name'  => $product->title,
+                                'product_code'  => $product->code,
+                                'product_id'    => $product->id,
+                                'parent_id'     => 0,
+                                'branch_id'     => $branch->id,
+                                'branch_name'   => $branch->name,
+                                'stock'         => $item['stock'],
+                            ];
+
+                            if($productId != $product->id) {
+
+                                $variation = Variation::get(Qr::set($productId));
+
+                                $attr_name = '';
+
+                                foreach ($variation->items as $attr_id) {
+                                    $attribute = Attributes::getItem($attr_id);
+                                    $attr_name .= ' - '.$attribute->title;
+                                }
+
+                                $inventoryAdd['product_name'] .= $attr_name;
+                                $inventoryAdd['product_code'] = $variation->code;
+                                $inventoryAdd['product_id'] = $variation->id;
+                                $inventoryAdd['parent_id'] = $product->id;
+                            }
+
+                            Inventory::insert($inventoryAdd);
+                        }
+                        else {
+                            Inventory::update(['stock' => $item['stock']], Qr::set('product_id', $productId)->where('branch_id', $branchId));
+                        }
+                    }
+                }
+
+                $result['status']   = 'success';
+
+                $result['message']  = 'Cập nhật dữ liệu thành công';
+
+                $result['data']     = $productStock;
+            }
+        }
+
+        echo json_encode($result);
+
+        return true;
+    }
 }
 Ajax::admin('Stock_Manager_Ajax::inventoryLoad');
 Ajax::admin('Stock_Manager_Ajax::inventoryUpdate');
+Ajax::admin('Stock_Manager_Ajax::quickEditSave');
 
 

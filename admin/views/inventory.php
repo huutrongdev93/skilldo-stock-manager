@@ -11,15 +11,13 @@
             <div class="box-content" id="js_inventory_table">
                 <div class="table-search row">
                     <div class="col-md-12">
-                        <div class="pull-left" style="padding:10px 0 10px 10px;">
-                        </div>
                         <div class="pull-right" style="padding-right:10px;">
-                            <form action="<?php echo Url::admin('plugins');?>" method="get" class="form-inline" role="form" autocomplete="off" id="js_inventory_form_search">
+                            <form action="<?php echo Url::admin('plugins');?>" method="get" class="d-flex gap-3 p-2" role="form" autocomplete="off" id="js_inventory_form_search">
                                 <input type="hidden" name="page" value="stock_inventory">
                                 <div class="form-group-search"><input type="text" name="keyword" value="" id="keyword" class=" form-control" placeholder="Từ khóa..." field="keyword"></div>
                                 <div class="form-group">
                                     <select name="branch" class=" form-control" id="branch" placeholder="Trạng thái đơn hàng">
-                                        <?php foreach ($branchs as $branch) { ?>
+                                        <?php foreach ($branches as $branch) { ?>
                                             <option value="<?php echo $branch->id;?>" <?php echo ($branch_id == $branch->id) ?'selected' : '';?>><?php echo $branch->name;?></option>
                                         <?php } ?>
                                     </select>
@@ -31,7 +29,9 @@
                                         <option value="outstock" <?php echo ($stock_status == 'outstock') ?'selected' : '';?>>hết hàng</option>
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-blue"><i class="fad fa-search"></i> Lộc dữ liệu</button>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-blue"><i class="fad fa-search"></i> Lộc dữ liệu</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -88,7 +88,7 @@
                 </table>
                 <!-- paging -->
                 <div class="col-md-12 text-left pagination">
-                    <?php echo (isset($pagination)) ? $pagination->html_fontend() : '';?>
+                    <?php echo (isset($pagination)) ? $pagination->backend() : '';?>
                 </div>
                 <!-- paging -->
             </div>

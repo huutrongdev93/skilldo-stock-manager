@@ -1,11 +1,11 @@
 <div class="col-md-12">
-    <?php foreach ($branchs as $branch) {
+    <?php foreach ($branches as $branch) {
         $inventory = Inventory::get(['where' => ['product_id' => $variation_id, 'branch_id' => $branch->id]]);
         $stock = (!empty($inventory->stock)) ? $inventory->stock : 0;
         ?>
         <hr />
         <div class="row stock-update">
-            <div class="col-md-6"><h5><?php echo $branch->name;?></h5></div>
+            <div class="col-md-6"><h5 style="font-size: 16px;">Tồn kho <?php echo $branch->name;?></h5></div>
             <div class="col-md-6">
                 <div class="spinner">
                     <span class="quantity-btn minus quantity-down"></span>

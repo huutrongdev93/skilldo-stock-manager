@@ -1,78 +1,9 @@
 <?php
-Class Inventory {
+Class Inventory extends Model {
 
-    static public function get($args = []) {
-
-        $model = get_model()->settable('inventories')->settable_metabox('metabox');
-
-        if(is_numeric($args)) $args = array( 'where' => array('id' => (int)$args));
-
-        if(!have_posts($args)) $args = [];
-
-        $args = array_merge( array('where' => [], 'params' => [] ), $args );
-
-        $inventories = $model->get_data( $args, 'Inventory' );
-
-        return apply_filters('get_branch', $inventories, $args);
-    }
-
-    static public function getBy( $field, $value, $params = [] ) {
-
-        $field = Str::clear( $field );
-
-        $value = Str::clear( $value );
-
-        $args = array( 'where' => array( $field => $value));
-
-        if(have_posts($params)) $arg['params'] = $params;
-
-        return apply_filters('get_inventories_by', static::get($args), $field, $value );
-    }
-
-    static public function gets( $args = [] ) {
-
-        $model 	= get_model()->settable('inventories')->settable_metabox('metabox');
-
-        if(!have_posts($args)) $args = [];
-
-        $args = array_merge(['where' => [], 'params' => []], $args );
-
-        $inventories = $model->gets_data($args, 'branch');
-
-        return apply_filters( 'gets_inventories', $inventories, $args );
-    }
-
-    static public function getsBy( $field, $value, $params = [] ) {
-
-        $field = Str::clear( $field );
-
-        $value = Str::clear( $value );
-
-        $args = ['where' => array( $field => $value )];
-
-        if( have_posts($params) ) $arg['params'] = $params;
-
-        return apply_filters( 'gets_inventories_by', static::gets($args), $field, $value );
-    }
-
-    static public function count( $args = [] ) {
-
-        if( is_numeric($args) ) $args = array( 'where' => array('id' => (int)$args));
-
-        if( !have_posts($args) ) $args = [];
-
-        $args = array_merge( array('where' => [], 'params' => [] ), $args );
-
-        $model = get_model()->settable('inventories')->settable_metabox('inventories_metadata');
-
-        $inventories = $model->count_data($args, 'inventories');
-
-        return apply_filters('count_inventories', $inventories, $args );
-    }
+    static string $table = 'inventories';
 
     static public function insert( $inventories = [] ) {
-
-        $model = get_model()->settable('inventories');
 
         if (!empty($inventories['id']) ) {
 
@@ -128,59 +59,56 @@ Class Inventory {
 
         $data = apply_filters( 'pre_insert_inventory_data', $data, $inventories, $update ? $old_inventories : null );
 
+        $model = model(static::$table);
+
         if ($update) {
 
-            $model->settable('inventories')->update_where( $data, compact( 'id'));
-
-            $inventories_id = (int) $id;
+            $model->update( $data, Qr::set($id));
         }
         else {
-            $inventories_id = $model->settable('inventories')->add( $data );
+            $id = $model->add($data);
         }
 
-        return $inventories_id;
+        return $id;
     }
 
-    static public function update($inventory = []) {
+    static public function update($update, $args = []) {
 
-        if(empty($inventory['id'])) {
-            $inventory_old = static::get(['where' => ['product_id' => $inventory['product_id'],'branch_id' => $inventory['branch_id'],]]);
-        }
-        else {
-            $inventory_old = static::get($inventory['id']);
-        }
+        if(is_array($args)) $args = Qr::convert($args);
+
+        $inventory_old = static::get($args);
 
         if(have_posts($inventory_old)) {
-            $inventory['id']        = $inventory_old->id;
+            $update['id'] = $inventory_old->id;
         }
 
-        if(!isset($inventory['status']) && $inventory['stock'] == 0) {
-            $inventory['status'] = 'outstock';
-        }
-        else {
-            $inventory['status'] = 'instock';
+        if(!isset($update['status']) && isset($update['stock'])) {
+            if($update['stock'] == 0) {
+                $update['status'] = 'outstock';
+            }
+            else {
+                $update['status'] = 'instock';
+            }
         }
 
-        $result = static::insert($inventory);
+        $result = static::insert($update);
 
         if(!is_skd_error($result)) {
 
             if(!have_posts($inventory_old)) {
-
                 $inventory_old = static::get($result);
             }
 
-            $product = Product::get(['where' => ['id' => $inventory_old->product_id, 'type <>' => 'trash']]);
+            $product = Product::get(Qr::set($inventory_old->product_id)->where('type', '<>', 'null'));
 
             if(have_posts($product)) {
 
-                $count = get_model()->settable('inventories')->operatorby(['product_id' => $inventory_old->product_id], 'stock');
+                $count = model('inventories')->gets(Qr::set('product_id', $inventory_old->product_id))->sum('stock');
 
-                $stock_status = (!empty((int)$count->stock)) ? 'instock' : 'outstock';
+                $stock_status = (!empty($count)) ? 'instock' : 'outstock';
 
                 if($product->stock_status != $stock_status) {
-
-                    get_model()->settable('products')->update_where(['stock_status' => $stock_status], ['id' => $product->id]);
+                    model('products')->update(['stock_status' => $stock_status], Qr::set($product->id));
                 }
             }
         }
@@ -196,20 +124,20 @@ Class Inventory {
 
         if( $inventoriesID == 0 ) return false;
 
-        $model = get_model('home')->settable('inventories');
+        $model = model(static::$table);
 
-        $inventories  = static::get( $inventoriesID );
+        $inventories  = static::get($inventoriesID);
 
-        if(have_posts($inventories) ) {
+        if(have_posts($inventories)) {
 
-            $ci->data['module']   = 'inventories';
+            $ci->data['module']   = static::$table;
 
-            do_action('delete_inventories', $inventoriesID );
+            do_action('delete_'.static::$table, $inventoriesID);
 
-            if($model->delete_where(['id'=> $inventoriesID])) {
-                do_action('delete_inventories_success', $inventoriesID );
-                //delete gallerys
-                Metadata::deleteByMid('inventories', $inventoriesID);
+            if($model->delete(Qr::set($inventoriesID))) {
+                do_action('delete_'.static::$table.'_success', $inventoriesID );
+                //delete galleries
+                Metadata::deleteByMid(static::$table, $inventoriesID);
                 return [$inventoriesID];
             }
         }
@@ -221,51 +149,39 @@ Class Inventory {
 
         if(have_posts($inventoriesID)) {
 
-            $model      = get_model('home')->settable('inventories');
+            $model      = model(static::$table);
 
-            $inventoriess = static::gets(['where_in' => ['field' => 'id', 'data' => $inventoriesID]]);
+            $inventories = static::gets(Qr::set()->whereIn('id', $inventoriesID));
 
-            if($model->delete_where_in(['field' => 'id', 'data' => $inventoriesID])) {
+            if($model->delete(Qr::set()->whereIn('id', $inventoriesID))) {
 
-                $where_in = ['field' => 'object_id', 'data' => $inventoriesID];
+                $args = Qr::set('object_type', 'inventories')->whereIn('object_id', $inventoriesID);
 
                 do_action('delete_inventories_list_trash_success', $inventoriesID );
 
                 //delete language
-                $model->settable('language')->delete_where_in($where_in, ['object_type' => 'inventories']);
+                $model->settable('language')->delete($args);
 
                 //delete router
-                $model->settable('routes')->delete_where_in($where_in, ['object_type' => 'inventories']);
+                $model->settable('routes')->delete($args);
 
                 //delete router
-                foreach ($inventoriess as $key => $inventories) {
-                    Gallery::deleteItemByObject($inventories->id, 'inventories');
-                    Metadata::deleteByMid('inventories', $inventories->id);
+                foreach ($inventories as $inventory) {
+                    Gallery::deleteItemByObject($inventory->id, 'inventories');
+                    Metadata::deleteByMid('inventories', $inventory->id);
                 }
 
                 //delete menu
-                $model->settable('menu')->delete_where_in($where_in, ['object_type' => 'inventories']);
+                $model->settable('menu')->delete($args);
 
                 //xóa liên kết
-                $model->settable('relationships')->delete_where_in($where_in, ['object_type' => 'inventories']);
+                $model->settable('relationships')->delete($args);
 
                 return $inventoriesID;
             }
         }
 
         return false;
-    }
-
-    static public function getMeta( $inventories_id, $key = '', $single = true) {
-        return Metadata::get('inventory', $inventories_id, $key, $single);
-    }
-
-    static public function updateMeta($inventories_id, $meta_key, $meta_value) {
-        return Metadata::update('inventory', $inventories_id, $meta_key, $meta_value);
-    }
-
-    static public function deleteMeta($inventories_id, $meta_key = '', $meta_value = '') {
-        return Metadata::delete('inventory', $inventories_id, $meta_key, $meta_value);
     }
 
     static public function status($key = '', $type = '') {

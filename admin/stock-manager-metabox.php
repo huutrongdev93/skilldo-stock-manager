@@ -1,24 +1,25 @@
 <?php
 Class Stock_Manager_Admin_Product {
-    static public function stockProduct($object) {
+    static public function stockProduct($object): void {
         $variation = [];
         $product_id = 0;
         if(have_posts($object)) {
             $product_id = $object->id;
-            $variation = Product::get(['where' => array('parent_id' => $object->id, 'type' => 'variations')]);
+            $variation = Product::get(Qr::set('parent_id', $object->id)->where('type', 'variations'));
         }
         if(!have_posts($variation)) {
-            $branchs = Branch::gets();
+            $branches = Branch::gets();
             include 'views/html-metabox.php';
         }
         else {
-            echo '<div class="col-md-12">';
-            echo notice('warning', 'Sản phẩm có biển thể không sử dụng kho hàng ở đây.');
-            echo '</div>';
+            echo '<style>';
+            echo '#admin_product_metabox_stock { display:none; }';
+            echo '#js_btn_collapse_admin_product_metabox_stock { display:none; }';
+            echo '</style>';
         }
     }
     static public function stockProductVariation($variation_id, $variation) {
-        $branchs = Branch::gets();
+        $branches = Branch::gets();
         include 'views/html-metabox-variation.php';
     }
     static public function save($product_id, $module) {
@@ -27,18 +28,18 @@ Class Stock_Manager_Admin_Product {
 
             $product = Product::get($product_id);
 
-            $variable_stock = InputBuilder::Post('variable_stock');
+            $variable_stock = Request::Post('variable_stock');
 
             if(have_posts($variable_stock)) {
 
                 foreach ($variable_stock as $variation_id => $stocks) {
 
-                    $variation = Variation::get(['where' => array('id' => $variation_id)]);
+                    $variation = Variation::get(Qr::set($variation_id));
 
                     $attr_name = '';
 
                     foreach ($variation->items as $key => $attr_id) {
-                        $attribute = Attribute::getItem($attr_id);
+                        $attribute = Attributes::getItem($attr_id);
                         $attr_name .= ' - '.$attribute->title;
                     }
 
@@ -54,13 +55,21 @@ Class Stock_Manager_Admin_Product {
                             $inventory['stock']         = $stock;
                             $inventory['branch_id']     = $branch_id;
                             $inventory['branch_name']   = $branch->name;
-                            Inventory::update($inventory);
+                            Inventory::update($inventory, Qr::set('product_id', $variation->id)->where('branch_id', $branch_id));
                         }
+                    }
+                }
+
+                $inventoryMainProduct = Inventory::gets(Qr::set('product_id', $product->id));
+
+                if(have_posts($inventoryMainProduct)) {
+                    foreach ($inventoryMainProduct as $item) {
+                        Inventory::delete($item->id);
                     }
                 }
             }
             else {
-                $product_stock = InputBuilder::Post('product_stock');
+                $product_stock = Request::Post('product_stock');
 
                 if(have_posts($product_stock)) {
 
@@ -77,7 +86,7 @@ Class Stock_Manager_Admin_Product {
                             'branch_name'   => $branch->name,
                         ];
 
-                        Inventory::update($inventory);
+                        Inventory::update($inventory, Qr::set('product_id', $product->id)->where('branch_id', $branch_id));
                     }
                 }
 

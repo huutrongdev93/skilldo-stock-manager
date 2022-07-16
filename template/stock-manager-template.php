@@ -11,7 +11,7 @@ Class ProductDetailInventory {
     }
 
     public function script($object) {
-        $variations = Variation::gets(['product' => $object->id]);
+        $variations = Variation::gets(Qr::set('parent_id', $object->id));
         $stock_inventory_data = [];
         $stock_inventory_data[$object->id] = [
             'status' => $object->stock_status,
