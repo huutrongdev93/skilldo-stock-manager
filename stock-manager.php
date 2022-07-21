@@ -13,6 +13,10 @@ const STOCK_VERSION = '1.2.0';
 
 define('STOCK_PATH', Path::plugin(STOCK_NAME));
 
+if(!class_exists('Sicommerce_Cart')) {
+    return false;
+}
+
 class stock_manager {
 
     private $name = 'stock_manager';
