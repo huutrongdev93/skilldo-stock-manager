@@ -62,10 +62,11 @@ Class Inventory extends Model {
         $model = model(static::$table);
 
         if ($update) {
-
+            $data['updated'] = gmdate('Y-m-d H:i:s', time() + 7*3600);
             $model->update( $data, Qr::set($id));
         }
         else {
+            $data['created'] = gmdate('Y-m-d H:i:s', time() + 7*3600);
             $id = $model->add($data);
         }
 

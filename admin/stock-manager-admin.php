@@ -130,21 +130,19 @@ class AdminStockProduct {
     static public function productTableStatus($item) {
         if(!empty($item->stock_status)) echo '<span style="background-color:'.Inventory::status($item->stock_status, 'color').'; border-radius:20px; padding:3px 15px; font-size:12px; display:inline-block;color:#000;">'.Inventory::status($item->stock_status,'label').'</span>';
     }
-    static public function productDelete($module, $productID) {
-        if($module == 'products') {
-            if(is_numeric($productID)) $productID = [$productID];
-            if(have_posts($productID)) {
-                foreach ($productID as $id) {
-                    $inventory = Inventory::get(Qr::set('product_id', $id));
-                    if (have_posts($inventory)) {
-                        $inventoryVariations = Inventory::get(Qr::set('parent_id', $id));
-                        if(have_posts($inventoryVariations)) {
-                            foreach ($inventoryVariations as $inventoryVariation) {
-                                Inventory::delete($inventoryVariation->id);
-                            }
+    static public function productDelete($productID) {
+        if(is_numeric($productID)) $productID = [$productID];
+        if(have_posts($productID)) {
+            foreach ($productID as $id) {
+                $inventory = Inventory::get(Qr::set('product_id', $id));
+                if (have_posts($inventory)) {
+                    $inventoryVariations = Inventory::get(Qr::set('parent_id', $id));
+                    if(have_posts($inventoryVariations)) {
+                        foreach ($inventoryVariations as $inventoryVariation) {
+                            Inventory::delete($inventoryVariation->id);
                         }
-                        Inventory::delete($inventory->id);
                     }
+                    Inventory::delete($inventory->id);
                 }
             }
         }
@@ -224,7 +222,8 @@ class AdminStockProduct {
     }
 }
 
-add_action('ajax_delete_before_success', 'AdminStockProduct::productDelete', 10, 2);
+add_action('delete_product_success', 'AdminStockProduct::productDelete', 10);
+add_action('delete_products_list_success', 'AdminStockProduct::productDelete', 10);
 add_filter('columns_db_products', 'AdminStockProduct::productInsert');
 add_filter('admin_product_table_data', 'AdminStockProduct::setBranchToTable');
 add_filter('manage_product_columns', 'AdminStockProduct::productTableHeader');
