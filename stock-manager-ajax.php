@@ -38,7 +38,7 @@ Class Stock_Manager_Ajax {
                 'currentPage'   => $current_item + 1,
                 'totalRecords'  => $total,
                 'limit'		    => $limit,
-                'url'           => '',
+                'url'           => '#',
             );
 
             $pagination = new Pagination($config);
@@ -101,7 +101,11 @@ Class Stock_Manager_Ajax {
 
             if($inventory_update['stock'] < 0) $inventory_update['stock'] = 0;
 
-            if(!is_skd_error(Inventory::update($inventory_update, Qr::set($inventory_old->id)))) {
+            if(!is_skd_error(Inventory::update(
+                $inventory_update,
+                Qr::set($inventory_old->id),
+                'inventory_update'
+            ))) {
 
                 $result['inventory']     = Inventory::get($id);
 
@@ -114,6 +118,34 @@ Class Stock_Manager_Ajax {
         echo json_encode($result);
 
         return false;
+    }
+    static public function inventoryHistory($ci, $model) {
+
+        $result['message'] = 'Cập nhật dữ liệu thất bại.';
+
+        $result['status'] = 'error';
+
+        if (Request::post()) {
+
+            $id = (int)Request::post('id');
+
+            $inventories = InventoryHistory::gets(Qr::set('inventory_id', $id));
+
+            $result['list'] = '';
+
+            foreach ($inventories as $inventory) {
+                $result['list'] .= '<p>'.$inventory->created.' : '.$inventory->message.'</p>';
+            }
+
+            $result['status'] = 'success';
+
+            $result['message'] = 'Load dữ liệu thành công';
+
+        }
+
+        echo json_encode($result);
+
+        return true;
     }
     static public function quickEditSave($ci, $model) {
 
@@ -130,6 +162,8 @@ Class Stock_Manager_Ajax {
             if(have_posts($product)) {
 
                 $productStock = Request::post('productStock');
+
+                $stock = 0;
 
                 foreach ($productStock as $branchId => $dataStock) {
 
@@ -162,18 +196,33 @@ Class Stock_Manager_Ajax {
                                     $attr_name .= ' - '.$attribute->title;
                                 }
 
-                                $inventoryAdd['product_name'] .= $attr_name;
-                                $inventoryAdd['product_code'] = $variation->code;
-                                $inventoryAdd['product_id'] = $variation->id;
-                                $inventoryAdd['parent_id'] = $product->id;
+                                $inventoryAdd['product_name']   .= $attr_name;
+                                $inventoryAdd['product_code']   = $variation->code;
+                                $inventoryAdd['product_id']     = $variation->id;
+                                $inventoryAdd['parent_id']      = $product->id;
                             }
+
+                            $stock += $item['stock'];
 
                             Inventory::insert($inventoryAdd);
                         }
                         else {
-                            Inventory::update(['stock' => $item['stock']], Qr::set('product_id', $productId)->where('branch_id', $branchId));
+                            Inventory::update(
+                                ['stock' => $item['stock']],
+                                Qr::set('product_id', $productId)->where('branch_id', $branchId),
+                                'product_update_quick'
+                            );
+
+                            $stock += $item['stock'];
                         }
                     }
+                }
+
+                if($stock > 0) {
+                    model('products')->update(['stock_status' => 'instock'], Qr::set($product->id));
+                }
+                else {
+                    model('products')->update(['stock_status' => 'outstock'], Qr::set($product->id));
                 }
 
                 $result['status']   = 'success';
@@ -191,6 +240,7 @@ Class Stock_Manager_Ajax {
 }
 Ajax::admin('Stock_Manager_Ajax::inventoryLoad');
 Ajax::admin('Stock_Manager_Ajax::inventoryUpdate');
+Ajax::admin('Stock_Manager_Ajax::inventoryHistory');
 Ajax::admin('Stock_Manager_Ajax::quickEditSave');
 
 

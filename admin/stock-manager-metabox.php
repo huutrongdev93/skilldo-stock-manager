@@ -55,7 +55,11 @@ Class Stock_Manager_Admin_Product {
                             $inventory['stock']         = $stock;
                             $inventory['branch_id']     = $branch_id;
                             $inventory['branch_name']   = $branch->name;
-                            Inventory::update($inventory, Qr::set('product_id', $variation->id)->where('branch_id', $branch_id));
+                            Inventory::update(
+                                $inventory,
+                                Qr::set('product_id', $variation->id)->where('branch_id', $branch_id),
+                                'product_update'
+                            );
                         }
                     }
                 }
@@ -86,7 +90,11 @@ Class Stock_Manager_Admin_Product {
                             'branch_name'   => $branch->name,
                         ];
 
-                        Inventory::update($inventory, Qr::set('product_id', $product->id)->where('branch_id', $branch_id));
+                        Inventory::update(
+                            $inventory,
+                            Qr::set('product_id', $product->id)->where('branch_id', $branch_id),
+                            'product_update'
+                        );
                     }
                 }
 

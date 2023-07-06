@@ -25,7 +25,7 @@ Class Stock_Manager_Admin {
             'currentPage'   => 1,
             'totalRecords'  => Inventory::count($args),
             'limit'		    => 20,
-            'url'           => '',
+            'url'           => '#',
         );
 
         $pagination = new Pagination($config);

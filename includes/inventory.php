@@ -73,14 +73,19 @@ Class Inventory extends Model {
         return $id;
     }
 
-    static public function update($update, $args = []) {
+    static public function update($update, $args = [], $action = '') {
 
-        if(is_array($args)) $args = Qr::convert($args);
-
-        $inventory_old = static::get($args);
+        if(empty($update['id'])) {
+            if (is_array($args)) $args = Qr::convert($args);
+            $inventory_old = static::get($args);
+        }
+        else {
+            $inventory_old = static::get(Qr::set($update['id']));
+        }
 
         if(have_posts($inventory_old)) {
-            $update['id'] = $inventory_old->id;
+            $update['id']         = $inventory_old->id;
+            $update['parent_id']  = $inventory_old->parent_id;
         }
 
         if(!isset($update['status']) && isset($update['stock'])) {
@@ -92,24 +97,83 @@ Class Inventory extends Model {
             }
         }
 
+        if(!empty($update['product_id']) && !isset($update['id']) && empty($update['product_name'])) {
+            $product = Product::get(Qr::set($update['product_id'])->where('type', '<>', 'null'));
+            if(!empty($product)) {
+                $update['product_name'] = $product->title;
+                $update['product_code'] = $product->code;
+                $update['parent_id']    = $product->parent_id;
+                if($product->type != 'product') {
+                    $variation = Variation::get(Qr::set($product->id));
+                    $attr_name = '';
+                    foreach ($variation->items as $key => $attr_id) {
+                        $attribute = Attributes::getItem($attr_id);
+                        $attr_name .= ' - '.$attribute->title;
+                    }
+                    $update['product_name'] .= $attr_name;
+                }
+            }
+        }
+
+        if(empty($update['id']) && empty($update['product_id'])) {
+            return new SKD_Error('invalid_inventories_id', __('ID sản phẩm không chính xác.'));
+        }
+
+        if(!isset($update['id'])) {
+            if(empty($update['branch_id']) || empty($update['branch_name'])) {
+                $update['branch_id'] = 1;
+                $update['branch_name'] = 'Kho trung tâm';
+            }
+        }
+
         $result = static::insert($update);
 
         if(!is_skd_error($result)) {
 
-            if(!have_posts($inventory_old)) {
+            if(isset($inventory_old) && !have_posts($inventory_old) || !isset($inventory_old)) {
                 $inventory_old = static::get($result);
+            }
+
+            if(isset($update['stock'])) {
+
+                $stockChange = $update['stock'] - $inventory_old->stock;
+
+                if(($stockChange == 0 && !isset($update['id'])) || $stockChange != 0) {
+                    InventoryHistory::insert([
+                        'inventory_id' => $inventory_old->id,
+                        'message' => InventoryHistory::message($action, $inventory_old, $update['stock'], $stockChange),
+                        'action' => (($stockChange >= 0) ? 'cong' : 'tru')
+                    ]);
+                }
             }
 
             $product = Product::get(Qr::set($inventory_old->product_id)->where('type', '<>', 'null'));
 
             if(have_posts($product)) {
 
-                $count = model('inventories')->gets(Qr::set('product_id', $inventory_old->product_id))->sum('stock');
+                do_action('inventory_update_stock_success', $action, $update, $inventory_old, $product, $stockChange);
+
+                $count = model('inventories')->sum('stock', Qr::set('product_id', $inventory_old->product_id));
 
                 $stock_status = (!empty($count)) ? 'instock' : 'outstock';
 
                 if($product->stock_status != $stock_status) {
                     model('products')->update(['stock_status' => $stock_status], Qr::set($product->id));
+                }
+
+                //Stock status product parent
+                if(!empty($inventory_old->parent_id)) {
+
+                    if($stock_status == 'outstock') {
+
+                        $count = model('inventories')->sum('stock', Qr::set('parent_id', $inventory_old->parent_id));
+
+                        $stock_status = (!empty($count)) ? 'instock' : 'outstock';
+                    }
+
+                    if($product->stock_status != $stock_status) {
+                        model('products')->update(['stock_status' => $stock_status], Qr::set($inventory_old->parent_id));
+                    }
                 }
             }
         }
@@ -205,5 +269,77 @@ Class Inventory extends Model {
             return apply_filters( 'inventory_status', $status[$key], $key, $type);
         }
         return apply_filters( 'inventory_status', $status, $key);
+    }
+}
+
+Class InventoryHistory extends Model {
+
+    static string $table = 'inventories_history';
+
+    static public function insert( $inventories = [] ) {
+
+        if (!empty($inventories['id']) ) {
+
+            $id             = (int) $inventories['id'];
+
+            $update        = true;
+
+            $old_inventories = static::get($id);
+
+            if(!$old_inventories) return new SKD_Error( 'invalid_inventories_id', __( 'ID bài viết không chính xác.'));
+
+            $inventories['inventory_id']   =  (!empty($inventories['inventory_id'])) ? Str::clear($inventories['inventory_id']) : $old_inventories->inventory_id;
+
+            $inventories['message']   =  (!empty($inventories['message'])) ? Str::clear($inventories['message']) : $old_inventories->message;
+
+            $inventories['action']   =  (!empty($inventories['action'])) ? Str::clear($inventories['action']) : $old_inventories->action;
+        }
+        else {
+            $update = false;
+        }
+
+        $inventory_id =  (!empty($inventories['inventory_id'])) ? (int)Str::clear($inventories['inventory_id']) : 0;
+
+        $message  =  (!empty($inventories['message'])) ? Str::clear($inventories['message']) : '';
+
+        $action  =  (!empty($inventories['action'])) ? Str::clear($inventories['action']) : '';
+
+        $data = compact( 'inventory_id', 'message', 'action');
+
+        $model = model(static::$table);
+
+        if ($update) {
+            $data['updated'] = gmdate('Y-m-d H:i:s', time() + 7*3600);
+            $model->update($data, Qr::set($id));
+            $inventories_id = (int) $id;
+        }
+        else {
+            $data['created'] = gmdate('Y-m-d H:i:s', time() + 7*3600);
+            $inventories_id = $model->add( $data );
+        }
+        return $inventories_id;
+    }
+
+    static public function message($action, $inventory, $stock, $stockChange) {
+
+        $message = 'Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+
+        if($action == 'order_change') {
+            $message = '<span class="'.$action.'">[Đơn hàng cập nhật]</span> Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+        }
+        if($action == 'order_cancel') {
+            $message = '<span class="'.$action.'">[Hủy đơn hàng]</span> Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+        }
+        if($action == 'inventory_update') {
+            $message = '<span class="'.$action.'">[Kho hàng cập nhật]</span> Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+        }
+        if($action == 'product_update') {
+            $message = '<span class="'.$action.'">[Sản phẩm cập nhật]</span> Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+        }
+        if($action == 'product_update_quick') {
+            $message = '<span class="'.$action.'">[Cập nhật nhanh]</span> Thay đổi số lượng từ <b>'.$inventory->stock.'</b> thành <strong>'.$stock.'</strong> ('.(($stockChange >= 0) ? '+' : '').$stockChange.')';
+        }
+
+        return apply_filters('inventory_update_message', $message, $action, $inventory, $stock, $stockChange);
     }
 }

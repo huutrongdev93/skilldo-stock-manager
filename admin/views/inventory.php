@@ -39,16 +39,16 @@
                 <?php echo Admin::loading();?>
                 <table class="display table table-striped media-table">
                     <thead>
-                        <tr>
-                            <th class='manage-column column-title'>Sản phẩm</th>
-                            <th class='manage-column column-title'>SKU</th>
-                            <th class='manage-column column-title'>Kho hàng</th>
-                            <th class='manage-column column-stock'>Tồn kho</th>
-                            <th class='manage-column column-status'>Trạng thái</th>
-                            <?php if(Auth::hasCap('inventory_edit')) {?>
+                    <tr>
+                        <th class='manage-column column-title'>Sản phẩm</th>
+                        <th class='manage-column column-title'>SKU</th>
+                        <th class='manage-column column-title'>Kho hàng</th>
+                        <th class='manage-column column-stock'>Tồn kho</th>
+                        <th class='manage-column column-status'>Trạng thái</th>
+                        <?php if(Auth::hasCap('inventory_edit')) {?>
                             <th class='manage-column column-action'>Cập nhật</th>
-                            <?php } ?>
-                        </tr>
+                        <?php } ?>
+                    </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($inventories as $inventory) { ?>
@@ -65,22 +65,23 @@
                             </td>
                             <td><span style="background-color:<?php echo Inventory::status($inventory->status, 'color');?>; border-radius:20px; padding:3px 15px; font-size:12px; display:inline-block;color:#000;"><?php echo Inventory::status($inventory->status,'label');?></span></td>
                             <?php if(Auth::hasCap('inventory_edit')) {?>
-                            <td class="stock_update column-stock_update">
-                                <div class="inventory-form-update">
-                                    <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="<?php echo $inventory->id;?>">
-                                    <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
-                                    <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="<?php echo $inventory->stock;?>">
-                                    <div class="next-input-wrapper">
-                                        <label class="next-label"></label>
-                                        <div class="inventory-line-quantity-fields">
-                                            <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
-                                            <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
-                                            <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-<?php echo $inventory->stock;?>">
-                                            <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
+                                <td class="stock_update column-stock_update">
+                                    <div class="inventory-form-update">
+                                        <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="<?php echo $inventory->id;?>">
+                                        <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
+                                        <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="<?php echo $inventory->stock;?>">
+                                        <div class="next-input-wrapper">
+                                            <label class="next-label"></label>
+                                            <div class="inventory-line-quantity-fields">
+                                                <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
+                                                <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
+                                                <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-<?php echo $inventory->stock;?>">
+                                                <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
+                                                <button class="btn btn-white js_inventory__btn_history" type="button" data-id="<?php echo $inventory->id;?>">Xem</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
                             <?php } ?>
                         </tr>
                     <?php } ?>
@@ -88,11 +89,26 @@
                 </table>
                 <!-- paging -->
                 <div class="col-md-12 text-left pagination">
-                    <?php echo (isset($pagination)) ? $pagination->backend() : '';?>
+                    <?php echo (isset($pagination)) ? $pagination->frontend() : '';?>
                 </div>
                 <!-- paging -->
             </div>
             <!-- /.box-content -->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="inventoryModalHistory" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Lịch sử</h4>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -122,6 +138,41 @@
     .inventory-form-update button.inventory_update_type.btn-active {
         opacity:1;
     }
+    .pagination {
+        padding:10px 0;
+    }
+    .pagination > li > a,
+    .pagination > li > span {
+        padding: 5px 13px;
+        margin-right: 6px;
+        border-radius: 5px;
+        font-size: 13px;
+        color: #000;
+        transition: all 0.25s cubic-bezier(0.02, 0.01, 0.47, 1);
+    }
+    .pagination > li > a:focus,
+    .pagination > li > span:focus,
+    .pagination > li > a:hover,
+    .pagination > li > span:hover {
+        background-color: #FBF9FF;
+        transform: translateY(-5px);
+        box-shadow: 0 4px 30px 0 rgba(0, 0, 0, 0.2), 0 0 0 transparent;
+    }
+    .pagination > .active > a,
+    .pagination > .active > a:focus,
+    .pagination > .active > a:hover,
+    .pagination > .active > span,
+    .pagination > .active > span:focus,
+    .pagination > .active > span:hover {
+        background-color: var(--theme-color);
+        border-color: var(--theme-color);
+    }
+    @media (max-width: 600px) {
+        .pagination > li > a,
+        .pagination > li > span {
+            padding: 5px 10px;
+        }
+    }
 </style>
 
 <script id="inventory_item_template" type="text/x-custom-template">
@@ -138,22 +189,23 @@
         </td>
         <td><span style="background-color:${status_color}; border-radius:20px; padding:3px 15px; font-size:12px; display:inline-block;color:#000;">${status_label}</span></td>
         <?php if(Auth::hasCap('inventory_edit')) {?>
-        <td class="stock_update column-stock_update">
-            <div class="inventory-form-update">
-                <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="${id}">
-                <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
-                <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="${stock}">
-                <div class="next-input-wrapper">
-                    <label class="next-label"></label>
-                    <div class="inventory-line-quantity-fields">
-                        <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
-                        <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
-                        <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-${stock}">
-                        <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
+            <td class="stock_update column-stock_update">
+                <div class="inventory-form-update">
+                    <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="${id}">
+                    <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
+                    <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="${stock}">
+                    <div class="next-input-wrapper">
+                        <label class="next-label"></label>
+                        <div class="inventory-line-quantity-fields">
+                            <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
+                            <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
+                            <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-${stock}">
+                            <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
+                            <button class="btn btn-white js_inventory__btn_history" type="button" data-id="${id}">Xem</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </td>
+            </td>
         <?php } ?>
     </tr>
 </script>
@@ -168,6 +220,7 @@
                 .on('click', '.inventory-form-update .inventory_update_type', this.updateType)
                 .on('change', '.inventory-form-update .js_inventory_inp_stock', this.changeStock)
                 .on('click', '.inventory-form-update .js_inventory__btn_save', this.save)
+                .on('click', '.inventory-form-update .js_inventory__btn_history', this.history)
                 .on('submit', '#js_inventory_form_search', this.search)
         };
 
@@ -267,6 +320,29 @@
 
                 inventory_form.find('.js_inventory__btn_save').attr('disabled','');
             }
+        };
+
+        InventoryHandler.prototype.history = function (e) {
+
+            let tr_box = $(this).closest('tr');
+
+            let data = {
+                id : $(this).data('id'),
+                action : 'Stock_Manager_Ajax::inventoryHistory'
+            }
+
+            $.post(ajax, data, function () { }, 'json').done(function (response) {
+
+                if(response.status === 'success') {
+                    $('#inventoryModalHistory .modal-body').html(response.list);
+                    $('#inventoryModalHistory').modal('show');
+                }
+                else {
+                    show_message(response.message, response.status);
+                }
+            });
+
+            return false;
         };
 
         InventoryHandler.prototype.save = function (e) {

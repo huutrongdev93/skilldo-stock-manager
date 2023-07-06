@@ -70,7 +70,11 @@ Class StockOrderAction {
                     $inventory = Inventory::get($args);
 
                     if(have_posts($inventory)) {
-                        if(!is_skd_error(Inventory::update(['stock' => $inventory->stock + $item->quantity], Qr::set($inventory->id)))) {
+                        if(!is_skd_error(Inventory::update(
+                            ['stock' => $inventory->stock + $item->quantity],
+                            Qr::set($inventory->id),
+                            'order_change'
+                        ))) {
                             Order::updateItemMeta($item->id, 'stock_process', false);
                         }
                     }
@@ -95,7 +99,11 @@ Class StockOrderAction {
 
                     if(have_posts($inventory)) {
 
-                        if(!is_skd_error(Inventory::update(['stock' => ($inventory->stock - $item->quantity)], Qr::set($inventory->id)))) {
+                        if(!is_skd_error(Inventory::update(
+                            ['stock' => ($inventory->stock - $item->quantity)],
+                            Qr::set($inventory->id),
+                            'order_change'
+                        ))) {
 
                             Order::updateItemMeta($item->id, 'stock_process', true);
                         }
@@ -118,7 +126,11 @@ Class StockOrderAction {
                 $inventory = Inventory::get($args);
 
                 if(have_posts($inventory)) {
-                    Inventory::update(['stock' => $inventory->stock + $item->quantity], Qr::set($inventory->id));
+                    Inventory::update(
+                        ['stock' => $inventory->stock + $item->quantity],
+                        Qr::set($inventory->id),
+                        'order_cancel'
+                    );
                 }
             }
         }

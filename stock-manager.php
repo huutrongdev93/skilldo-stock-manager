@@ -5,11 +5,11 @@ Plugin class    : stock_manager
 Plugin uri      : http://sikido.vn
 Description     : Ứng dụng quản lý kho hàng nhiều chi nhánh
 Author          : Nguyễn Hữu Trọng
-Version         : 1.2.1
+Version         : 1.3.1
  */
 const STOCK_NAME = 'stock-manager';
 
-const STOCK_VERSION = '1.2.1';
+const STOCK_VERSION = '1.3.1';
 
 define('STOCK_PATH', Path::plugin(STOCK_NAME));
 
@@ -39,6 +39,17 @@ class stock_manager {
                 $table->string('status', 100)->collate('utf8mb4_unicode_ci')->default('instock');
                 $table->integer('default')->default(0);
                 $table->integer('order')->default(0);
+                $table->dateTime('created');
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!$model::schema()->hasTable('inventories_history')) {
+            $model::schema()->create('inventories_history', function ($table) {
+                $table->increments('id');
+                $table->integer('inventory_id')->default(0);
+                $table->text('message')->collate('utf8mb4_unicode_ci')->nullable();
+                $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
                 $table->dateTime('created');
                 $table->dateTime('updated')->nullable();
             });
