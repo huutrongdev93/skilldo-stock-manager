@@ -92,9 +92,9 @@ class AdminStockProduct {
                         $class = ($countKey++ > 2) ? 'd-hidden' : '';
                         echo '<div class="product-variations-model '.$class.'">
                         <p class="quick-edit-box d-flex gap-3">
-                        <span class="product_stock_'.$variable->id.'">'.$inventory.'</span>
-                        <span class="quick-edit js_product_quick_edit_stock" data-id="'.$item->id.'" data-inventory="'.htmlentities(json_encode($branches)).'"><i class="fa-thin fa-pen"></i></span>
-                        </p>
+                        <span class="product_stock_'.$variable->id.'">'.$inventory.'</span>';
+                        echo (Auth::hasCap('inventory_edit')) ? '<span class="quick-edit js_product_quick_edit_stock" data-id="'.$item->id.'" data-inventory="'.htmlentities(json_encode($branches)).'"><i class="fa-thin fa-pen"></i></span>' : '';
+                        echo '</p>
                         </div>';
                     }
                     echo (count($item->variations) > 3) ? '<p>...</p>' : '';
@@ -226,7 +226,9 @@ add_action('delete_product_success', 'AdminStockProduct::productDelete', 10);
 add_action('delete_products_list_success', 'AdminStockProduct::productDelete', 10);
 add_filter('columns_db_products', 'AdminStockProduct::productInsert');
 add_filter('admin_product_table_data', 'AdminStockProduct::setBranchToTable');
-add_filter('manage_product_columns', 'AdminStockProduct::productTableHeader');
+if(Auth::hasCap('inventory_list')) {
+    add_filter('manage_product_columns', 'AdminStockProduct::productTableHeader');
+}
 add_action('manage_product_custom_column', 'AdminStockProduct::productTableData',10,3);
 add_action('admin_product_table_column_title', 'AdminStockProduct::productTableStatus',10);
 add_action('admin_footer', 'AdminStockProduct::quickEdit',10);

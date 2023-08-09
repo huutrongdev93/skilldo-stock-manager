@@ -11,13 +11,8 @@ Class Stock_Manager_Role {
         return array_merge( $label, Stock_Manager_Role::capabilities() );
     }
     static public function capabilities(): array {
-        $label['branch_list']      = 'Xem thông tin chi nhánh';
-        $label['branch_add']       = 'Thêm chi nhánh';
-        $label['branch_edit']      = 'Cập nhật thông tin chi nhánh';
-
         $label['inventory_list']   = 'Xem thông tin kho';
         $label['inventory_edit']   = 'Cập nhật kho hàng';
-
         return $label;
     }
 }
