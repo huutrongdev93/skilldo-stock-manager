@@ -25,7 +25,7 @@ Class Stock_Manager_Admin {
             'currentPage'   => 1,
             'totalRecords'  => Inventory::count($args),
             'limit'		    => 20,
-            'url'           => '#',
+            'url'           => '{page}',
         );
 
         $pagination = new Pagination($config);
@@ -45,7 +45,7 @@ class AdminStockProduct {
     static public function productTableHeader($column) {
         $newColumn = array();
         foreach ($column as $key => $col) {
-            if($key == 'collection') $newColumn['stock'] = 'Tồn kho';
+            if($key == 'order') $newColumn['stock'] = 'Tồn kho';
             $newColumn[$key] = $col;
         }
         return $newColumn;

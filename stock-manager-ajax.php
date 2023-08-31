@@ -38,7 +38,7 @@ Class Stock_Manager_Ajax {
                 'currentPage'   => $current_item + 1,
                 'totalRecords'  => $total,
                 'limit'		    => $limit,
-                'url'           => '#',
+                'url'           => '{page}',
             );
 
             $pagination = new Pagination($config);

@@ -1,100 +1,96 @@
 <div class="ui-layout">
-    <div class="col-md-12">
-        <div class="ui-title-bar__group">
-            <h1 class="ui-title-bar__title">Kho hàng</h1>
-            <div class="ui-title-bar__action">
-                <?php do_action('admin_inventory_action_bar_heading');?>
-            </div>
+    <div class="ui-title-bar__group">
+        <h1 class="ui-title-bar__title">Kho hàng</h1>
+        <div class="ui-title-bar__action">
+            <?php do_action('admin_inventory_action_bar_heading');?>
         </div>
-        <div class="box">
-            <!-- .box-content -->
-            <div class="box-content" id="js_inventory_table">
-                <div class="table-search row">
-                    <div class="col-md-12">
-                        <div class="pull-right" style="padding-right:10px;">
-                            <form action="<?php echo Url::admin('plugins');?>" method="get" class="d-flex gap-3 p-2" role="form" autocomplete="off" id="js_inventory_form_search">
-                                <input type="hidden" name="page" value="stock_inventory">
-                                <div class="form-group-search"><input type="text" name="keyword" value="" id="keyword" class=" form-control" placeholder="Từ khóa..." field="keyword"></div>
-                                <div class="form-group">
-                                    <select name="branch" class=" form-control" id="branch" placeholder="Trạng thái đơn hàng">
-                                        <?php foreach ($branches as $branch) { ?>
-                                            <option value="<?php echo $branch->id;?>" <?php echo ($branch_id == $branch->id) ?'selected' : '';?>><?php echo $branch->name;?></option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <select name="status" class=" form-control" id="status" placeholder="Trạng thái đơn hàng">
-                                        <option value="">Tất cả trạng thái</option>
-                                        <option value="instock" <?php echo ($stock_status == 'instock') ?'selected' : '';?>>còn hàng</option>
-                                        <option value="outstock" <?php echo ($stock_status == 'outstock') ?'selected' : '';?>>hết hàng</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-blue"><i class="fad fa-search"></i> Lộc dữ liệu</button>
-                                </div>
-                            </form>
-                        </div>
+    </div>
+    <div class="box">
+        <!-- .box-content -->
+        <div class="box-content" id="js_inventory_table">
+            <div class="table-search row">
+                <div class="col-md-12">
+                    <div class="pull-right" style="padding-right:10px;">
+                        <form action="<?php echo Url::admin('plugins');?>" method="get" class="d-flex gap-3 p-2" role="form" autocomplete="off" id="js_inventory_form_search">
+                            <input type="hidden" name="page" value="stock_inventory">
+                            <div class="form-group-search"><input type="text" name="keyword" value="" id="keyword" class=" form-control" placeholder="Từ khóa..." field="keyword"></div>
+                            <div class="form-group">
+                                <select name="branch" class=" form-control" id="branch" placeholder="Trạng thái đơn hàng">
+                                    <?php foreach ($branches as $branch) { ?>
+                                        <option value="<?php echo $branch->id;?>" <?php echo ($branch_id == $branch->id) ?'selected' : '';?>><?php echo $branch->name;?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select name="status" class=" form-control" id="status" placeholder="Trạng thái đơn hàng">
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="instock" <?php echo ($stock_status == 'instock') ?'selected' : '';?>>còn hàng</option>
+                                    <option value="outstock" <?php echo ($stock_status == 'outstock') ?'selected' : '';?>>hết hàng</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-blue"><i class="fad fa-search"></i> Lộc dữ liệu</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <?php echo Admin::loading();?>
-                <table class="display table table-striped media-table">
-                    <thead>
-                    <tr>
-                        <th class='manage-column column-title'>Sản phẩm</th>
-                        <th class='manage-column column-title'>SKU</th>
-                        <th class='manage-column column-title'>Kho hàng</th>
-                        <th class='manage-column column-stock'>Tồn kho</th>
-                        <th class='manage-column column-status'>Trạng thái</th>
+            </div>
+            <?php echo Admin::loading();?>
+            <table class="display table table-striped media-table">
+                <thead>
+                <tr>
+                    <th class='manage-column column-title'>Sản phẩm</th>
+                    <th class='manage-column column-title'>SKU</th>
+                    <th class='manage-column column-title'>Kho hàng</th>
+                    <th class='manage-column column-stock'>Tồn kho</th>
+                    <th class='manage-column column-status'>Trạng thái</th>
+                    <?php if(Auth::hasCap('inventory_edit')) {?>
+                        <th class='manage-column column-action'>Cập nhật</th>
+                    <?php } ?>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($inventories as $inventory) { ?>
+                    <tr class="tr_<?php echo $inventory->id;?>">
+                        <td class='title column-title'>
+                            <h3><?php echo $inventory->product_name;?></h3>
+                        </td>
+                        <td><?php echo $inventory->product_code;?></td>
+                        <td><?php echo $inventory->branch_name;?></td>
+                        <td class="stock column-stock">
+                            <span class="js_inventory_stock_number"><?php echo $inventory->stock;?></span>
+                            <span class="js_inventory_stock_review_icon" style="display:none;"><i class="fal fa-angle-right"></i></span>
+                            <span class="js_inventory_stock_review inventory-quantity--modified" style="display:none;"></span>
+                        </td>
+                        <td><span style="background-color:<?php echo Inventory::status($inventory->status, 'color');?>; border-radius:20px; padding:3px 15px; font-size:12px; display:inline-block;color:#000;"><?php echo Inventory::status($inventory->status,'label');?></span></td>
                         <?php if(Auth::hasCap('inventory_edit')) {?>
-                            <th class='manage-column column-action'>Cập nhật</th>
-                        <?php } ?>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($inventories as $inventory) { ?>
-                        <tr class="tr_<?php echo $inventory->id;?>">
-                            <td class='title column-title'>
-                                <h3><?php echo $inventory->product_name;?></h3>
-                            </td>
-                            <td><?php echo $inventory->product_code;?></td>
-                            <td><?php echo $inventory->branch_name;?></td>
-                            <td class="stock column-stock">
-                                <span class="js_inventory_stock_number"><?php echo $inventory->stock;?></span>
-                                <span class="js_inventory_stock_review_icon" style="display:none;"><i class="fal fa-angle-right"></i></span>
-                                <span class="js_inventory_stock_review inventory-quantity--modified" style="display:none;"></span>
-                            </td>
-                            <td><span style="background-color:<?php echo Inventory::status($inventory->status, 'color');?>; border-radius:20px; padding:3px 15px; font-size:12px; display:inline-block;color:#000;"><?php echo Inventory::status($inventory->status,'label');?></span></td>
-                            <?php if(Auth::hasCap('inventory_edit')) {?>
-                                <td class="stock_update column-stock_update">
-                                    <div class="inventory-form-update">
-                                        <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="<?php echo $inventory->id;?>">
-                                        <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
-                                        <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="<?php echo $inventory->stock;?>">
-                                        <div class="next-input-wrapper">
-                                            <label class="next-label"></label>
-                                            <div class="inventory-line-quantity-fields">
-                                                <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
-                                                <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
-                                                <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-<?php echo $inventory->stock;?>">
-                                                <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
-                                                <button class="btn btn-white js_inventory__btn_history" type="button" data-id="<?php echo $inventory->id;?>">Xem</button>
-                                            </div>
+                            <td class="stock_update column-stock_update">
+                                <div class="inventory-form-update">
+                                    <input type="hidden" class="js_inventory_inp_id" name="inventory[id]" value="<?php echo $inventory->id;?>">
+                                    <input type="hidden" class="js_inventory_inp_type" name="inventory[type]" value="1">
+                                    <input type="hidden" class="js_inventory_inp_stock_old" name="inventory[stock_old]" value="<?php echo $inventory->stock;?>">
+                                    <div class="next-input-wrapper">
+                                        <label class="next-label"></label>
+                                        <div class="inventory-line-quantity-fields">
+                                            <button class="btn btn-green btn-active inventory_update_type" data-type="1" type="button" name="button"> Thêm bớt </button>
+                                            <button class="btn btn-green inventory_update_type" data-type="2" type="button" name="button"> Đặt lại </button>
+                                            <input type="number" name="inventory[stock]" value="0" class="form-control js_inventory_inp_stock" min="-<?php echo $inventory->stock;?>">
+                                            <button class="btn btn-blue js_inventory__btn_save" type="button" disabled>Lưu</button>
+                                            <button class="btn btn-white js_inventory__btn_history" type="button" data-id="<?php echo $inventory->id;?>">Xem</button>
                                         </div>
                                     </div>
-                                </td>
-                            <?php } ?>
-                        </tr>
-                    <?php } ?>
-                    </tbody>
-                </table>
-                <!-- paging -->
-                <div class="col-md-12 text-left pagination">
-                    <?php echo (isset($pagination)) ? $pagination->frontend() : '';?>
-                </div>
-                <!-- paging -->
-            </div>
-            <!-- /.box-content -->
+                                </div>
+                            </td>
+                        <?php } ?>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
+	        <div class="p-2 text-right pagination mb-0 justify-content-end">
+                <?php echo (isset($pagination)) ? $pagination->backend() : '';?>
+	        </div>
         </div>
+        <!-- /.box-content -->
     </div>
 </div>
 
@@ -119,6 +115,9 @@
         display: -ms-inline-flexbox;
         display: inline-flex;
     }
+    .inventory-form-update button, .inventory-form-update .btn {
+        font-size:10px;
+    }
     .inventory-form-update button, .inventory-form-update input {
         -webkit-box-flex: 0;
         -webkit-flex: 0 0 auto;
@@ -138,40 +137,8 @@
     .inventory-form-update button.inventory_update_type.btn-active {
         opacity:1;
     }
-    .pagination {
-        padding:10px 0;
-    }
-    .pagination > li > a,
-    .pagination > li > span {
-        padding: 5px 13px;
-        margin-right: 6px;
-        border-radius: 5px;
-        font-size: 13px;
-        color: #000;
-        transition: all 0.25s cubic-bezier(0.02, 0.01, 0.47, 1);
-    }
-    .pagination > li > a:focus,
-    .pagination > li > span:focus,
-    .pagination > li > a:hover,
-    .pagination > li > span:hover {
-        background-color: #FBF9FF;
-        transform: translateY(-5px);
-        box-shadow: 0 4px 30px 0 rgba(0, 0, 0, 0.2), 0 0 0 transparent;
-    }
-    .pagination > .active > a,
-    .pagination > .active > a:focus,
-    .pagination > .active > a:hover,
-    .pagination > .active > span,
-    .pagination > .active > span:focus,
-    .pagination > .active > span:hover {
-        background-color: var(--theme-color);
-        border-color: var(--theme-color);
-    }
-    @media (max-width: 600px) {
-        .pagination > li > a,
-        .pagination > li > span {
-            padding: 5px 10px;
-        }
+    .pagination ul {
+        margin-bottom: 0;
     }
 </style>
 
@@ -216,7 +183,7 @@
 
         let InventoryHandler = function () {
             $(document)
-                .on('click', '#js_inventory_table .pagination .pagination-item', this.pagination)
+                .on('click', '#js_inventory_table .pagination .page-item a', this.pagination)
                 .on('click', '.inventory-form-update .inventory_update_type', this.updateType)
                 .on('change', '.inventory-form-update .js_inventory_inp_stock', this.changeStock)
                 .on('click', '.inventory-form-update .js_inventory__btn_save', this.save)
@@ -267,7 +234,7 @@
         };
 
         InventoryHandler.prototype.pagination = function (e) {
-            page = $(this).attr('data-page-number');
+            page = $(this).attr('href');
             InventoryHandler.prototype.load();
             return false;
         };
