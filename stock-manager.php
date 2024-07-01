@@ -5,65 +5,23 @@ Plugin class    : stock_manager
 Plugin uri      : http://sikido.vn
 Description     : Ứng dụng quản lý kho hàng nhiều chi nhánh
 Author          : Nguyễn Hữu Trọng
-Version         : 1.3.3
+Version         : 2.0.0
  */
 const STOCK_NAME = 'stock-manager';
 
-const STOCK_VERSION = '1.3.3';
+const STOCK_VERSION = '2.0.0';
 
 define('STOCK_PATH', Path::plugin(STOCK_NAME));
-
-if(!class_exists('Sicommerce_Cart')) {
-    return false;
-}
 
 class stock_manager {
 
     private string $name = 'stock_manager';
 
-    public function active() {
+    public function active(): void
+    {
+        $db = include 'database/database.php';
 
-        $model = model();
-
-        if(!class_exists('Branch')) {
-            return new SKD_Error('error', 'Bạn chưa có plugin chi nhánh');
-        }
-
-        if(!$model::schema()->hasTable('inventories')) {
-            $model::schema()->create('inventories', function ($table) {
-                $table->increments('id');
-                $table->string('product_id', 255)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('product_name', 255)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('product_code', 200)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('branch_id', 255)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('branch_name', 100)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->integer('parent_id')->default(0);
-                $table->integer('stock')->default(0);
-                $table->integer('reserved')->default(0);
-                $table->string('status', 100)->collate('utf8mb4_unicode_ci')->default('instock');
-                $table->integer('default')->default(0);
-                $table->integer('order')->default(0);
-                $table->dateTime('created');
-                $table->dateTime('updated')->nullable();
-            });
-        }
-
-        if(!$model::schema()->hasTable('inventories_history')) {
-            $model::schema()->create('inventories_history', function ($table) {
-                $table->increments('id');
-                $table->integer('inventory_id')->default(0);
-                $table->text('message')->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->dateTime('created');
-                $table->dateTime('updated')->nullable();
-            });
-        }
-
-        if($model::schema()->hasTable('products') && !$model::schema()->hasColumn('products', 'stock_status')) {
-            $model::schema()->table('products', function ($table) {
-                $table->string('stock_status', 100)->default('instock')->after('weight');
-            });
-        }
+        $db->up();
 
         $branch = Branch::count();
 
@@ -78,28 +36,31 @@ class stock_manager {
         }
 
         $root = Role::get('root');
-        $root->add_cap('inventory_list');
-        $root->add_cap('inventory_edit');
+        $root->add('inventory_list');
+        $root->add('inventory_edit');
 
         $admin = Role::get('administrator');
-        $admin->add_cap('inventory_list');
-        $admin->add_cap('inventory_edit');
+        $admin->add('inventory_list');
+        $admin->add('inventory_edit');
 
         AdminStockProduct::productStatusCreated();
     }
 
-    public function uninstall() {
-        $model = model();
-        $model::schema()->drop('inventories');
+    public function uninstall(): void
+    {
+        $db = include 'database/database.php';
+
+        $db->down();
     }
 }
-require_once 'stock-manager-ajax.php';
-require_once 'includes/inventory.php';
-require_once 'order-action.php';
+require_once 'ajax.php';
+require_once 'includes/helper.php';
+require_once 'includes/model.php';
+require_once 'order.php';
 if(Admin::is()) {
-    include_once 'admin/stock-roles.php';
-    include_once 'admin/stock-manager-admin.php';
-    include_once 'admin/stock-manager-metabox.php';
+    include_once 'admin/roles.php';
+    include_once 'admin/admin.php';
     require_once 'update.php';
 }
-include_once 'template/stock-manager-template.php';
+include_once 'template.php';
+include_once 'checkout.php';

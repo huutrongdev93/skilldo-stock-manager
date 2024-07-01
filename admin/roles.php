@@ -7,7 +7,8 @@ Class Stock_Manager_Role {
         ];
         return $group;
     }
-    static public function label( $label ) {
+    static public function label($label): array
+    {
         return array_merge( $label, Stock_Manager_Role::capabilities() );
     }
     static public function capabilities(): array {
