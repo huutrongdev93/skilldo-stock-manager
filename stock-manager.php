@@ -13,12 +13,20 @@ const STOCK_VERSION = '2.0.0';
 
 define('STOCK_PATH', Path::plugin(STOCK_NAME));
 
+if(!class_exists('Sicommerce_Cart')) {
+    return false;
+}
+
 class stock_manager {
 
     private string $name = 'stock_manager';
 
     public function active(): void
     {
+        if(!class_exists('Branch')) {
+            response()->error('Bạn chưa có plugin chi nhánh');
+        }
+
         $db = include 'database/database.php';
 
         $db->up();

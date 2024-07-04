@@ -132,13 +132,16 @@ class AdminStockProduct {
 
         $inventoriesCheck = Inventory::where('parent_id', $variation->parent_id)->fetch();
 
-        $inventories = [];
+        $inventoriesAdd = [];
+
+        $inventoriesUp = [];
 
         $status = 'outstock';
 
         foreach ($branches as $branch) {
 
             $inventoryAddOrUp = [
+                'product_name'  => $variation->title,
                 'product_code'  => $variation->code,
                 'product_id'    => $variation->id,
                 'parent_id'     => $variation->parent_id,
@@ -150,6 +153,9 @@ class AdminStockProduct {
 
             if(have_posts($inventoriesCheck)) {
                 foreach ($inventoriesCheck as $inventory) {
+                    if($inventory->stock > 0) {
+                        $status = 'instock';
+                    }
                     if($inventory->product_id == $variation->id && $inventory->branch_id == $branch->id) {
                         $inventoryAddOrUp['id']     = $inventory->id;
                         $inventoryAddOrUp['status'] = $inventory->status;
@@ -159,16 +165,20 @@ class AdminStockProduct {
                 }
             }
 
-            $inventories[] = $inventoryAddOrUp;
+            if(!empty($inventoryAddOrUp['id'])) {
+                $inventoriesUp[] = $inventoryAddOrUp;
+            }
+            else {
+                $inventoriesAdd[] = $inventoryAddOrUp;
+            }
         }
 
-        foreach ($inventories as $inventory) {
+        if(have_posts($inventoriesAdd)) {
+            DB::table('inventories')->insert($inventoriesAdd);
+        }
 
-            if($inventory['status'] == 'instock') {
-                $status = 'instock';
-            }
-
-            Inventory::insert($inventory);
+        if(have_posts($inventoriesUp)) {
+            model('inventories')::updateBatch($inventoriesUp, 'id');
         }
 
         model('products')::where('id', $variation->parent_id)->update(['stock_status' => $status]);
@@ -202,12 +212,12 @@ class AdminStockProduct {
             //nếu còn biến thể cập nhật trạng thái sản phẩm
             if(have_posts($variations)) {
                 if($status == 'outstock') {
-                    model('products')::where('id', $productId)->update(['stock_status', $status]);
+                    model('products')::where('id', $productId)->update(['stock_status' => $status]);
                 }
             }
             else {
                 if($variationDelete->stock_status == 'instock') {
-                    model('products')::where('id', $productId)->update(['stock_status', 'outstock']);
+                    model('products')::where('id', $productId)->update(['stock_status' => 'outstock']);
                 }
 
                 $branches = Branch::gets();
@@ -255,8 +265,8 @@ class AdminStockProduct {
                 'productId'    => $product->id,
                 'product_name' => $product->title,
                 'product_code' => $product->code,
-                'stock' => 0,
-                'status' => 'outstock'
+                'stock'        => 0,
+                'status'       => 'outstock'
             ]);
         }
     }
@@ -264,6 +274,7 @@ class AdminStockProduct {
     static function productEdit($product): void
     {
         if(have_posts($product)) {
+
             if($product->hasVariation == 0) {
 
                 $count = Inventory::where('product_id', $product->id)->where('parent_id', 0)->amount();
@@ -285,6 +296,7 @@ class AdminStockProduct {
                 }
             }
             else {
+
                 Inventory::where('parent_id', $product->id)->update([
                     'product_name' => $product->title,
                 ]);

@@ -57,7 +57,7 @@ Class Stock_Manager_Ajax {
 
             $args = apply_filters('admin_inventories_controllers_index_args', $args);
 
-            $objects = apply_filters('admin_inventories_controllers_index_objects', Inventory::gets($args), $args);
+            $objects = Inventory::gets($args);
 
             $variationsId = [];
 
@@ -85,7 +85,7 @@ Class Stock_Manager_Ajax {
 
                 $attributesItem = AttributesItem::whereIn('id', $attributes_items_relationship_id)->fetch();
 
-                foreach ($objects as &$item) {
+                foreach ($objects as $item) {
 
                     foreach ($attributes_items_relationship as $attribute_item_relationship) {
 
@@ -106,6 +106,8 @@ Class Stock_Manager_Ajax {
                     $item->optionName = trim($item->optionName, ' - ');
                 }
             }
+
+            $objects = apply_filters('admin_inventories_controllers_index_objects', $objects);
 
             $args = [
                 'items' => $objects,

@@ -84,8 +84,7 @@ Class InventoryHistory extends \SkillDo\Model\Model {
 
             $message = '<span class="text-status-'.OrderHelper::status($status, 'colorClass').'">'.$message.'</span> '.$messageDefault;
         }
-
-        if($action == 'order_change_reserved') {
+        else if($action == 'order_change_reserved') {
 
             $message = match ($status) {
                 'created' => '[Đơn hàng mới '.$code.']',
@@ -101,17 +100,17 @@ Class InventoryHistory extends \SkillDo\Model\Model {
 
             $message = '<span class="text-status-'.OrderHelper::status($status, 'colorClass').'">'.$message.'</span> '.$messageReservedDefault;
         }
-
-        if($action == 'inventory_update') {
+        else if($action == 'inventory_update') {
             $message = '<span class="'.$action.'">[Kho hàng cập nhật]</span> '.$messageDefault;
         }
-
-        if($action == 'product_update') {
+        else if($action == 'product_update') {
             $message = '<span class="'.$action.'">[Sản phẩm cập nhật]</span> '.$messageDefault;
         }
-
-        if($action == 'product_update_quick') {
+        else if($action == 'product_update_quick') {
             $message = '<span class="'.$action.'">[Cập nhật nhanh]</span> '.$messageDefault;
+        }
+        else if(!empty($action)) {
+            $message = '<span class="custom">['.$action.']</span> '.$messageDefault;
         }
 
         if(empty($message)) {

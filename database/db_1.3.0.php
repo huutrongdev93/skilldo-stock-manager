@@ -12,7 +12,7 @@ return new class () extends Migration {
                 $table->integer('inventory_id')->default(0);
                 $table->text('message')->collate('utf8mb4_unicode_ci')->nullable();
                 $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }

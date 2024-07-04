@@ -20,7 +20,7 @@ return new class () extends Migration {
                 $table->string('status', 100)->collate('utf8mb4_unicode_ci')->default('outstock');
                 $table->integer('default')->default(0);
                 $table->integer('order')->default(0);
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }
@@ -33,7 +33,7 @@ return new class () extends Migration {
                 $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
                 $table->string('type', 50)->default('stock');
                 $table->integer('user_created')->default(0);
-                $table->dateTime('created');
+                $table->dateTime('created')->default('CURRENT_TIMESTAMP');
                 $table->dateTime('updated')->nullable();
             });
         }
