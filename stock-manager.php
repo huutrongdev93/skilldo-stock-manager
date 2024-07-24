@@ -1,12 +1,4 @@
 <?php
-/**
-Plugin name     : Stock manager
-Plugin class    : stock_manager
-Plugin uri      : http://sikido.vn
-Description     : Ứng dụng quản lý kho hàng nhiều chi nhánh
-Author          : Nguyễn Hữu Trọng
-Version         : 2.0.0
- */
 const STOCK_NAME = 'stock-manager';
 
 const STOCK_VERSION = '2.0.0';

@@ -245,7 +245,7 @@ class AdminStockProduct {
 
     static function productDelete($module, $productID): void
     {
-        if($module == 'products') {
+        if($module == 'products' || $module == 'Product') {
 
             if(is_numeric($productID)) {
                 $productID = [$productID];
