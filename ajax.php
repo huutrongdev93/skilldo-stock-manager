@@ -331,9 +331,13 @@ Class Stock_Manager_Ajax {
 
             $id = (int)$request->input('id');
 
+            $stock = InventoryHistory::where('inventory_id', $id)->where('type', 'stock')->limit(100)->orderByDesc('created')->fetch();
+
+            $reserved = InventoryHistory::where('inventory_id', $id)->where('type', 'reserved')->limit(100)->orderByDesc('created')->fetch();
+
             response()->success(trans('ajax.load.success'), [
-                'stock' => InventoryHistory::where('inventory_id', $id)->where('type', 'stock')->limit(100)->orderByDesc('created')->fetch(),
-                'reserved' => InventoryHistory::where('inventory_id', $id)->where('type', 'reserved')->limit(100)->orderByDesc('created')->fetch()
+                'stock' => SkillDo\Utils::toArray($stock),
+                'reserved' => SkillDo\Utils::toArray($reserved)
             ]);
         }
 
@@ -424,7 +428,7 @@ Class Stock_Manager_Ajax {
                 }
             }
 
-            response()->success(trans('ajax.load.success'), $branches);
+            response()->success(trans('ajax.load.success'), SkillDo\Utils::toArray($branches));
         }
 
         response()->error(trans('ajax.load.error'));

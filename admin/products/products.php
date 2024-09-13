@@ -43,7 +43,7 @@ class AdminStockProduct {
 
             if(have_posts($inventory)) continue;
 
-            $variations = Product::gets(Qr::set('parent_id', $product->id)->where('type', 'variations'));
+            $variations = Variation::where('parent_id', $product->id)->fetch();
 
             if(have_posts($variations)) {
 

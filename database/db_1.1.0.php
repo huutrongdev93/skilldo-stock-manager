@@ -16,7 +16,7 @@ return new class () extends Migration {
 
             foreach ($inventories as $item) {
                 if($item->parent_id != 0) continue;
-                $product = Product::gets(Qr::set($item->product_id)->where('type', 'variations')->where('parent_id', '<>', 0));
+                $product = Variation::whereKey($item->product_id)->where('parent_id', '<>', 0)->fetch();
                 if(have_posts($product)) {
                     Inventory::insert(['id' => $item->id, 'parent_id' => $product->parent_id]);
                 }

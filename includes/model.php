@@ -1,54 +1,17 @@
 <?php
 Class Inventory extends \SkillDo\Model\Model {
 
-    static string $table = 'inventories';
+    protected string $table = 'inventories';
 
     static function deleteById($inventoriesID = 0): array|bool
     {
-        $inventoriesID = (int)Str::clear($inventoriesID);
-
-        if($inventoriesID == 0) return false;
-
-        $model = model(static::$table);
-
-        $inventories  = static::get($inventoriesID);
-
-        if(have_posts($inventories)) {
-
-            do_action('delete_'.static::$table, $inventoriesID);
-
-            if($model::where('id', $inventoriesID)->remove()) {
-
-                do_action('delete_'.static::$table.'_success', $inventoriesID);
-
-                return [$inventoriesID];
-            }
-        }
-
-        return false;
-    }
-
-    static function deleteList( $inventoriesID = []) {
-
-        if(have_posts($inventoriesID)) {
-
-            $model = model(static::$table);
-
-            if($model::whereIn('id', $inventoriesID)->remove()) {
-
-                do_action('delete_inventories_list_trash_success', $inventoriesID );
-
-                return $inventoriesID;
-            }
-        }
-
-        return false;
+        return static::whereKey($inventoriesID)->remove();
     }
 }
 
 Class InventoryHistory extends \SkillDo\Model\Model {
 
-    static string $table = 'inventories_history';
+    protected string $table = 'inventories_history';
 
     static function message($action, $args) {
         //số lượng trước khi thay đổi

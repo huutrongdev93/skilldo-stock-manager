@@ -213,7 +213,6 @@ Class CheckoutInventory {
                 $productsId = array_unique($productsId);
 
                 if(have_posts($productsId)) {
-
                     foreach ($productsId as $productId) {
 
                         $stock = Inventory::where('parent_id', $productId)
@@ -224,10 +223,10 @@ Class CheckoutInventory {
                             'stock_status' => ($stock == 0) ? 'outstock' : 'instock'
                         ]);
                     }
+                }
 
-                    if(have_posts($inventoriesHistory)) {
-                        DB::table('inventories_history')->insert($inventoriesHistory);
-                    }
+                if(have_posts($inventoriesHistory)) {
+                    DB::table('inventories_history')->insert($inventoriesHistory);
                 }
             }
         }
