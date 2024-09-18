@@ -78,4 +78,4 @@ class AdminInventoriesSystem
 }
 
 add_filter('skd_system_tab', 'AdminInventoriesSystem::register', 50);
-add_filter('admin_system_inventories_save', 'AdminInventoriesSystem::save', 10, 2);
+add_action('admin_system_inventories_save', 'AdminInventoriesSystem::save');
