@@ -58,18 +58,9 @@ class AdminStockProduct {
                         continue;
                     }
 
-                    $variation = Variation::get(Qr::set('id', $variation->id));
-
-                    $attr_name = '';
-
-                    foreach ($variation->items as $key => $attr_id) {
-                        $attribute = AttributesItem::get($attr_id);
-                        $attr_name .= ' - '.$attribute->title;
-                    }
-
                     foreach ($branches as $branch) {
                         $inventory = [
-                            'product_name'  => $product->title.$attr_name,
+                            'product_name'  => $product->title,
                             'product_code'  => $variation->code,
                             'product_id'    => $variation->id,
                             'parent_id'     => $product->id,
@@ -262,7 +253,7 @@ class AdminStockProduct {
     {
         if($product->hasVariation == 0) {
             Inventory::insert([
-                'productId'    => $product->id,
+                'product_id'    => $product->id,
                 'product_name' => $product->title,
                 'product_code' => $product->code,
                 'stock'        => 0,
@@ -287,7 +278,7 @@ class AdminStockProduct {
                 }
                 else {
                     Inventory::insert([
-                        'productId'    => $product->id,
+                        'product_id'    => $product->id,
                         'product_name' => $product->title,
                         'product_code' => $product->code,
                         'stock' => 0,

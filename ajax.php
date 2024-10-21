@@ -6,147 +6,142 @@ Class Stock_Manager_Ajax {
     #[NoReturn]
     static function inventoryLoad(SkillDo\Http\Request $request): void
     {
-        if($request->isMethod('post')) {
+        $page    = $request->input('page');
 
-            $page    = $request->input('page');
+        $page   = (is_null($page) || empty($page)) ? 1 : (int)$page;
 
-            $page   = (is_null($page) || empty($page)) ? 1 : (int)$page;
+        $limit  = $request->input('limit');
 
-            $limit  = $request->input('limit');
+        $limit   = (is_null($limit) || empty($limit)) ? 10 : (int)$limit;
 
-            $limit   = (is_null($limit) || empty($limit)) ? 10 : (int)$limit;
+        $recordsTotal   = $request->input('recordsTotal');
 
-            $recordsTotal   = $request->input('recordsTotal');
+        $args = Qr::set();
 
-            $args = Qr::set();
+        $keyword = trim($request->input('keyword'));
 
-            $keyword = trim($request->input('keyword'));
+        if(!empty($keyword)) {
+            $args->where(function ($query) use ($keyword) {
+                $query->where('product_name', 'like', '%'.$keyword.'%');
+                $query->orWhere('product_code', 'like', '%'.$keyword.'%');
+            });
+        }
 
-            if(!empty($keyword)) {
-                $args->where(function ($query) use ($keyword) {
-                    $query->where('product_name', 'like', '%'.$keyword.'%');
-                    $query->orWhere('product_code', 'like', '%'.$keyword.'%');
-                });
+        $branch_id = (int)$request->input('branch');
+
+        if($branch_id == 0) $branch_id = 1;
+
+        $args->where('branch_id', $branch_id);
+
+        $stock_status = $request->input('status');
+
+        if(!empty($stock_status)) {
+            $args->where('status', $stock_status);
+        }
+        /**
+         * @since 7.0.0
+         */
+        $args = apply_filters('admin_inventories_controllers_index_args_before_count', $args);
+
+        if(!is_numeric($recordsTotal)) {
+            $recordsTotal = apply_filters('admin_inventories_controllers_index_count', Inventory::count($args), $args);
+        }
+
+        # [List data]
+        $args->limit($limit)
+            ->offset(($page - 1)*$limit)
+            ->orderBy('order')
+            ->orderBy('created', 'desc');
+
+        $args = apply_filters('admin_inventories_controllers_index_args', $args);
+
+        $objects = Inventory::gets($args);
+
+        $variationsId = [];
+
+        foreach ($objects as $object) {
+
+            $object->optionName = '';
+
+            if($object->parent_id != 0) {
+                $variationsId[] = $object->product_id;
+            }
+        }
+
+        if (have_posts($variationsId)) {
+
+            //Attributes Item
+            $attributes_items_relationship = DB::table('products_attribute_item')->whereIn('variation_id', $variationsId)->get();
+
+            $attributes_items_relationship_id = [];
+
+            foreach ($attributes_items_relationship as $item) {
+                $attributes_items_relationship_id[] = $item->item_id;
             }
 
-            $branch_id = (int)$request->input('branch');
+            $attributes_items_relationship_id = array_unique($attributes_items_relationship_id);
 
-            if($branch_id == 0) $branch_id = 1;
+            $attributesItem = AttributesItem::whereIn('id', $attributes_items_relationship_id)->fetch();
 
-            $args->where('branch_id', $branch_id);
+            foreach ($objects as $item) {
 
-            $stock_status = $request->input('status');
+                foreach ($attributes_items_relationship as $attribute_item_relationship) {
 
-            if(!empty($stock_status)) {
-                $args->where('status', $stock_status);
-            }
-            /**
-             * @since 7.0.0
-             */
-            $args = apply_filters('admin_inventories_controllers_index_args_before_count', $args);
+                    if ($item->product_id == $attribute_item_relationship->variation_id) {
 
-            if(!is_numeric($recordsTotal)) {
-                $recordsTotal = apply_filters('admin_inventories_controllers_index_count', Inventory::count($args), $args);
-            }
+                        foreach ($attributesItem as $attributeItem) {
 
-            # [List data]
-            $args->limit($limit)
-                ->offset(($page - 1)*$limit)
-                ->orderBy('order')
-                ->orderBy('created', 'desc');
+                            if ($attributeItem->id == $attribute_item_relationship->item_id) {
 
-            $args = apply_filters('admin_inventories_controllers_index_args', $args);
+                                $item->optionName .= '<span style="font-weight: bold;">' . $attributeItem->title . '</span>' . ' - ';
 
-            $objects = Inventory::gets($args);
-
-            $variationsId = [];
-
-            foreach ($objects as $object) {
-
-                $object->optionName = '';
-
-                if($object->parent_id != 0) {
-                    $variationsId[] = $object->product_id;
-                }
-            }
-
-            if (have_posts($variationsId)) {
-
-                //Attributes Item
-                $attributes_items_relationship = model('products_attribute_item')->whereIn('variation_id', $variationsId)->fetch();
-
-                $attributes_items_relationship_id = [];
-
-                foreach ($attributes_items_relationship as $item) {
-                    $attributes_items_relationship_id[] = $item->item_id;
-                }
-
-                $attributes_items_relationship_id = array_unique($attributes_items_relationship_id);
-
-                $attributesItem = AttributesItem::whereIn('id', $attributes_items_relationship_id)->fetch();
-
-                foreach ($objects as $item) {
-
-                    foreach ($attributes_items_relationship as $attribute_item_relationship) {
-
-                        if ($item->product_id == $attribute_item_relationship->variation_id) {
-
-                            foreach ($attributesItem as $attributeItem) {
-
-                                if ($attributeItem->id == $attribute_item_relationship->item_id) {
-
-                                    $item->optionName .= '<span style="font-weight: bold;">' . $attributeItem->title . '</span>' . ' - ';
-
-                                    break;
-                                }
+                                break;
                             }
                         }
                     }
-
-                    $item->optionName = trim($item->optionName, ' - ');
                 }
+
+                $item->optionName = trim($item->optionName, ' - ');
             }
-
-            $objects = apply_filters('admin_inventories_controllers_index_objects', $objects);
-
-            $args = [
-                'items' => $objects,
-                'table' => 'inventories',
-                'model' => model('inventories'),
-                'module'=> 'inventories',
-            ];
-
-            $table = new AdminInventoriesTable($args);
-            $table->get_columns();
-            ob_start();
-            $table->display_rows_or_message();
-            $html = ob_get_contents();
-            ob_end_clean();
-
-            /**
-             * Bulk Actions
-             * @hook table_*_bulk_action_buttons Hook mới phiên bản 7.0.0
-             */
-            $buttonsBulkAction = apply_filters('table_inventories_bulk_action_buttons', []);
-
-            $bulkAction = Admin::partial('include/table/header/bulk-action-buttons', [
-                'actionList' => $buttonsBulkAction
-            ]);
-
-            $result['data'] = [
-                'html'          => base64_encode($html),
-                'bulkAction'    => base64_encode($bulkAction),
-            ];
-            $result['pagination']   = [
-                'limit' => $limit,
-                'total' => $recordsTotal,
-                'page'  => (int)$page,
-            ];
-
-            response()->success(trans('ajax.load.success'), $result);
         }
 
-        response()->error(trans('ajax.load.error'));
+        $objects = apply_filters('admin_inventories_controllers_index_objects', $objects);
+
+        $args = [
+            'items' => $objects,
+            'table' => 'inventories',
+            'model' => model('inventories'),
+            'module'=> 'inventories',
+        ];
+
+        $table = new AdminInventoriesTable($args);
+        $table->get_columns();
+        ob_start();
+        $table->display_rows_or_message();
+        $html = ob_get_contents();
+        ob_end_clean();
+
+        /**
+         * Bulk Actions
+         * @hook table_*_bulk_action_buttons Hook mới phiên bản 7.0.0
+         */
+        $buttonsBulkAction = apply_filters('table_inventories_bulk_action_buttons', []);
+
+        $bulkAction = Admin::partial('include/table/header/bulk-action-buttons', [
+            'actionList' => $buttonsBulkAction
+        ]);
+
+        $result['data'] = [
+            'html'          => base64_encode($html),
+            'bulkAction'    => base64_encode($bulkAction),
+        ];
+        $result['pagination']   = [
+            'limit' => $limit,
+            'total' => $recordsTotal,
+            'page'  => (int)$page,
+        ];
+
+        response()->success(trans('ajax.load.success'), $result);
     }
     #[NoReturn]
     static function purchaseOrder(SkillDo\Http\Request $request, $model): void
