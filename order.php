@@ -1,4 +1,6 @@
 <?php
+
+use Ecommerce\Enum\Order\Status;
 use Illuminate\Database\Capsule\Manager as DB;
 
 Class OrderInventory {
@@ -13,30 +15,35 @@ Class OrderInventory {
     {
         $purchaseOrder = InventoryHelper::config('purchaseOrder');
 
-        if($status == ORDER_SHIPPING) {
-
-            if($purchaseOrder === 'shipping') {
+        if($status == Status::SHIPPING->value)
+        {
+            if($purchaseOrder === 'shipping')
+            {
                 OrderInventory::purchaseOrder($order, $status);
             }
 
-            if($purchaseOrder === 'pay-shipping' && $order->status_pay == 'paid') {
+            if($purchaseOrder === 'pay-shipping' && $order->status_pay == 'paid')
+            {
                 OrderInventory::purchaseOrder($order, $status);
             }
         }
-        else if($status == ORDER_COMPLETED) {
-
+        else if($status == Status::COMPLETED->value)
+        {
             if($purchaseOrder === 'success') {
                 OrderInventory::purchaseOrder($order, $status);
             }
 
-            if($purchaseOrder === 'pay-success' && $order->status_pay == 'paid') {
+            if($purchaseOrder === 'pay-success' && $order->status_pay == 'paid')
+            {
                 OrderInventory::purchaseOrder($order, $status);
             }
         }
-        else if($status == ORDER_CANCELLED) {
+        else if($status == Status::CANCELLED->value)
+        {
             OrderInventory::purchaseReturn($order, $status);
         }
-        else {
+        else
+        {
             $purchaseOrderStatus = Order::getMeta($order->id, 'inventory_status', true);
 
             if(!empty($purchaseOrderStatus)) {
@@ -52,11 +59,13 @@ Class OrderInventory {
 
         if($status == 'paid') {
 
-            if($purchaseOrder === 'pay-shipping' && $order->status == ORDER_SHIPPING) {
+            if($purchaseOrder === 'pay-shipping' && $order->status == Status::SHIPPING->value)
+            {
                 OrderInventory::purchaseOrder($order, $order->status);
             }
 
-            if($purchaseOrder === 'pay-success' && $order->status == ORDER_COMPLETED) {
+            if($purchaseOrder === 'pay-success' && $order->status == Status::COMPLETED->value)
+            {
                 OrderInventory::purchaseOrder($order, $order->status);
             }
         }
@@ -64,7 +73,8 @@ Class OrderInventory {
 
             $purchaseOrderStatus = Order::getMeta($order->id, 'inventory_status', true);
 
-            if(!empty($purchaseOrderStatus)) {
+            if(!empty($purchaseOrderStatus))
+            {
                 OrderInventory::purchaseReturn($order, $order->status);
             }
         }

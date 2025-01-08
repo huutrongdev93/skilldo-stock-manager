@@ -1,7 +1,7 @@
 <?php
 const STOCK_NAME = 'stock-manager';
 
-const STOCK_VERSION = '2.0.0';
+const STOCK_VERSION = '2.0.3';
 
 define('STOCK_PATH', Path::plugin(STOCK_NAME));
 

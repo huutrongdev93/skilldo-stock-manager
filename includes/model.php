@@ -1,4 +1,7 @@
 <?php
+
+use Ecommerce\Enum\Order\Status;
+
 Class Inventory extends \SkillDo\Model\Model {
 
     protected string $table = 'inventories';
@@ -35,33 +38,33 @@ Class InventoryHistory extends \SkillDo\Model\Model {
 
             $message = match ($status) {
                 'created' => '[Đơn hàng mới '.$code.']',
-                ORDER_COMPLETED => '[Hoàn thành đơn '.$code.']',
-                ORDER_PROCESSING => '[Vận chuyển đơn '.$code.']',
-                ORDER_CANCELLED => '[Hủy đơn '.$code.']',
-                default => '[ '.OrderHelper::status(($status == 'created') ? ORDER_WAIT : $status, 'label').' đơn '.$code.']'
+                Status::COMPLETED->value => '[Hoàn thành đơn '.$code.']',
+                Status::PROCESSING->value => '[Vận chuyển đơn '.$code.']',
+                Status::CANCELLED->value => '[Hủy đơn '.$code.']',
+                default => '[ '.Status::tryFrom(($status == 'created') ? Status::WAIT->value : $status)->label().' đơn '.$code.']'
             };
 
             if($status == 'created') {
-                $status = ORDER_WAIT;
+                $status = Status::WAIT->value;
             }
 
-            $message = '<span class="text-status-'.OrderHelper::status($status, 'colorClass').'">'.$message.'</span> '.$messageDefault;
+            $message = '<span class="text-status-'.Status::tryFrom($status)->badge().'">'.$message.'</span> '.$messageDefault;
         }
         else if($action == 'order_change_reserved') {
 
             $message = match ($status) {
                 'created' => '[Đơn hàng mới '.$code.']',
-                ORDER_COMPLETED => '[Hoàn thành đơn '.$code.']',
-                ORDER_PROCESSING => '[Vận chuyển đơn '.$code.']',
-                ORDER_CANCELLED => '[Hủy đơn '.$code.']',
-                default => '[ '.OrderHelper::status(($status == 'created') ? ORDER_WAIT : $status, 'label').' đơn '.$code.']'
+                Status::COMPLETED->value => '[Hoàn thành đơn '.$code.']',
+                Status::PROCESSING->value => '[Vận chuyển đơn '.$code.']',
+                Status::CANCELLED->value => '[Hủy đơn '.$code.']',
+                default => '[ '.Status::tryFrom(($status == 'created') ? Status::WAIT->value : $status)->label().' đơn '.$code.']'
             };
 
             if($status == 'created') {
-                $status = ORDER_WAIT;
+                $status = Status::WAIT->value;
             }
 
-            $message = '<span class="text-status-'.OrderHelper::status($status, 'colorClass').'">'.$message.'</span> '.$messageReservedDefault;
+            $message = '<span class="text-status-'.Status::tryFrom($status)->badge().'">'.$message.'</span> '.$messageReservedDefault;
         }
         else if($action == 'inventory_update') {
             $message = '<span class="'.$action.'">[Kho hàng cập nhật]</span> '.$messageDefault;

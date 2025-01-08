@@ -63,7 +63,12 @@ Class CheckoutInventory {
                     $stock = Inventory::where('product_id', $item['variable'])->sum('stock');
                 }
                 else {
-                    $stock = Inventory::where('product_id', $item['id'])->sum('stock');
+                    if(!empty($item['option']['product_id'])) {
+                        $stock = Inventory::where('product_id', $item['option']['product_id'])->sum('stock');
+                    }
+                    else {
+                        $stock = Inventory::where('product_id', $item['id'])->sum('stock');
+                    }
                 }
 
                 if($stock < $item['qty']) {
