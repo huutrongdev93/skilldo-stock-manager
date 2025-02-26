@@ -1,5 +1,15 @@
 <?php
-class InventoryHelper {
+namespace Stock;
+
+class Helper {
+
+    static function code($prefix, $id): string
+    {
+        $code = str_pad($id, 6, '0', STR_PAD_LEFT);
+
+        return $prefix . $code;
+    }
+
     static function status($key = '', $type = '') {
         $status = [
             'instock' => [
@@ -30,7 +40,7 @@ class InventoryHelper {
             'lackStock' => 'handmade'
         ];
 
-        $config = Option::get('inventoriesConfig', $default);
+        $config = \Option::get('inventoriesConfig', $default);
 
         if(!is_array($config)) {
             $config = $default;
@@ -42,6 +52,18 @@ class InventoryHelper {
             }
         }
 
-        return (!empty($key)) ? Arr::get($config, $key) : $config;
+        return (!empty($key)) ? \Arr::get($config, $key) : $config;
+    }
+
+    static function icon(string $key): string
+    {
+        return match ($key) {
+            'purchaseOrder' => '<i class="fa-duotone fa-solid fa-cart-flatbed-boxes"></i>',
+            'purchaseReturn' => '<i class="fa-duotone fa-solid fa-inbox-out"></i>',
+            'damageItems' => '<i class="fa-duotone fa-solid fa-hand-holding-box"></i>',
+            'inventory' => '<i class="fa-duotone fa-solid fa-cubes"></i>',
+            'stockTake' => '<i class="fa-duotone fa-clipboard-check icon-item"></i>',
+            default => $key,
+        };
     }
 }

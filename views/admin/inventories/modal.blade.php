@@ -106,7 +106,7 @@
 
 		let productId = 0;
 
-		let inventoryId = 0;
+		let branchId = 0;
 
 		let modelPurchaseOrder = $('#js_inventories_model_purchase_order');
 
@@ -131,9 +131,9 @@
 
 		InventoryHandler.prototype.modelPurchaseOrder = function (e) {
 
-			productId = $(this).attr('data-product-id');
+			productId = $(this).attr('data-id');
 
-			inventoryId = $(this).attr('data-id');
+            branchId = $(this).attr('data-branch-id');
 
 			modelPurchaseOrderHandel.show();
 
@@ -142,9 +142,9 @@
 
 		InventoryHandler.prototype.modelPurchaseReturn = function (e) {
 
-			productId = $(this).attr('data-product-id');
+			productId = $(this).attr('data-id');
 
-			inventoryId = $(this).attr('data-id');
+            branchId = $(this).attr('data-branch-id');
 
 			modelPurchaseReturnHandel.show();
 
@@ -158,9 +158,9 @@
 			let loading = SkilldoUtil.buttonLoading($(this))
 
 			let data = {
-				action: 'Stock_Manager_Ajax::purchaseOrder',
+				action: 'StockInventoryAdminAjax::purchaseOrder',
 				stock: modelPurchaseOrder.find('input[name="stock"]').val(),
-				id: inventoryId,
+				productId: productId,
 				branchId: branchId
 			}
 
@@ -205,9 +205,9 @@
 			let loading = SkilldoUtil.buttonLoading($(this))
 
 			let data = {
-				action: 'Stock_Manager_Ajax::purchaseReturn',
+				action: 'StockInventoryAdminAjax::purchaseReturn',
 				stock: modelPurchaseReturn.find('input[name="stock"]').val(),
-				id: inventoryId,
+                productId: productId,
 				branchId: branchId
 			}
 
@@ -252,8 +252,9 @@
 			modelHistoriesHandel.show();
 
 			let data = {
-				id : $(this).data('id'),
-				action : 'Stock_Manager_Ajax::inventoryHistory'
+                productId : $(this).data('id'),
+                branchId : $(this).data('branch-id'),
+				action : 'StockInventoryAdminAjax::inventoryHistory'
 			}
 
 			request.post(ajax, data).then(function (response) {

@@ -7,6 +7,21 @@ class AdminInventoriesButton {
      */
     static function tableHeaderButton($buttons): array
     {
+        $buttons[] = Admin::button('blue', [
+            'icon' => \Stock\Helper::icon('purchaseOrder'),
+            'text' => 'Nhập hàng',
+            'href' => Url::route('admin.stock.purchaseOrders')
+        ]);
+        $buttons[] = Admin::button('blue', [
+            'icon' => \Stock\Helper::icon('purchaseReturn'),
+            'text' => 'Trả hàng',
+            'href' => Url::route('admin.stock.purchaseReturns')
+        ]);
+        $buttons[] = Admin::button('blue', [
+            'icon' => \Stock\Helper::icon('damageItems'),
+            'text' => 'Xuất hủy',
+            'href' => Url::route('admin.stock.damageItems')
+        ]);
         $buttons[] = Admin::button('reload');
         return $buttons;
     }
