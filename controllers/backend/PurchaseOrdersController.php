@@ -1,0 +1,131 @@
+<?php
+use SkillDo\Http\Request;
+
+class PurchaseOrdersController extends MY_Controller {
+
+    function __construct()
+    {
+        add_action('beforeLoad', function () {
+            Cms::set('loadWidget', false);
+        });
+
+        parent::__construct();
+    }
+
+    public function index(Request $request): void
+    {
+        $table = new \Stock\Table\PurchaseOrder();
+
+        $tableProduct = new \Stock\Table\PurchaseOrder\ProductDetail();
+
+        Cms::setData('table', $table);
+
+        Cms::setData('tableProduct', $tableProduct);
+
+        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/index', 'plugin');
+
+        $this->template->render();
+    }
+
+    public function add(Request $request): void
+    {
+        $table = new \Stock\Table\PurchaseOrder\ProductAdd();
+
+        Cms::setData('table', $table);
+
+        Cms::setData('form', $this->form());
+
+        Cms::setData('action', 'add');
+
+        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/add', 'plugin');
+
+        $this->template->render();
+    }
+
+    public function edit(Request $request, $id): void
+    {
+        Cms::setData('action', 'edit');
+
+        $type = $request->input('type');
+
+        $purchaseOrder = \Stock\Model\PurchaseOrder::find($id);
+
+        if($type === 'clone')
+        {
+            $purchaseOrder->code = 'Copy_'.$purchaseOrder->code;
+
+            Cms::setData('action', 'clone');
+        }
+
+        Cms::setData('purchaseOrder', $purchaseOrder);
+
+        $table = new \Stock\Table\PurchaseOrder\ProductAdd();
+
+        Cms::setData('table', $table);
+
+        Cms::setData('form', $this->form($purchaseOrder));
+
+        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/add', 'plugin');
+
+        $this->template->render();
+    }
+
+    public function form($object = []): \SkillDo\Form\Form
+    {
+        $branches = \Branch::all()->pluck('name', 'id')->toArray();
+
+        $form = form()
+                    ->startDefault('<div class="stock-form-group form-group">')
+                    ->endDefault('</div>');
+
+        $form
+
+            ->addGroup(function ($f) use ($branches, $object) {
+                $f->select2('branch_id', $branches, ['label' => 'Chi nhánh', 'start' => 6], $object->branch_id ?? 0);
+                $f->datetime('time', [
+                    'label' => 'Ngày nhập hàng',
+                    'start' => 6
+                ], date('d/m/Y H:i', $object->purchase_date ?? time()));
+            }, [
+                'start' => '<div class="form-group"><div class="row">',
+                'end' => '</div></div>',
+            ])
+            ->addGroup(function ($f) use ($object) {
+                $f->popoverAdvance('purchase', [
+                    'label' => 'Người nhập hàng',
+                    'search' => 'user',
+                    'multiple' => false,
+                    'noImage' => true,
+                    'start' => 6
+                ], $object->purchase_id ?? Auth::id())
+                ->popoverAdvance('supplier', [
+                    'label' => 'Nhà cung cấp',
+                    'search' => 'suppliers',
+                    'multiple' => false,
+                    'noImage' => true,
+                    'start' => 6
+                ], $object->supplier_id ?? Auth::id());
+            }, [
+                'start' => '<div class="form-group"><div class="row">',
+                'end' => '</div></div>',
+            ])
+            ->text('code', [
+                'label' => 'Mã phiếu nhập',
+                'placeholder' => 'Mã phiếu nhập tự động'
+            ], $object->code ?? '')
+            ->none('<p class="d-flex justify-content-between mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseOrder::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between mb-4"><b>Tổng tiền hàng</b>  <b class="js_purchase_order_cost_total">0</b></p>')
+            ->price('discount', [
+                'label' => 'Giảm giá',
+            ], number_format($object->discount ?? 0))
+            ->price('total_payment', [
+                'label' => 'Đã trả NCC',
+            ], number_format($object->total_payment ?? 0))
+            ->none('<p class="d-flex justify-content-between mb-4">Cần trả NCC  <b class="js_purchase_order_total_payment">0</b></p>')
+            ->textarea('note', [
+                'label' => 'Ghi chú'
+            ], $object->note ?? '');
+
+        return $form;
+    }
+}

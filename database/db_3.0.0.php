@@ -1,49 +1,25 @@
 <?php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Capsule\Manager as DB;
+use SkillDo\DB;
 
 return new class () extends Migration {
 
     public function up(): void
     {
-        if(!schema()->hasTable('inventories')) {
-            schema()->create('inventories', function (Blueprint $table) {
-                $table->increments('id');
-                $table->integer('product_id')->default(0);
-                $table->string('product_name', 255)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('product_code', 100)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->integer('branch_id')->default(0);
-                $table->string('branch_name', 100)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->integer('parent_id')->default(0);
-                $table->integer('stock')->default(0);
-                $table->integer('reserved')->default(0);
-                $table->string('status', 100)->collate('utf8mb4_unicode_ci')->default('outstock');
-                $table->integer('default')->default(0);
-                $table->integer('order')->default(0);
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
+        \Stock\Model\Inventory::where('branch_id', '')->delete();
+
+        if(schema()->hasTable('inventories')) {
+            schema()->table('inventories', function (Blueprint $table) {
+                $table->integer('product_id')->default(0)->change();
+                $table->integer('branch_id')->default(0)->change();
             });
         }
 
-        if(!schema()->hasTable('inventories_history')) {
-            schema()->create('inventories_history', function (Blueprint $table) {
-                $table->increments('id');
-                $table->integer('inventory_id')->default(0);
+        if(!schema()->hasColumn('inventories_history', 'product_id')) {
+            schema()->table('inventories_history', function (Blueprint $table) {
                 $table->integer('product_id')->default(0);
                 $table->integer('branch_id')->default(0);
-                $table->text('message')->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('type', 50)->default('stock');
-                $table->integer('user_created')->default(0);
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-            });
-        }
-
-        if(!schema()->hasColumn('products', 'stock_status')) {
-            schema()->table('products', function (Blueprint $table) {
-                $table->string('stock_status', 100)->default('outstock')->after('weight');
             });
         }
 
@@ -59,10 +35,10 @@ return new class () extends Migration {
                 $table->integer('supplier_id')->default(0); //id nhà cung cấp
                 $table->string('supplier_name', 100)->nullable();
                 $table->string('status', 20)->default('draft');
-                $table->integer('discount')->default(0); //Giảm giá nhập hàng
-                $table->integer('sub_total')->default(0); //Tổng giá trị hàng hóa
-                $table->integer('total_payment')->default(0); //Đã trả cho nhà cung cấp
                 $table->integer('total_quantity')->default(0); //Tổng số lượng sản phẩm
+                $table->integer('sub_total')->default(0); //Tổng giá trị hàng hóa
+                $table->integer('discount')->default(0); //Giảm giá nhập hàng
+                $table->integer('total_payment')->default(0); //Đã trả cho nhà cung cấp
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
@@ -99,7 +75,7 @@ return new class () extends Migration {
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
-                $table->dateTime('created')->default(\SkillDo\DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });
         }
@@ -131,7 +107,6 @@ return new class () extends Migration {
                 $table->integer('return_discount')->default(0); // Giảm giá trả hàng
                 $table->integer('sub_total')->default(0); // Tổng tiền trả hàng
                 $table->integer('total_payment')->default(0); //Tổng tiền khách trả
-                $table->integer('total_quantity')->default(0); //Tổng số lượng hàng trả
                 $table->integer('supplier_id')->default(0); //id nhà cung cấp
                 $table->string('supplier_name', 100)->nullable();
                 $table->string('status', 20)->default('draft');
@@ -159,24 +134,12 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('suppliers')) {
-            schema()->create('suppliers', function (Blueprint $table) {
-                $table->increments('id');
+        if(schema()->hasColumns('suppliers', ['seo_title', 'seo_description', 'seo_keywords'])) {
+            schema()->table('suppliers', function (Blueprint $table) {
+                $table->dropColumn(['slug', 'seo_title', 'seo_description', 'seo_keywords']);
                 $table->string('code', 200)->collation('utf8mb4_unicode_ci'); //mã nhà cung cấp
-                $table->string('name', 200)->collation('utf8mb4_unicode_ci'); //Tên nhà cung cấp
-                $table->string('firstname', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('lastname', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('email', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('phone', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('image', 100)->nullable();
                 $table->integer('total_invoiced')->default(0); //Tổng mua
-                $table->integer('total_invoiced_without_return')->default(0); //Tổng cần trả cho nhà cung cấp
-                $table->integer('order')->default(0);
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-                $table->integer('user_created')->default(0);
-                $table->integer('user_updated')->default(0);
+                $table->integer('total_invoiced_without_return')->default(0); //Tổng đã trả cho nhà cung cấp
                 $table->index('code');
             });
         }
@@ -230,7 +193,5 @@ return new class () extends Migration {
 
     public function down(): void
     {
-        schema()->drop('inventories');
-        schema()->drop('inventories_history');
     }
 };
