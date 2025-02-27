@@ -75,6 +75,9 @@ Class History extends \SkillDo\Model\Model {
         else if($action == 'damage_items_update') {
             $message = '<span class="'.$action.'">[Phiếu xuất hủy '.($args['damageCode'] ?? '').']</span> '.$messageDefault;
         }
+        else if($action == 'stock_take_update') {
+            $message = '<span class="'.$action.'">[Phiếu kiểm kho '.($args['stockTakeCode'] ?? '').']</span> '.$messageDefault;
+        }
         else if(!empty($action)) {
             $message = '<span class="custom">['.$action.']</span> '.$messageDefault;
         }
