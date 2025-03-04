@@ -797,3 +797,58 @@ class WarehouseNewHandle
         return false;
     }
 }
+
+class WarehouseLocation {
+
+    constructor()
+    {
+        let self = this;
+
+        $(document)
+            .on('change', 'select[data-input-address="city"]', function(event) {
+                self.changeInputCity($(this))
+            })
+            .on('change', 'select[data-input-address="district"]', function(event) {
+                self.changeInputDistrict($(this))
+            })
+
+    }
+
+    changeInputCity(input) {
+
+        let form = input.closest('form');
+
+        let district = form.find('select[data-input-address="district"]')
+
+        let ward = form.find('select[data-input-address="ward"]')
+
+        let data = {
+            province_id : input.val(),
+            action: 'Cart_Ajax::loadDistricts'
+        };
+
+        request.post(ajax, data).then(function(response) {
+            if(response.status === 'success') {
+                district.html(response.data);
+                ward.html('');
+            }
+        });
+    }
+
+    changeInputDistrict(input) {
+
+        let ward = input.closest('form').find('select[data-input-address="ward"]')
+
+        let data = {
+            district_id : input.val(),
+            action: 'Cart_Ajax::loadWard'
+        };
+
+        request.post(ajax, data).then(function(response) {
+            if(response.status === 'success') {
+                ward.html(response.data);
+            }
+        });
+    }
+
+}

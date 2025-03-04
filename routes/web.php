@@ -26,4 +26,16 @@ Route::middleware([AdminAuthMiddleware::class, AdminPermissionMiddleware::class]
     Route::get('/stock-take', 'StockTakesController@index', ['namespace' => $controller])->name('admin.stock.stockTakes');
     Route::get('/stock-take/new', 'StockTakesController@add', ['namespace' => $controller])->name('admin.stock.stockTakes.new');
     Route::get('/stock-take/{num:id}', 'StockTakesController@edit', ['namespace' => $controller])->name('admin.stock.stockTakes.edit');
+
+    //Sổ quỹ
+    //Nhóm thu
+    Route::get('/cash-flow-group/receipt', 'CashFlowGroupController@receiptIndex', ['namespace' => $controller])->name('admin.cashFlow.group.receipt');
+    Route::get('/cash-flow-group/receipt/add', 'CashFlowGroupController@receiptAdd', ['namespace' => $controller])->name('admin.cashFlow.group.receipt.new');
+    Route::get('/cash-flow-group/receipt/edit/{num:id}', 'CashFlowGroupController@receiptEdit', ['namespace' => $controller])->name('admin.cashFlow.group.receipt.edit');
+    //Nhóm chi
+    Route::get('/cash-flow-group/payment', 'CashFlowGroupController@paymentIndex', ['namespace' => $controller])->name('admin.cashFlow.group.payment');
+    Route::get('/cash-flow-group/payment/add', 'CashFlowGroupController@paymentAdd', ['namespace' => $controller])->name('admin.cashFlow.group.payment.new');
+    Route::get('/cash-flow-group/payment/edit/{num:id}', 'CashFlowGroupController@paymentEdit', ['namespace' => $controller])->name('admin.cashFlow.group.payment.edit');
+    //thu - chi
+    Route::get('/cash-flow', 'CashFlowController@index', ['namespace' => $controller])->name('admin.cashFlow');
 });

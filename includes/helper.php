@@ -1,6 +1,8 @@
 <?php
 namespace Stock;
 
+use Illuminate\Support\Collection;
+
 class Helper {
 
     static function code($prefix, $id): string
@@ -65,5 +67,17 @@ class Helper {
             'stockTake' => '<i class="fa-duotone fa-clipboard-check icon-item"></i>',
             default => $key,
         };
+    }
+}
+
+class CashFlowHelper {
+
+    static function partnerType(): Collection
+    {
+        return Collection::make([
+            ['key' => 'S', 'name' => 'Nhà cung cấp'],
+            ['key' => 'C', 'name' => 'Khách hàng'],
+            ['key' => 'O', 'name' => 'Khác']
+        ]);
     }
 }

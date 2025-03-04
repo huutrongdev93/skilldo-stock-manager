@@ -189,6 +189,103 @@ return new class () extends Migration {
                 $table->dateTime('updated')->nullable();
             });
         }
+
+        if(!schema()->hasTable('cash_flow')) {
+            schema()->create('cash_flow', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('code', 50)->nullable();
+                //chi nhánh
+                $table->integer('branch_id')->default(0);
+                $table->string('branch_name', 100)->nullable();
+                //user thu / chi
+                $table->integer('user_id')->default(0);
+                $table->string('user_name', 100)->nullable();
+
+                //người nhận
+                $table->integer('partner_id')->default(0);
+                $table->string('partner_code', 50)->nullable();
+                $table->string('partner_name', 255)->nullable();
+                $table->text('address')->nullable();
+                $table->text('phone')->nullable();
+                //S : nhà cung cấp
+                //C : khách hàng
+                //O : Khác
+                $table->string('partner_type', 10)->nullable();
+
+                //Loại
+                $table->integer('group_id')->default(0);
+                $table->string('group_name', 255)->nullable();
+
+                //Nguồn tiền:
+                //Pay: khách trả
+                //Purchase: thanh toán
+                $table->string('origin', 50)->default('cash');
+                //Loại thanh toán
+                // cash : tiền mặt
+                // bank : chuyển khoản
+                $table->string('method', 50)->default('cash');
+                $table->integer('amount')->default(0);
+
+                //Target
+                $table->integer('target_id')->default(0);
+                $table->string('target_code', 100)->nullable();
+                //PNH : phiếu nhập hàng
+                //XHN : Phiếu xuất hàng nhập
+                //Order : Đơn hàng
+                $table->string('target_type', 10)->nullable();
+
+                $table->integer('time')->default(0);
+                $table->string('status', 20)->default('draft');
+                $table->text('note')->nullable();
+                $table->integer('user_created')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('cash_flow_group')) {
+            schema()->create('cash_flow_group', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name', 100)->nullable();
+                //receiptVoucher phiếu thu
+                //paymentVoucher phiếu chi
+                $table->string('type', 20)->default('receipt');
+                $table->text('note')->nullable();
+                $table->integer('user_created')->default(0);
+                $table->integer('user_updated')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+//            DB::table('cash_flow_group')->insert([
+//                [
+//                    'id' => -1,
+//                    'name' => 'Thu tiền khách trả',
+//                    'type' => 'receipt'
+//                ],
+//                [
+//                    'id' => -2,
+//                    'name' => 'Chi tiền trả NCC',
+//                    'type' => 'payment'
+//                ]
+//            ]);
+        }
+
+        if(!schema()->hasTable('cash_flow_partner')) {
+            schema()->create('cash_flow_partner', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name', 100)->nullable();
+                $table->string('phone', 100)->nullable();
+                $table->string('address', 100)->nullable();
+                $table->string('address_full', 255)->nullable();
+                $table->integer('city')->default(0);
+                $table->integer('district')->default(0);
+                $table->integer('ward')->default(0);
+                $table->integer('user_created')->default(0);
+                $table->integer('user_updated')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
     }
 
     public function down(): void

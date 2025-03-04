@@ -1,9 +1,6 @@
 <?php
 use SkillDo\Validate\Rule;
 
-include_once 'button.php';
-include_once 'table.php';
-
 Class SuppliersAdmin
 {
     /**
