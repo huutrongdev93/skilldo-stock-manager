@@ -37,6 +37,8 @@ class CashFlowIndexHandle
                 loading: $(`#js_cash_flow_modal_detail .loading`),
                 info: $(`#js_cash_flow_modal_detail .js_detail_content`),
                 __templateInfo: `#cash_flow_detail_template`,
+                __templateTable: `#cash_flow_detail_table_template`,
+                __templateTableItem: `#cash_flow_detail_table_item_template`,
             }
         }
 
@@ -196,6 +198,12 @@ class CashFlowIndexHandle
 
         if(this.id != id)
         {
+            let loading = SkilldoUtil.buttonLoading(button)
+
+            loading.start()
+
+            this.elements.detail.info.html('')
+
             this.id = id
 
             let data = {
@@ -207,13 +215,47 @@ class CashFlowIndexHandle
             {
                 if (response.status === 'success')
                 {
+                    response.data.item.target_table = ''
+
+                    if(response.data.item?.targets && response.data.item?.targets.length > 0)
+                    {
+                        let targetItems = ''
+
+                        for (const [key, target] of Object.entries(response.data.item?.targets)) {
+                            targetItems += ([target].map(() => {
+
+                                target.need_pay_value = SkilldoUtil.formatNumber(target.need_pay_value)
+
+                                target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
+
+                                target.amount = SkilldoUtil.formatNumber(target.amount)
+
+                                return $(this.elements.detail.__templateTableItem)
+                                    .html()
+                                    .split(/\$\{(.+?)\}/g)
+                                    .map(render(target))
+                                    .join('');
+                            }))
+                        }
+
+                        response.data.item.target_table = ([{}].map(() => {
+                            return $(this.elements.detail.__templateTable).html().split(/\$\{(.+?)\}/g).map(render({
+                                items : targetItems
+                            })).join('');
+                        }))
+                    }
+
                     this.elements.detail.info.html(() => {
                         return $(this.elements.detail.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
                     });
+
+                    this.elements.detail.modelAction.show()
+
+                    loading.stop()
                 }
             }.bind(this))
         }
-        this.elements.detail.modelAction.show()
+
     }
 
     cancelSuccess(response, button)

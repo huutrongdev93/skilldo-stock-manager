@@ -71,6 +71,19 @@ class StockPurchaseOrderAdminAjax
         response()->success(trans('ajax.load.success'), $result);
     }
 
+    static function loadCashFlowDetail(\SkillDo\Http\Request $request): void
+    {
+        $id   = (int)$request->input('id');
+
+        $cashFlows = \Stock\Model\CashFlow::widthChildren()
+            ->select('id', 'target_id', 'target_code', 'parent_id', 'created', 'amount', 'order_value', 'need_pay_value', 'paid_value')
+            ->where('target_id', $id)
+            ->where('target_type', \Stock\Prefix::purchaseOrder->value)
+            ->get();
+
+        response()->success(trans('ajax.load.success'), $cashFlows);
+    }
+
     static function loadProductsEdit(\SkillDo\Http\Request $request): void
     {
         $id  = $request->input('id');
@@ -499,6 +512,11 @@ class StockPurchaseOrderAdminAjax
             //Tạo phiếu nhập hàng
             $purchaseOrderId = \Stock\Model\PurchaseOrder::create($purchaseOrder);
 
+            if(empty($purchaseOrder['code']))
+            {
+                $purchaseOrder['code'] = \Stock\Helper::code(\Stock\Prefix::purchaseOrder->value, $purchaseOrderId);
+            }
+
             if(empty($purchaseOrderId) || is_skd_error($purchaseOrderId))
             {
                 response()->error('Tạo phiếu nhập hàng thất bại');
@@ -507,7 +525,7 @@ class StockPurchaseOrderAdminAjax
             // Cập nhật mã phiếu vào lịch sử kho
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['purchaseCode'] = (!(empty($purchaseOrder['code']))) ? $purchaseOrder['code'] : \Stock\Helper::code('PN', $purchaseOrderId);
+                $history['message']['purchaseCode'] = $purchaseOrder['code'];
                 $history['message'] = InventoryHistory::message('purchase_update', $history['message']);
                 $inventoriesHistories[$key] = $history;
             }
@@ -543,11 +561,7 @@ class StockPurchaseOrderAdminAjax
 
             if(!empty($supplier))
             {
-                \Stock\Model\Suppliers::whereKey($supplier->id)
-                    ->update([
-                        'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])),
-                        'total_invoiced_without_return' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
-                    ]);
+                static::debt($supplier, $purchaseOrderId, $purchaseOrder);
             }
 
             DB::commit();
@@ -718,11 +732,7 @@ class StockPurchaseOrderAdminAjax
 
             if(!empty($supplier))
             {
-                \Stock\Model\Suppliers::whereKey($supplier->id)
-                    ->update([
-                        'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])),
-                        'total_invoiced_without_return' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
-                    ]);
+                static::debt($supplier, $id, $purchaseOrder);
             }
             DB::commit();
 
@@ -781,7 +791,8 @@ class StockPurchaseOrderAdminAjax
             'status'        => \Stock\Status\PurchaseOrder::success->value,
             'discount'      => (int)$request->input('discount'),
             'total_payment' => (int)$request->input('total_payment'),
-            'purchase_date' => $time
+            'purchase_date' => $time,
+            'is_payment'    => 0
         ];
 
         //Chi nhánh
@@ -873,6 +884,11 @@ class StockPurchaseOrderAdminAjax
         if(($total - $purchaseOrder['discount']) < $purchaseOrder['total_payment'])
         {
             response()->error('Số tiền đã thanh toán không được lớn hơn số tiền trả cho nhà cung cấp');
+        }
+
+        if(($total - $purchaseOrder['discount']) == $purchaseOrder['total_payment'])
+        {
+            $purchaseOrder['is_payment'] = 1;
         }
 
         $purchaseOrder['sub_total'] = $total;
@@ -1025,6 +1041,76 @@ class StockPurchaseOrderAdminAjax
             $productCosts,
             $productsDetail
         ];
+    }
+
+    //Xử lý công nợ
+    static function debt($supplier, $purchaseOrderId, $purchaseOrder): void
+    {
+        //Tạo công nợ cho đơn nhập hàng
+        \Stock\Model\Debt::create([
+            'before'        => ($supplier->debt)*-1,
+            'amount'        => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])*-1,
+            'balance'       => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] + $supplier->debt)*-1,
+            'partner_id'    => $supplier->id,
+            'target_id'     => $purchaseOrderId,
+            'target_code'   => $purchaseOrder['code'],
+            'target_type'   => \Stock\Prefix::purchaseOrder->value,
+            'time'          => $purchaseOrder['purchase_date']
+        ]);
+
+        if($purchaseOrder['total_payment'] > 0)
+        {
+            //Tạo phiếu chi
+            $code = \Stock\Helper::code('TT'.\Stock\Prefix::purchaseOrder->value, $purchaseOrderId);
+
+            $idCashFlow = \Stock\Model\CashFlow::create([
+                'code'      => $code,
+                'branch_id' => $purchaseOrder['branch_id'],
+                'branch_name' => $purchaseOrder['branch_name'],
+                //Người chi
+                'user_id' => $purchaseOrder['purchase_id'],
+                'user_name' => $purchaseOrder['purchase_name'],
+                //người nhận
+                'partner_id' => $supplier->id,
+                'partner_code' => $supplier->code,
+                'partner_name'  => $supplier->name,
+                'address' => $supplier->address,
+                'phone' => $supplier->phone,
+                'partner_type' => 'S',
+
+                //Loại
+                'group_id' => -2,
+                'group_name' => 'Chi tiền trả NCC',
+                'origin' => 'purchase',
+                'method' => 'cash',
+                'amount' => $purchaseOrder['total_payment']*-1,
+
+                'target_id'     => $purchaseOrderId,
+                'target_code'   => $purchaseOrder['code'],
+                'target_type'   => \Stock\Prefix::purchaseOrder->value,
+                'time'          => $purchaseOrder['purchase_date'],
+                'status'        => \Stock\Status\CashFlow::success->value,
+                'user_created'  => Auth::id()
+            ]);
+
+            //Tạo công nợ cho phiêu chi
+            \Stock\Model\Debt::create([
+                'before'        => ($supplier->debt)*-1,
+                'amount'        => $purchaseOrder['total_payment'],
+                'balance'       => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'] + $supplier->debt)*-1,
+                'partner_id'    => $supplier->id,
+                'target_id'     => $idCashFlow,
+                'target_code'   => $code,
+                'target_type'   => 'TT'.\Stock\Prefix::purchaseOrder->value,
+                'time'          => $purchaseOrder['purchase_date']
+            ]);
+        }
+
+        \Stock\Model\Suppliers::whereKey($supplier->id)
+            ->update([
+                'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])),
+                'debt' => DB::raw('debt + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
+            ]);
     }
 
     static function cancel(\SkillDo\Http\Request $request): void
@@ -1465,6 +1551,7 @@ class StockPurchaseOrderAdminAjax
 }
 
 Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsDetail');
+Ajax::admin('StockPurchaseOrderAdminAjax::loadCashFlowDetail');
 Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsEdit');
 Ajax::admin('StockPurchaseOrderAdminAjax::addDraft');
 Ajax::admin('StockPurchaseOrderAdminAjax::saveDraft');

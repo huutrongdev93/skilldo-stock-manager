@@ -39,6 +39,7 @@ return new class () extends Migration {
                 $table->integer('sub_total')->default(0); //Tổng giá trị hàng hóa
                 $table->integer('discount')->default(0); //Giảm giá nhập hàng
                 $table->integer('total_payment')->default(0); //Đã trả cho nhà cung cấp
+                $table->integer('is_payment')->default(0); //Đã trả hết
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
@@ -139,7 +140,7 @@ return new class () extends Migration {
                 $table->dropColumn(['slug', 'seo_title', 'seo_description', 'seo_keywords']);
                 $table->string('code', 200)->collation('utf8mb4_unicode_ci'); //mã nhà cung cấp
                 $table->integer('total_invoiced')->default(0); //Tổng mua
-                $table->integer('total_invoiced_without_return')->default(0); //Tổng đã trả cho nhà cung cấp
+                $table->integer('debt')->default(0); //Công nợ
                 $table->index('code');
             });
         }
@@ -229,11 +230,20 @@ return new class () extends Migration {
                 //Target
                 $table->integer('target_id')->default(0);
                 $table->string('target_code', 100)->nullable();
-                //PNH : phiếu nhập hàng
-                //XHN : Phiếu xuất hàng nhập
+                //PN : phiếu nhập hàng
+                //THN : Phiếu trả hàng nhập
                 //Order : Đơn hàng
                 $table->string('target_type', 10)->nullable();
 
+                //Thông tin phiếu thu
+                //Giá trị phiếu
+                $table->integer('order_value')->default(0);
+                //Giá trị cần trả phiếu
+                $table->integer('need_pay_value')->default(0);
+                //Đã chi trước
+                $table->integer('paid_value')->default(0);
+
+                $table->integer('parent_id')->default(0);
                 $table->integer('time')->default(0);
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
@@ -244,6 +254,9 @@ return new class () extends Migration {
         }
 
         if(!schema()->hasTable('cash_flow_group')) {
+            //-1: Thu tiền khách trả
+            //-2: Chi tiền trả NCC
+            //-3: NCC hoàn tiền
             schema()->create('cash_flow_group', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('name', 100)->nullable();
@@ -256,18 +269,6 @@ return new class () extends Migration {
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });
-//            DB::table('cash_flow_group')->insert([
-//                [
-//                    'id' => -1,
-//                    'name' => 'Thu tiền khách trả',
-//                    'type' => 'receipt'
-//                ],
-//                [
-//                    'id' => -2,
-//                    'name' => 'Chi tiền trả NCC',
-//                    'type' => 'payment'
-//                ]
-//            ]);
         }
 
         if(!schema()->hasTable('cash_flow_partner')) {
@@ -280,6 +281,32 @@ return new class () extends Migration {
                 $table->integer('city')->default(0);
                 $table->integer('district')->default(0);
                 $table->integer('ward')->default(0);
+                $table->integer('user_created')->default(0);
+                $table->integer('user_updated')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        //Công nợ
+        if(!schema()->hasTable('debt')) {
+            schema()->create('debt', function (Blueprint $table) {
+                $table->increments('id');
+
+                $table->integer('before')->default(0); //giá trị công nợ trước điều chỉnh
+                $table->integer('amount')->default(0); //Số tiền thanh toán
+                $table->integer('balance')->default(0); // Công nợ sau khi điều chỉnh
+                $table->integer('partner_id')->default(0); //id nhà cung cấp
+
+                //Target
+                $table->integer('target_id')->default(0);
+                $table->string('target_code', 100)->nullable();
+                //PN : phiếu nhập hàng
+                //TTPN : thanh toán phiếu nhập hàng
+                //PCPT : Phiếu chi - phiếu thu
+                $table->string('target_type', 10)->nullable();
+
+                $table->integer('time')->default(0); //thời gian
                 $table->integer('user_created')->default(0);
                 $table->integer('user_updated')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));

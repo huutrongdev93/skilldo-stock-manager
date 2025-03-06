@@ -11,11 +11,19 @@
                 {!! Admin::loading() !!}
                 <div class="js_detail_content"></div>
                 <hr />
-                {!! $tableProduct->display() !!}
-                <div class="pagination mt-3"></div>
+                {!! Admin::tabs([
+                    'products' => [
+                        'label'   => 'Sản phẩm', //Tiêu đề của tab
+                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-products', ['table' => $tableProduct])
+                    ],
+                    'cashFlow' => [
+                        'label'   => 'Lịch sử thanh toán',
+                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-cash-flow')
+                    ],
+                ], 'products', ['class' => 'mb-0']) !!}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-white" data-bs-dismiss="modal">{{trans('button.close')}}</button>
+                <button type="button" class="btn btn-white" data-bs-dismiss="modal">{{ trans('button.close') }}</button>
             </div>
         </div>
     </div>

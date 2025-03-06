@@ -17,7 +17,7 @@ Class Suppliers extends Model {
         'address'       => ['string'],
         'image'                         => ['image'],
         'total_invoiced'                => ['int', 0],
-        'total_invoiced_without_return' => ['int', 0],
+        'debt' => ['int', 0],
     ];
 
     protected static function boot(): void

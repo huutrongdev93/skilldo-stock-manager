@@ -6,14 +6,14 @@ use Illuminate\Database\Capsule\Manager as DB;
 Class OrderInventory {
 
     public function __construct() {
-        add_action('admin_order_status_before_update', 'OrderInventory::purchaseOrderCheck');
+        add_action('admin_order_status_before_update', 'OrderInventory::purchaseOrderCheck', 10, 2);
         add_action('admin_order_status_update', 'OrderInventory::statusChange', 10, 2);
         add_action('admin_order_status_pay_update', 'OrderInventory::statusPayChange', 10, 2);
     }
 
     static function statusChange($order, $status): void
     {
-        $purchaseOrder = InventoryHelper::config('purchaseOrder');
+        $purchaseOrder = \Stock\Helper::config('purchaseOrder');
 
         if($status == Status::SHIPPING->value)
         {
@@ -55,7 +55,7 @@ Class OrderInventory {
 
     static function statusPayChange($order, $status): void
     {
-        $purchaseOrder = InventoryHelper::config('purchaseOrder');
+        $purchaseOrder = \Stock\Helper::config('purchaseOrder');
 
         if($status == 'paid') {
 
@@ -80,51 +80,52 @@ Class OrderInventory {
         }
     }
 
-    static function purchaseOrderCheck($order): void
+    static function purchaseOrderCheck($order, $status): void
     {
-        if(have_posts($order)) {
-
+        if(have_posts($order) && $status !== \Ecommerce\Enum\Order\Status::CANCELLED->value)
+        {
             $purchaseOrderStatus = Order::getMeta($order->id, 'inventory_status', true);
 
             if(empty($purchaseOrderStatus)) {
 
-                $products = OrderItem::where('order_id', $order->id)->fetch();
+                $products = OrderItem::where('order_id', $order->id)->get();
 
-                $productsId = [];
+                $productsId = $products->pluck('product_id')->toArray();
 
-                foreach ($products as $item) {
-                    $productsId[] = $item->product_id;
-                }
-
-                $inventories = Inventory::whereIn('product_id', $productsId)->where('branch_id', $order->branch_id)->fetch();
+                $inventories = Inventory::whereIn('product_id', $productsId)
+                    ->where('branch_id', $order->branch_id)
+                    ->get()
+                    ->keyBy('product_id');
 
                 $inventoriesUp = [];
 
                 foreach ($products as $itemKey => $item) {
 
-                    foreach ($inventories as $inventory) {
+                    $productId = $item->product_id;
 
-                        $productId = $inventory->product_id;
-
-                        if ($productId == $item->product_id) {
-
-                            if (!isset($inventoriesUp[$productId])) {
-                                $inventoriesUp[$productId] = $inventory->reserved;
-                            }
-
-                            $inventoriesUp[$productId] = $inventoriesUp[$productId] - $item->quantity;
-
-                            if ($inventoriesUp[$productId] < 0) {
-
-                                response()->error(trans('Số lượng sản phẩm :name trong kho không đủ (hiện có :reserved)', [
-                                    'name' => $item->title,
-                                    'reserved' => $inventoriesUp[$productId]
-                                ]));
-                            }
-
-                            unset($products[$itemKey]);
-                        }
+                    if(!$inventories->has($productId))
+                    {
+                        continue;
                     }
+
+                    $inventory = $inventories->get($productId);
+
+                    if (!isset($inventoriesUp[$productId]))
+                    {
+                        $inventoriesUp[$productId] = $inventory->reserved;
+                    }
+
+                    $inventoriesUp[$productId] = $inventoriesUp[$productId] - $item->quantity;
+
+                    if ($inventoriesUp[$productId] < 0) {
+
+                        response()->error(trans('Số lượng sản phẩm :name trong kho không đủ (hiện có :reserved)', [
+                            'name' => $item->title,
+                            'reserved' => $inventoriesUp[$productId]
+                        ]));
+                    }
+
+                    unset($products[$itemKey]);
                 }
             }
         }
@@ -209,7 +210,7 @@ Class OrderInventory {
                         ];
                     }
 
-                    Order::updateMeta($order->id, 'inventory_status', InventoryHelper::config('purchaseOrder'));
+                    Order::updateMeta($order->id, 'inventory_status', \Stock\Helper::config('purchaseOrder'));
 
                     if(have_posts($inventoriesHistory)) {
                         DB::table('inventories_history')->insert($inventoriesHistory);
@@ -331,7 +332,7 @@ Class OrderInventory {
                             $inventoriesUp[$inventory->product_id]['reserved']  = $inventoriesUp[$inventory->product_id]['reserved'] - $item->quantity;
                         }
                         $inventoriesUp[$inventory->product_id]['stock']     = $inventoriesUp[$inventory->product_id]['stock'] + $item->quantity;
-                        $inventoriesUp[$inventory->product_id]['status']    = ($inventoriesUp[$inventory->product_id]['stock'] > 0) ? 'instock' : 'outstock';
+                        $inventoriesUp[$inventory->product_id]['status']    = ($inventoriesUp[$inventory->product_id]['stock'] > 0) ? \Stock\Status\Inventory::in->value : \Stock\Status\Inventory::out->value;
 
                         unset($products[$itemKey]);
                     }
@@ -348,7 +349,9 @@ Class OrderInventory {
 
                 Inventory::where('id', $inventory->id)->update($updateData);
 
-                model('products')::where('id', $productId)->update(['stock_status' => 'instock']);
+                DB::table('products')
+                    ->where('id', $productId)
+                    ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
 
                 if($inventory->parent_id != 0) {
                     $productsId[] = $inventory->parent_id;
@@ -390,9 +393,11 @@ Class OrderInventory {
 
             foreach ($productsId as $productId) {
 
-                model('products')::where('id', $productId)->update([
-                    'stock_status' => 'instock'
-                ]);
+                DB::table('products')
+                    ->where('id', $productId)
+                    ->update([
+                        'stock_status' => \Stock\Status\Inventory::in->value
+                    ]);
             }
 
             if(have_posts($inventoriesHistory)) {

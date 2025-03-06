@@ -178,11 +178,13 @@ Class CheckoutInventory {
 
                     unset($updateData['inventory']);
 
-                    $updateData['status'] = ($updateData['stock'] == 0) ? 'outstock' : 'instock';
+                    $updateData['status'] = ($updateData['stock'] == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value;
 
                     Inventory::where('id', $inventory->id)->update($updateData);
 
-                    model('products')::where('id', $productId)->update(['stock_status' => $updateData['status']]);
+                    DB::table('products')
+                        ->where('id', $productId)
+                        ->update(['stock_status' => $updateData['status']]);
 
                     if($inventory->parent_id != 0) {
                         $productsId[] = $inventory->parent_id;
@@ -224,9 +226,11 @@ Class CheckoutInventory {
                             ->where('branch_id', $order->branch_id)
                             ->sum('stock');
 
-                        model('products')::where('id', $productId)->update([
-                            'stock_status' => ($stock == 0) ? 'outstock' : 'instock'
-                        ]);
+                        DB::table('products')
+                            ->where('id', $productId)
+                            ->update([
+                                'stock_status' => ($stock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                            ]);
                     }
                 }
 

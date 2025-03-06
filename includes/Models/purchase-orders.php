@@ -17,7 +17,7 @@ Class PurchaseOrder extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code('PN', $object->id)]);
+                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::purchaseOrder->value, $object->id)]);
             }
         });
     }

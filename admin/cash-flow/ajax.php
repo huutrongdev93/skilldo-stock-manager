@@ -233,15 +233,29 @@ class CashFlowAdminAjax
         //target note
         $object->target_note = '';
 
-        if($object->target_type == 'Order')
+        if(!empty($object->target_code) && $object->target_type == 'Order')
         {
             $object->target_note = 'Phiếu thu tự động được tạo gắn với đơn hàng <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
         }
 
-        if($object->target_type == 'PNH')
+        if(!empty($object->target_code) && $object->target_type == \Stock\Prefix::purchaseOrder->value)
         {
-            $object->target_note = 'Phiếu thu tự động được tạo gắn với phiếu nhập hàng <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
+            $object->target_note = 'Phiếu chi tự động được tạo gắn với phiếu nhập hàng <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
         }
+
+        if(!empty($object->target_code) && $object->target_type == \Stock\Prefix::purchaseReturn->value)
+        {
+            $object->target_note = 'Phiếu thu tự động được tạo gắn với phiếu trả hàng nhập <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
+        }
+
+        $childrens = \Stock\Model\CashFlow::widthChildren()
+            ->where('parent_id', $object->id)
+            ->get()
+            ->map(function($child){
+                return $child->toObject();
+            });
+
+        $object->targets = $childrens;
 
         response()->success('load dữ liệu thành công', [
             'item' => $object->toObject()

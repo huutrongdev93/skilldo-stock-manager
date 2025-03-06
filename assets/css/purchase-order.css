@@ -1,0 +1,162 @@
+.air-datepicker {
+  --adp-z-index: 9999999;
+}
+.air-datepicker-overlay {
+  --adp-overlay-z-index: 9999;
+}
+.dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  gap: 20px;
+}
+.stock-form-group {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.stock-page-form {
+  display: flex;
+  height: calc(100vh - 150px);
+}
+.stock-page-form .stock-page-table {
+  height: calc(100vh - 200px);
+  overflow: auto;
+}
+.stock-page-form-content {
+  flex: 0 0 auto;
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+}
+.stock-page-form-content .stock-page-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stock-page-form-content .stock-page-header-search {
+  flex: 0 0 auto;
+  width: 500px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper {
+  width: 400px;
+  position: relative;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .input-icon {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .input-search {
+  padding-left: 40px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background-color: #fff;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
+  max-height: 329px;
+  width: 100%;
+  z-index: 999;
+  border-radius: 8px;
+  overflow: auto;
+  display: none;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item .img {
+  flex: 0 0 auto;
+  width: 70px;
+  height: 70px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item .img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item .info p {
+  margin-bottom: 5px;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item .info .sugg-attr {
+  color: var(--theme-color);
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item:hover {
+  background-color: var(--theme-color);
+  color: #fff;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results .product-item:hover .info .sugg-attr {
+  color: #fff;
+}
+.stock-page-form-content .stock-page-header-search .search-wrapper .autocomplete-suggestions-results.open {
+  display: block;
+}
+.stock-page-form-content .stock-page-products {
+  flex: 1 1 auto;
+}
+.stock-page-form-info {
+  flex: 0 0 auto;
+  width: 30%;
+  margin-left: 10px;
+  display: flex;
+}
+.stock-page-form-info .stock-page-button {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.stock-page-form .form-control {
+  min-height: 40px;
+}
+.stock-page-form .product_name span {
+  display: block;
+}
+.stock-upload-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0px auto 0;
+  position: relative;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 5px;
+  overflow: hidden;
+  transition: 0.2s linear all;
+  color: var(--theme-color);
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23ccc' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+}
+.stock-upload-wrapper:hover,
+.stock-upload-wrapper:focus {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%232e44ff' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+}
+.stock-upload-wrapper input[type=file] {
+  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  top: 0;
+  bottom: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.stock-upload-wrapper > svg {
+  width: 30px;
+  height: auto;
+  cursor: pointer;
+}
+.stock-upload-wrapper .file-upload-text {
+  opacity: 1;
+  visibility: visible;
+  transition: 0.2s linear all;
+}
+/*# sourceMappingURL=purchase-order.css.map */

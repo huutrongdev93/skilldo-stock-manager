@@ -1,0 +1,183 @@
+.air-datepicker
+{
+    --adp-z-index:9999999;
+}
+.air-datepicker-overlay
+{
+    --adp-overlay-z-index:9999;
+}
+
+.dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    gap:20px;
+}
+
+.stock-form-group {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.stock-page-form
+{
+    display:flex;
+    height: ~"calc(100vh - 150px)";
+    .stock-page-table {
+        height: ~"calc(100vh - 200px)";
+        overflow: auto;
+    }
+    &-content
+    {
+        flex: 0 0 auto;
+        width:70%;
+        display: flex;
+        flex-direction: column;
+        .stock-page-header {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            &-search {
+                flex: 0 0 auto;
+                width:500px;
+                .search-wrapper
+                {
+                    width:400px;
+                    position:relative;
+                    .input-icon
+                    {
+                        position: absolute;
+                        top:12px;
+                        left:12px;
+                    }
+                    .input-search
+                    {
+                        padding-left: 40px;
+                    }
+
+                    .autocomplete-suggestions-results
+                    {
+                        position: absolute;
+                        top:50px;
+                        left:0;
+                        background-color: #fff;
+                        box-shadow: 0 5px 25px rgba(0,0,0,.25);
+                        max-height:329px;
+                        width: 100%;
+                        z-index: 999;
+                        border-radius:8px;
+                        overflow: auto;
+                        display: none;
+                        .product-item
+                        {
+                            display:flex;
+                            gap:10px;
+                            padding: 10px;
+                            .img {
+                                flex: 0 0 auto;
+                                width: 70px;
+                                height: 70px;
+                                img {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: cover;
+                                }
+                            }
+                            .info {
+                                p {
+                                    margin-bottom: 5px;
+                                }
+                                .sugg-attr {
+                                    color:var(--theme-color);
+                                }
+                            }
+                            &:hover
+                            {
+                                background-color: var(--theme-color);
+                                color:#fff;
+                                .info {
+                                    .sugg-attr {
+                                        color:#fff;
+                                    }
+                                }
+                            }
+                        }
+                        &.open {
+                            display: block;
+                        }
+                    }
+                }
+            }
+        }
+        .stock-page-products {
+            flex: 1 1 auto;
+        }
+    }
+    &-info
+    {
+        flex: 0 0 auto;
+        width:30%;
+        margin-left: 10px;
+        display: flex;
+        .stock-page-button {
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            left: 0;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    .form-control
+    {
+        min-height: 40px;
+    }
+    .product_name {
+        span {
+            display:block;
+        }
+    }
+}
+
+.stock-upload-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:10px;
+    margin: 0px auto 0;
+    position: relative;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: 0.2s linear all;
+    color: var(--theme-color);
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23ccc' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+    &:hover, &:focus {
+        background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%232e44ff' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+    }
+    input[type=file] {
+        width: 100%;
+        position: absolute;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        top: 0;
+        bottom: 0;
+        cursor: pointer;
+        z-index: 1;
+    }
+    > svg {
+        width: 30px;
+        height: auto;
+        cursor: pointer;
+    }
+    .file-upload-text {
+        opacity: 1;
+        visibility: visible;
+        transition: 0.2s linear all;
+    }
+}

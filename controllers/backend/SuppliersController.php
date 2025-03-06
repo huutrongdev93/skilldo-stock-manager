@@ -36,12 +36,27 @@ class SuppliersController extends MY_Controller {
     {
         $object = \Stock\Model\Suppliers::find($id);
 
-        if(have_posts($object))
-        {
-            Admin::creatForm('suppliers', $object);
-        }
+        Cms::setData('object', $object);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/suppliers/save', 'plugin');
+        $tablePurchaseOrder = new \Stock\Table\Suppliers\PurchaseOrder();
+
+        $tablePurchaseOrder->supplierId = $object->id;
+
+        Cms::setData('tablePurchaseOrder', $tablePurchaseOrder);
+
+        $tablePurchaseReturn = new \Stock\Table\Suppliers\PurchaseReturn();
+
+        $tablePurchaseReturn->supplierId = $object->id;
+
+        Cms::setData('tablePurchaseReturn', $tablePurchaseReturn);
+
+        $tableDebt = new \Stock\Table\Suppliers\Debt();
+
+        $tableDebt->supplierId = $object->id;
+
+        Cms::setData('tableDebt', $tableDebt);
+
+        $this->template->setView(STOCK_NAME.'/views/admin/suppliers/detail', 'plugin');
 
         $this->template->render();
     }

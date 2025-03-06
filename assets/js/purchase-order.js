@@ -5,9 +5,58 @@ class PurchaseOrderIndexHandle extends WarehouseIndexHandle
             module: 'purchase_order',
             ajax: {
                 loadProducts: 'StockPurchaseOrderAdminAjax::loadProductsDetail',
-                print: 'StockPurchaseOrderAdminAjax::print'
+                print: 'StockPurchaseOrderAdminAjax::print',
+                cashFlow: 'StockPurchaseOrderAdminAjax::loadCashFlowDetail'
             }
         });
+
+        this.detail.modal.cashFlow = {
+            table: $('#js_purchase_order_detail_cash_flow tbody'),
+            __templateItem: '#purchase_order_detail_cash_flow_table_item_template'
+        }
+    }
+
+    loadDataDetail()
+    {
+        this.detail.modal.cashFlow.table.html('')
+
+        let data = {
+            action: this.ajax.cashFlow,
+            id: this.data.id,
+        }
+
+        request.post(ajax, data).then(function(response)
+        {
+            if (response.status === 'success')
+            {
+                if(response.data.length > 0)
+                {
+                    let targetItems = ''
+
+                    for (const [key, target] of Object.entries(response.data)) {
+
+                        targetItems += (([target].map(() => {
+
+                            target.need_pay_value = SkilldoUtil.formatNumber(target.need_pay_value)
+
+                            target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
+
+                            target.amount = SkilldoUtil.formatNumber(target.amount)
+
+                            return $(this.detail.modal.cashFlow.__templateItem)
+                                .html()
+                                .split(/\$\{(.+?)\}/g)
+                                .map(render(target))
+                                .join('');
+                        })))
+                    }
+
+                    this.detail.modal.cashFlow.table.html(targetItems)
+                }
+            }
+        }.bind(this))
+
+        return false
     }
 
     events() {

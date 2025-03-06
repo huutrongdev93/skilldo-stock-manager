@@ -546,10 +546,15 @@ class StockPurchaseReturnAdminAjax
                 response()->error('Tạo phiếu trả hàng thất bại');
             }
 
+            if(empty($purchaseReturn['code']))
+            {
+                $purchaseReturn['code'] = \Stock\Helper::code(\Stock\Prefix::purchaseReturn->value, $purchaseReturnId);
+            }
+
             // Cập nhật mã phiếu vào lịch sử kho
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['purchaseReturnCode'] = (!empty($purchaseReturn['code'])) ? $purchaseReturn['code'] : \Stock\Helper::code('THN', $purchaseReturnId);
+                $history['message']['purchaseReturnCode'] = $purchaseReturn['code'];
                 $history['message'] = InventoryHistory::message('purchase_returns_update', $history['message']);
                 $inventoriesHistories[$key] = $history;
             }
@@ -585,11 +590,7 @@ class StockPurchaseReturnAdminAjax
 
             if(!empty($supplier))
             {
-                \Stock\Model\Suppliers::whereKey($supplier->id)
-                    ->update([
-                        'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'])),
-                        'total_invoiced_without_return' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'] - $purchaseReturn['total_payment'])),
-                    ]);
+                static::debt($supplier, $purchaseReturnId, $purchaseReturn);
             }
 
             DB::commit();
@@ -766,12 +767,9 @@ class StockPurchaseReturnAdminAjax
 
             if(!empty($supplier))
             {
-                \Stock\Model\Suppliers::whereKey($supplier->id)
-                    ->update([
-                        'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'])),
-                        'total_invoiced_without_return' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'] - $purchaseReturn['total_payment'])),
-                    ]);
+                static::debt($supplier, $id, $purchaseReturn);
             }
+
             DB::commit();
 
             response()->success('Lưu phiếu trả hàng thành công');
@@ -1075,6 +1073,78 @@ class StockPurchaseReturnAdminAjax
             $productCosts,
             $productsDetail
         ];
+    }
+
+    static function debt($supplier, $purchaseReturnId, $purchaseReturn): void
+    {
+        //Số tiền ncc cần thanh toán
+        $amount = $purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'];
+
+        //Tạo công nợ cho đơn xuất hàng
+        \Stock\Model\Debt::create([
+            'before'        => ($supplier->debt)*-1,
+            'amount'        => $amount,
+            'balance'       => ($supplier->debt - $amount)*-1,
+            'partner_id'    => $supplier->id,
+            'target_id'     => $purchaseReturnId,
+            'target_code'   => $purchaseReturn['code'],
+            'target_type'   => \Stock\Prefix::purchaseReturn->value,
+            'time'          => $purchaseReturn['purchase_date']
+        ]);
+
+        if($purchaseReturn['total_payment'] > 0)
+        {
+            //Tạo phiếu thu
+            $code = \Stock\Helper::code('PT'.\Stock\Prefix::purchaseReturn->value, $purchaseReturnId);
+
+            $idCashFlow = \Stock\Model\CashFlow::create([
+                'code'      => $code,
+                'branch_id' => $purchaseReturn['branch_id'],
+                'branch_name' => $purchaseReturn['branch_name'],
+                //Người thu
+                'user_id' => $purchaseReturn['purchase_id'],
+                'user_name' => $purchaseReturn['purchase_name'],
+                //người chi
+                'partner_id' => $supplier->id,
+                'partner_code' => $supplier->code,
+                'partner_name'  => $supplier->name,
+                'address' => $supplier->address,
+                'phone' => $supplier->phone,
+                'partner_type' => 'S',
+
+                //Loại
+                'group_id' => -3,
+                'group_name' => 'Thu tiền NCC hoàn trả',
+                'origin' => 'purchase',
+                'method' => 'cash',
+                'amount' => $purchaseReturn['total_payment'],
+
+                'target_id'     => $purchaseReturnId,
+                'target_code'   => $purchaseReturn['code'],
+                'target_type'   => \Stock\Prefix::purchaseReturn->value,
+                'time'          => $purchaseReturn['purchase_date'],
+                'status'        => \Stock\Status\CashFlow::success->value,
+                'user_created'  => Auth::id()
+            ]);
+
+            //Tạo công nợ cho phiêu thu
+            \Stock\Model\Debt::create([
+                'before'        => ($supplier->debt)*-1,
+                'amount'        => $purchaseReturn['total_payment']*-1,
+                'balance'       => ($supplier->debt - $amount + $purchaseReturn['total_payment'])*-1,
+                'partner_id'    => $supplier->id,
+                'target_id'     => $idCashFlow,
+                'target_code'   => $code,
+                'target_type'   => 'PT'.\Stock\Prefix::purchaseReturn->value,
+                'time'          => $purchaseReturn['purchase_date']
+            ]);
+        }
+
+        \Stock\Model\Suppliers::whereKey($supplier->id)
+            ->update([
+                'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'])),
+                'debt' => DB::raw('debt - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'] + $purchaseReturn['total_payment'])),
+            ]);
     }
     
     static function cancel(\SkillDo\Http\Request $request): void

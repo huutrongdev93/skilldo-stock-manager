@@ -53,14 +53,5 @@ class stock_manager {
         $db->down();
     }
 }
-require_once 'ajax.php';
-require_once 'includes/helper.php';
-require_once 'includes/model.php';
-require_once 'order.php';
-if(Admin::is()) {
-    include_once 'admin/roles.php';
-    include_once 'admin/admin.php';
-    require_once 'update.php';
-}
-include_once 'template.php';
-include_once 'checkout.php';
+
+include_once 'autoload/autoload.php';

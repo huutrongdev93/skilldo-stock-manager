@@ -18,6 +18,12 @@ Class SuppliersAdmin
                 'validations'   => Rule::make()->notEmpty()
             ])
             ->textarea('excerpt', ['label' => 'Ghi chú']);
+
+        $form->right
+            ->addGroup('company', 'Thông tin công ty')
+            ->email('company', ['label' => 'Tên công ty'])
+            ->tel('tax', ['label' => 'Mã số thuế']);
+
         $form->right
             ->addGroup('information', 'Thông tin người đại diện')
             ->email('email', ['label' => 'Email', 'validations'   => Rule::make()->notEmpty()])

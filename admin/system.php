@@ -25,7 +25,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[stockOrder]', $order, [
             'label' => 'Khách mua hàng'
-        ], InventoryHelper::config('stockOrder'));
+        ], \Stock\Helper::config('stockOrder'));
 
         $purchaseOrder = [
             'shipping'      => 'Khi đơn hàng ở trạng thái đang vận chuyển',
@@ -36,7 +36,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[purchaseOrder]', $purchaseOrder, [
             'label' => 'Trừ kho'
-        ], InventoryHelper::config('purchaseOrder'));
+        ], \Stock\Helper::config('purchaseOrder'));
 
         $purchaseOrder = [
             'handmade' => 'Thao tác thủ công',
@@ -45,7 +45,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[lackStock]', $purchaseOrder, [
             'label' => 'Kho hàng thiếu sản phẩm'
-        ], InventoryHelper::config('lackStock'));
+        ], \Stock\Helper::config('lackStock'));
 
         Admin::view('components/system-default', [
             'title'         => 'Cấu hình kho hàng',

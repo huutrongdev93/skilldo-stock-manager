@@ -71,7 +71,34 @@
             </div>
         </div>
     </div>
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-md-12"><p class="fst-italic">${target_note}</p></div>
     </div>
+
+    ${target_table}
+</script>
+
+<script id="cash_flow_detail_table_template" type="text/x-custom-template">
+    <table class="display table table-striped media-table mt-4">
+        <thead>
+        <tr>
+            <th class="manage-column">Mã phiếu</th>
+            <th class="manage-column">Thời gian</th>
+            <th class="manage-column">Giá trị phiếu</th>
+            <th class="manage-column">Đã trả trước</th>
+            <th class="manage-column">Tiền chi</th>
+        </tr>
+        </thead>
+        <tbody>${items}</tbody>
+    </table>
+</script>
+
+<script id="cash_flow_detail_table_item_template" type="text/x-custom-template">
+    <tr>
+        <td>${target_code}</td>
+        <td>${created}</td>
+        <td>${need_pay_value}</td>
+        <td>${paid_value}</td>
+        <td>${amount}</td>
+    </tr>
 </script>

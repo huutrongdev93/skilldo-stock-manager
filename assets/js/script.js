@@ -372,6 +372,8 @@ class WarehouseIndexHandle
             }.bind(this))
     }
 
+    loadDataDetail() {}
+
     clickButtonDetail(button) {
 
         if(this.detail.modal.handel === null)
@@ -403,6 +405,8 @@ class WarehouseIndexHandle
             this.detail.modal.pagination.html('');
 
             this.loadProductDetail()
+
+            this.loadDataDetail()
         }
 
         this.detail.modal.handel.show()
@@ -849,6 +853,110 @@ class WarehouseLocation {
                 ward.html(response.data);
             }
         });
+    }
+
+}
+
+class WarehouseDetail {
+
+    constructor()
+    {
+        this.ajax = {
+            cashFlow: 'CashFlowAdminAjax::detail',
+        }
+
+        this.cashFlow = {
+            modalId: `#js_cash_flow_modal_detail`,
+            modal: $(`#js_cash_flow_modal_detail`),
+            modelAction: new bootstrap.Modal('#js_cash_flow_modal_detail', {backdrop: "static", keyboard: false}),
+            loading: $(`#js_cash_flow_modal_detail .loading`),
+            info: $(`#js_cash_flow_modal_detail .js_detail_content`),
+            __templateInfo: `#cash_flow_detail_template`,
+            __templateTable: `#cash_flow_detail_table_template`,
+            __templateTableItem: `#cash_flow_detail_table_item_template`,
+        }
+
+        this.data = {
+            id: 0,
+            type: undefined,
+        }
+    }
+
+    onClickTarget(button)
+    {
+        this.data.type = button.data('target')
+
+        this.data.id = button.data('target-id')
+
+        if(this.data.type == 'cash-flow')
+        {
+            this.onClickCashFlow(button)
+        }
+
+        return false
+    }
+
+    onClickCashFlow(button)
+    {
+        this.cashFlow.info.html('')
+
+        let data = {
+            action: this.ajax.cashFlow,
+            id: this.data.id,
+        }
+
+        request.post(ajax, data).then(function(response)
+        {
+            if (response.status === 'success')
+            {
+                response.data.item.target_table = ''
+
+                if(response.data.item?.targets && response.data.item?.targets.length > 0)
+                {
+                    let targetItems = ''
+
+                    for (const [key, target] of Object.entries(response.data.item?.targets)) {
+                        targetItems += ([target].map(() => {
+
+                            target.need_pay_value = SkilldoUtil.formatNumber(target.need_pay_value)
+
+                            target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
+
+                            target.amount = SkilldoUtil.formatNumber(target.amount)
+
+                            return $(this.cashFlow.__templateTableItem)
+                                .html()
+                                .split(/\$\{(.+?)\}/g)
+                                .map(render(target))
+                                .join('');
+                        }))
+                    }
+
+                    response.data.item.target_table = ([{}].map(() => {
+                        return $(this.cashFlow.__templateTable).html().split(/\$\{(.+?)\}/g).map(render({
+                            items : targetItems
+                        })).join('');
+                    }))
+                }
+
+                this.cashFlow.info.html(() => {
+                    return $(this.cashFlow.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
+                });
+
+                this.cashFlow.modelAction.show()
+            }
+        }.bind(this))
+
+        return false
+    }
+
+    events() {
+        let self = this;
+
+        $(document)
+            .on('click', '.js_btn_target', function () {
+                return self.onClickTarget($(this))
+            })
     }
 
 }

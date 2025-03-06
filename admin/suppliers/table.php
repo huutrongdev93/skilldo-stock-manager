@@ -33,9 +33,9 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
                 'label' => 'Email',
                 'column' => fn($item, $args) => ColumnText::make('email', $item, $args)
             ],
-            'total_invoiced_without_return' => [
+            'debt' => [
                 'label' => 'Nợ cần trả hiện tại',
-                'column' => fn($item, $args) => ColumnText::make('total_invoiced_without_return', $item, $args)->number()
+                'column' => fn($item, $args) => ColumnText::make('debt', $item, $args)->number()
             ],
             'total_invoiced' => [
                 'label' => 'Tổng mua',
@@ -51,7 +51,7 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
     {
         $listButton = [];
         $listButton[] = Admin::button('blue', [
-            'href' => Url::admin('plugins/suppliers/edit/'.$item->id),
+            'href' => Url::route('admin.suppliers.edit', ['id' => $item->id]),
             'icon' => Admin::icon('edit')
         ]);
         $listButton[] = Admin::btnDelete([

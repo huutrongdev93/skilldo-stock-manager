@@ -17,7 +17,7 @@ Class PurchaseReturn extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code('THN', $object->id)]);
+                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::purchaseReturn->value, $object->id)]);
             }
         });
     }

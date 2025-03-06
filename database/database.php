@@ -63,6 +63,7 @@ return new class () extends Migration {
                 $table->integer('sub_total')->default(0); //Tổng giá trị hàng hóa
                 $table->integer('total_payment')->default(0); //Đã trả cho nhà cung cấp
                 $table->integer('total_quantity')->default(0); //Tổng số lượng sản phẩm
+                $table->integer('is_payment')->default(0); //Đã trả hết
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
@@ -171,7 +172,7 @@ return new class () extends Migration {
                 $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
                 $table->string('image', 100)->nullable();
                 $table->integer('total_invoiced')->default(0); //Tổng mua
-                $table->integer('total_invoiced_without_return')->default(0); //Tổng cần trả cho nhà cung cấp
+                $table->integer('debt')->default(0); //Tổng cần trả cho nhà cung cấp
                 $table->integer('order')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
@@ -271,6 +272,15 @@ return new class () extends Migration {
                 //Order : Đơn hàng
                 $table->string('target_type', 10)->nullable();
 
+                //Thông tin phiếu thu
+                //Giá trị phiếu
+                $table->integer('order_value')->default(0);
+                //Giá trị cần trả phiếu
+                $table->integer('need_pay_value')->default(0);
+                //Đã chi trước
+                $table->integer('paid_value')->default(0);
+
+                $table->integer('parent_id')->default(0);
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);

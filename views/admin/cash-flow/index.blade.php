@@ -28,8 +28,6 @@ Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal-partner', [
 ]);
 !!}
 
-{!! Plugin::partial(STOCK_NAME, 'admin/cash-flow/detail-info'); !!}
-
 <script defer>
     $(function() {
         let handle = new CashFlowIndexHandle();
