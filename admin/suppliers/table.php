@@ -41,6 +41,18 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
                 'label' => 'Tổng mua',
                 'column' => fn($item, $args) => ColumnText::make('total_invoiced', $item, $args)->number()
             ],
+            'status'   => [
+                'label' => trans('user.status'),
+                'column' => fn($item, $args) =>
+                \SkillDo\Table\Columns\ColumnBadge::make('status', $item, $args)
+                    ->color(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->badge())
+                    ->label(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->label())
+                    ->attributes(fn ($item): array => [
+                        'data-id' => $item->id,
+                        'data-status' => $item->status,
+                    ])
+                    ->class(['js_supplier_btn_status'])
+            ],
             'action' => trans('table.action'),
         ];
 
@@ -67,6 +79,8 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
 
     public function queryFilter(\Qr $query, Request $request): \Qr
     {
+        $query->where('status', '<>', 'null');
+
         $keyword = $request->input('keyword');
 
         if (!empty($keyword)) {

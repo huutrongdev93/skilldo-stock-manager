@@ -1,3 +1,82 @@
+class SuppliersIndex
+{
+    constructor() {
+        this.elements = {
+            status: {
+                modal: $('#js_supplier_modal_status'),
+                modalAction: new bootstrap.Modal('#js_supplier_modal_status', {backdrop: "static", keyboard: false}),
+                inputStatus: $('#js_supplier_modal_status select[name="supplierStatus"]')
+            }
+        }
+
+        this.data = {
+            status: {
+                id: 0
+            }
+        }
+    }
+
+    clickStatus(element) {
+
+        this.data.status.id = element.attr('data-id');
+
+        let status = element.attr('data-status');
+
+        this.elements.status.inputStatus.val(status).trigger('change')
+
+        this.elements.status.modalAction.show();
+    }
+
+    clickSaveStatus(element) {
+
+        let loading = SkilldoUtil.buttonLoading(element)
+
+        let data = {
+            action: 'SuppliersAdminAjax::status',
+            status: this.elements.status.inputStatus.val(),
+            id: this.data.status.id
+        }
+
+        loading.start()
+
+        request
+            .post(ajax, data)
+            .then(function (response) {
+
+                SkilldoMessage.response(response);
+
+                loading.stop();
+
+                if(response.status === 'success') {
+
+                    $('.tr_' + this.data.status.id).find('.column-status').html(response.data);
+
+                    this.elements.status.modalAction.hide();
+                }
+            }.bind(this))
+            .catch(function (error) {
+                loading.stop();
+            });
+
+        return false;
+    }
+
+    events()
+    {
+        let handler = this;
+
+        $(document)
+            .on('click', '.js_supplier_btn_status', function () {
+                handler.clickStatus($(this))
+                return false;
+            })
+            .on('click', '.js_supplier_btn_status_save', function () {
+                handler.clickSaveStatus($(this))
+                return false;
+            })
+    }
+}
+
 class SuppliersPayment
 {
     constructor() {

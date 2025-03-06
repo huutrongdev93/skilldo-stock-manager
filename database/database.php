@@ -171,6 +171,7 @@ return new class () extends Migration {
                 $table->string('phone', 200)->collation('utf8mb4_unicode_ci')->nullable();
                 $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
                 $table->string('image', 100)->nullable();
+                $table->string('status', 20)->default('use');
                 $table->integer('total_invoiced')->default(0); //Tổng mua
                 $table->integer('debt')->default(0); //Tổng cần trả cho nhà cung cấp
                 $table->integer('order')->default(0);

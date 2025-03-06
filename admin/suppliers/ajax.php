@@ -215,7 +215,48 @@ class SuppliersAdminAjax
 
         response()->success(trans('Cập nhật dữ liệu thành công'));
     }
+
+    static function status(\SkillDo\Http\Request $request): void
+    {
+        $validate = $request->validate([
+            'id' => Rule::make('Id nhà sản xuất')->notEmpty()->integer()->min(1),
+            'status' => Rule::make('Trạng thái')->notEmpty()->in(array_column(\Stock\Status\Supplier::cases(), 'value')),
+        ]);
+
+        if ($validate->fails()) {
+            response()->error($validate->errors());
+        }
+
+        $id = (int)$request->input('id');
+
+        $object = \Stock\Model\Suppliers::widthStop()->whereKey($id)->first();
+
+        if(!have_posts($object)) {
+            response()->error('Nhà sản xuất không tồn tại');
+        }
+
+        $status = Str::clear($request->input('status'));
+
+        if($status == $object->status) {
+            response()->error('Trạng thái NCC không thay đổi');
+        }
+
+        $object->status = $status;
+
+        $object->save();
+
+        response()->success(trans('ajax.update.success'), \SkillDo\Table\Columns\ColumnBadge::make('status', [], [])
+            ->value($object->status)
+            ->color(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->badge())
+            ->label(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->label())
+            ->attributes(fn ($item): array => [
+                'data-id' => $object->id,
+                'data-status' => $object->status,
+            ])
+            ->class(['js_supplier_btn_status'])->view());
+    }
 }
 
 Ajax::admin('SuppliersAdminAjax::loadDebtPayment');
 Ajax::admin('SuppliersAdminAjax::addCashFlow');
+Ajax::admin('SuppliersAdminAjax::status');

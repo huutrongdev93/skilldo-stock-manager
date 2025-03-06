@@ -141,6 +141,7 @@ return new class () extends Migration {
                 $table->string('code', 200)->collation('utf8mb4_unicode_ci'); //mã nhà cung cấp
                 $table->integer('total_invoiced')->default(0); //Tổng mua
                 $table->integer('debt')->default(0); //Công nợ
+                $table->string('status', 20)->default('use');
                 $table->index('code');
             });
         }
