@@ -83,30 +83,47 @@ class SuppliersPayment
 
         this.ajax = {
             load: 'SuppliersAdminAjax::loadDebtPayment',
-            add: 'SuppliersAdminAjax::addCashFlow'
+            add: 'SuppliersAdminAjax::addCashFlow',
+            updateBalance: 'SuppliersAdminAjax::updateBalance'
         }
 
         this.data = {
             id: 0,
-            debt: 0,
-            payment: 0,
-            balance: 0
+            supplier: $('#js_supplier_detail_data').data('supplier'),
+            payment: {
+                debt: 0,
+                payment: 0,
+                balance: 0,
+            },
         }
 
         this.elements = {
-            modalId: '#js_supplier_debt_modal_payment',
-            tableBody: $('#js_supplier_debt_modal_payment table tbody'),
-            templateTableItems: $('#supplier_debt_purchase_order_template'),
-            divTotalDebt: $('#js_supplier_debt_modal_payment .js_supplier_debt_total'),
-            divBalance: $('#js_supplier_debt_modal_payment .js_supplier_debt_balance'),
-            inputPayment: $('#js_supplier_debt_modal_payment .js_input_supplier_total_payment'),
-            divTotalPaymentPurchase: $('#js_supplier_debt_modal_payment .js_total_payment_purchase'),
-            divTotalPaymentSupplier: $('#js_supplier_debt_modal_payment .js_total_payment_supplier'),
+            divTotalDebt: $('.js_supplier_detail_debt_total'),
+            payment: {
+                modalId: '#js_supplier_debt_modal_payment',
+                tableBody: $('#js_supplier_debt_modal_payment table tbody'),
+                templateTableItems: $('#supplier_debt_purchase_order_template'),
+                divTotalDebt: $('#js_supplier_debt_modal_payment .js_supplier_debt_total'),
+                divBalance: $('#js_supplier_debt_modal_payment .js_supplier_debt_balance'),
+                inputPayment: $('#js_supplier_debt_modal_payment .js_input_supplier_total_payment'),
+                divTotalPaymentPurchase: $('#js_supplier_debt_modal_payment .js_total_payment_purchase'),
+                divTotalPaymentSupplier: $('#js_supplier_debt_modal_payment .js_total_payment_supplier'),
+            },
+            balance: {
+                modalId: '#js_supplier_update_balance_modal',
+                divTotalDebt: $('#js_supplier_update_balance_modal .js_supplier_update_balance_total'),
+                inputBalance: $('#js_supplier_update_balance_modal .js_input_supplier_update_balance_number'),
+                inputNote: $('#js_supplier_update_balance_modal .js_input_supplier_update_balance_note'),
+            }
         }
 
-        this.elements.modal = $(this.elements.modalId)
+        this.elements.payment.modal = $(this.elements.payment.modalId)
 
-        this.elements.modalAction = new bootstrap.Modal(this.elements.modalId, {backdrop: "static", keyboard: false})
+        this.elements.payment.modalAction = new bootstrap.Modal(this.elements.payment.modalId, {backdrop: "static", keyboard: false})
+
+        this.elements.balance.modal = $(this.elements.balance.modalId)
+
+        this.elements.balance.modalAction = new bootstrap.Modal(this.elements.balance.modalId, {backdrop: "static", keyboard: false})
 
         this.purchaseOrders = SkilldoUtil.reducer()
     }
@@ -128,23 +145,25 @@ class SuppliersPayment
             id: id
         }
 
-        this.elements.tableBody.html('')
+        this.elements.payment.tableBody.html('')
 
         this.purchaseOrders.empty()
+
+        this.elements.payment.modal.find('.js_supplier_debt_modal_name').html(this.data.supplier.code + ' - ' + this.data.supplier.name)
 
         request.post(ajax, data).then(function(response)
         {
             if (response.status === 'success')
             {
-                this.data.debt = response.data.item.debt;
+                this.data.payment.debt = response.data.item.debt;
 
-                this.data.balance = response.data.item.debt;
+                this.data.payment.balance = response.data.item.debt;
 
-                this.elements.divTotalDebt.html(SkilldoUtil.formatNumber(this.data.debt))
+                this.elements.payment.divTotalDebt.html(SkilldoUtil.formatNumber(this.data.payment.debt))
 
-                this.elements.divBalance.html(SkilldoUtil.formatNumber(this.data.balance))
+                this.elements.payment.divBalance.html(SkilldoUtil.formatNumber(this.data.payment.balance))
 
-                this.elements.inputPayment.val(0)
+                this.elements.payment.inputPayment.val(0)
 
                 for (const [key, item] of Object.entries(response.data.purchaseOrders))
                 {
@@ -164,14 +183,14 @@ class SuppliersPayment
 
                     itemN.payment = SkilldoUtil.formatNumber(itemN.payment);
 
-                    this.elements.tableBody.append(function() {
-                        return self.elements.templateTableItems.html().split(/\$\{(.+?)\}/g).map(render(itemN)).join('');
+                    this.elements.payment.tableBody.append(function() {
+                        return self.elements.payment.templateTableItems.html().split(/\$\{(.+?)\}/g).map(render(itemN)).join('');
                     });
                 }
 
                 this.purchaseOrders.items = this.purchaseOrders.items.reverse();
 
-                this.elements.modalAction.show()
+                this.elements.payment.modalAction.show()
             }
 
             loading.stop()
@@ -200,7 +219,7 @@ class SuppliersPayment
             payment = item.payment
         }
 
-        if(this.data.payment > 0)
+        if(this.data.payment.payment > 0)
         {
             let paymentCalculator = 0
 
@@ -210,9 +229,9 @@ class SuppliersPayment
                 {
                     paymentCalculator += purchase.paid
 
-                    if(paymentCalculator > this.data.payment)
+                    if(paymentCalculator > this.data.payment.payment)
                     {
-                        purchase.paid = purchase.paid - (paymentCalculator - this.data.payment)
+                        purchase.paid = purchase.paid - (paymentCalculator - this.data.payment.payment)
 
                         $('.js_input_payment[data-id="'+purchase.id+'"]').val(SkilldoUtil.formatNumber(purchase.paid))
 
@@ -223,9 +242,9 @@ class SuppliersPayment
 
             paymentCalculator += payment;
 
-            if(paymentCalculator > this.data.payment)
+            if(paymentCalculator > this.data.payment.payment)
             {
-                payment = payment - (paymentCalculator - this.data.payment)
+                payment = payment - (paymentCalculator - this.data.payment.payment)
             }
         }
 
@@ -235,7 +254,7 @@ class SuppliersPayment
 
         $('.js_input_payment[data-id="'+item.id+'"]').val(SkilldoUtil.formatNumber(item.paid))
 
-        this.calculate()
+        this.calculatePayment()
     }
 
     changeTotalPayment(input)
@@ -244,9 +263,9 @@ class SuppliersPayment
 
         payment = parseInt(payment)
 
-        this.data.payment = payment;
+        this.data.payment.payment = payment;
 
-        this.data.balance = this.data.debt - payment;
+        this.data.payment.balance = this.data.payment.debt - payment;
 
         let paymentCalculator = payment;
 
@@ -274,10 +293,10 @@ class SuppliersPayment
             this.purchaseOrders.update(purchase)
         }
 
-        this.calculate()
+        this.calculatePayment()
     }
 
-    calculate()
+    calculatePayment()
     {
         let paymentPurchase = 0;
 
@@ -286,18 +305,18 @@ class SuppliersPayment
             paymentPurchase += purchase.paid
         }
 
-        let paymentSupplier = (paymentPurchase >= this.data.payment) ? 0 : this.data.payment - paymentPurchase
+        let paymentSupplier = (paymentPurchase >= this.data.payment.payment) ? 0 : this.data.payment.payment - paymentPurchase
 
-        this.data.balance = this.data.debt - this.data.payment;
+        this.data.payment.balance = this.data.payment.debt - this.data.payment.payment;
 
-        this.elements.divTotalPaymentPurchase.html(SkilldoUtil.formatNumber(paymentPurchase))
+        this.elements.payment.divTotalPaymentPurchase.html(SkilldoUtil.formatNumber(paymentPurchase))
 
-        this.elements.divTotalPaymentSupplier.html(SkilldoUtil.formatNumber(paymentSupplier))
+        this.elements.payment.divTotalPaymentSupplier.html(SkilldoUtil.formatNumber(paymentSupplier))
 
-        this.elements.divBalance.html(SkilldoUtil.formatNumber(this.data.balance))
+        this.elements.payment.divBalance.html(SkilldoUtil.formatNumber(this.data.payment.balance))
     }
 
-    clickAdd(button)
+    clickAddPayment(button)
     {
         let self = this;
 
@@ -308,7 +327,7 @@ class SuppliersPayment
         let data = {
             action: this.ajax.add,
             id: this.data.id,
-            payment: this.data.payment
+            payment: this.data.payment.payment
         }
 
         data.purchaseOrders = [];
@@ -329,7 +348,54 @@ class SuppliersPayment
             {
                 $('#admin_table_suppliers_debt_list #table-form-search button[type="submit"]').trigger('click')
 
-                this.elements.modalAction.hide()
+                this.elements.payment.modalAction.hide()
+            }
+
+            loading.stop()
+
+        }.bind(this))
+    }
+
+    clickBalance(button)
+    {
+        this.elements.balance.modal.find('.js_supplier_update_balance_modal_name').html(this.data.supplier.code + ' - ' + this.data.supplier.name)
+        this.elements.balance.divTotalDebt.html(SkilldoUtil.formatNumber(this.data.supplier.debt))
+        this.elements.balance.inputBalance.html('')
+        this.elements.balance.modalAction.show()
+    }
+
+    clickUpdateBalance(button)
+    {
+        let self = this;
+
+        let balance = this.elements.balance.inputBalance.val()
+
+        balance = parseInt(balance.replace(/,/g, ''))
+
+        let loading = SkilldoUtil.buttonLoading(button)
+
+        loading.start()
+
+        let data = {
+            action: this.ajax.updateBalance,
+            id: this.data.supplier.id,
+            balance: balance,
+            note: this.elements.balance.inputNote.val()
+        }
+
+        request.post(ajax, data).then(function(response)
+        {
+            SkilldoMessage.response(response)
+
+            if (response.status === 'success')
+            {
+                this.data.supplier.debt = response.data.debt;
+
+                this.elements.divTotalDebt.html(SkilldoUtil.formatNumber(this.data.supplier.debt))
+
+                $('#admin_table_suppliers_debt_list #table-form-search button[type="submit"]').trigger('click')
+
+                this.elements.balance.modalAction.hide()
             }
 
             loading.stop()
@@ -354,7 +420,16 @@ class SuppliersPayment
                 return false;
             })
             .on('click', '#js_supplier_debt_modal_payment .js_supplier_debt_btn_submit', function () {
-                handler.clickAdd($(this))
+                handler.clickAddPayment($(this))
+                return false;
+            })
+            //Update Balance
+            .on('click', '.js_supplier_btn_update_balance', function () {
+                handler.clickBalance($(this))
+                return false;
+            })
+            .on('click', '#js_supplier_update_balance_modal .js_supplier_update_balance_btn_submit', function () {
+                handler.clickUpdateBalance($(this))
                 return false;
             })
     }

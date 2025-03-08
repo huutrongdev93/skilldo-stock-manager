@@ -170,6 +170,8 @@ return new class () extends Migration {
                 $table->string('email', 200)->collation('utf8mb4_unicode_ci')->nullable();
                 $table->string('phone', 200)->collation('utf8mb4_unicode_ci')->nullable();
                 $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('company', 255)->nullable();
+                $table->string('tax', 50)->nullable();
                 $table->string('image', 100)->nullable();
                 $table->string('status', 20)->default('use');
                 $table->integer('total_invoiced')->default(0); //Tổng mua
@@ -179,6 +181,41 @@ return new class () extends Migration {
                 $table->dateTime('updated')->nullable();
                 $table->integer('user_created')->default(0);
                 $table->integer('user_updated')->default(0);
+                $table->index('code');
+            });
+        }
+
+        if(!schema()->hasTable('suppliers_adjustment')) {
+            schema()->create('suppliers_adjustment', function (Blueprint $table) {
+                $table->increments('id');
+
+                $table->string('code', 200)
+                    ->collation('utf8mb4_unicode_ci')
+                    ->comment('Mã code phiếu điều chỉnh');
+
+                $table->integer('partner_id')
+                    ->default(0)
+                    ->comment('Id nhà cung cấp');
+
+                $table->integer('debt_before')
+                    ->default(0)
+                    ->comment('Công nợ trước điều chỉnh');
+
+                $table->integer('balance')
+                    ->default(0)
+                    ->comment('Công nợ sau khi được điều chỉnh');
+
+                $table->integer('time')
+                    ->default(0)
+                    ->comment('Thời gian điều chỉnh');
+
+                $table->integer('user_id')->default(0)->comment('id người điều chỉnh');
+                $table->string('user_code', 100)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('user_name', 100)->collation('utf8mb4_unicode_ci')->nullable();
+
+                $table->text('note')->collation('utf8mb4_unicode_ci')->nullable();
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
                 $table->index('code');
             });
         }

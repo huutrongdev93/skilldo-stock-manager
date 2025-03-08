@@ -92,15 +92,17 @@ class PurchaseReturn extends SKDObjectTable
             'sub_total' => \Prd::price($item->sub_total),
             'total' => \Prd::price($item->sub_total - $item->return_discount),
             'total_payment' => \Prd::price($item->total_payment),
-            'total_quantity' => $item->total_quantity,
+            'total_quantity' => $item->sub_total,
         ];
 
         $buttons[] = Admin::button('blue', [
             'icon' => '<i class="fa-sharp-duotone fa-solid fa-eye"></i>',
             'tooltip' => 'Chi tiết',
             'data-id' => $item->id,
+            'data-target' => 'purchase-return',
+            'data-target-id' => $item->id,
             'data-bill' => htmlspecialchars(json_encode($data)),
-            'class' => 'js_purchase_return_btn_detail'
+            'class' => 'js_btn_target'
         ]);
 
         if($item->status === \Stock\Status\PurchaseReturn::draft->value)

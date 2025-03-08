@@ -27,7 +27,9 @@ class PurchaseOrder extends SKDObjectTable
 
         $this->_column_headers['code'] = [
             'label'  => trans('Mã nhập hàng'),
-            'column' => fn($item, $args) => ColumnText::make('code', $item, $args)
+            'column' => fn($item, $args) => ColumnView::make('target_code', $item, $args)->html(function ($column){
+                echo '<a href="#" class="js_btn_target" data-target="purchase-order" data-target-id="'.$column->item->id.'" data-target-cash-flow="0">'.$column->item->code.'</a>';
+            })
         ];
 
         $this->_column_headers['created'] = [
@@ -139,7 +141,9 @@ class PurchaseReturn extends SKDObjectTable
 
         $this->_column_headers['code'] = [
             'label'  => trans('Mã trả hàng'),
-            'column' => fn($item, $args) => ColumnText::make('code', $item, $args)
+            'column' => fn($item, $args) => ColumnView::make('target_code', $item, $args)->html(function ($column){
+                echo '<a href="#" class="js_btn_target" data-target="purchase-return" data-target-id="'.$column->item->id.'" data-target-cash-flow="0">'.$column->item->code.'</a>';
+            })
         ];
 
         $this->_column_headers['created'] = [
@@ -261,7 +265,19 @@ class Debt extends SKDObjectTable
             'column' => fn($item, $args) => ColumnView::make('target_code', $item, $args)->html(function ($column){
                 if(!empty($column->item->target_id))
                 {
-                    echo '<a href="#" class="js_btn_target" data-target="cash-flow" data-target-id="'.$column->item->target_id.'">'.$column->item->target_code.'</a>';
+                    if($column->item->target_type == \Stock\Prefix::adjustment->value)
+                    {
+                        echo '<a href="#" class="js_btn_target" data-target="adjustment" data-target-id="'.$column->item->target_id.'">'.$column->item->target_code.'</a>';
+                    }
+                    else if($column->item->target_type == \Stock\Prefix::purchaseOrder->value)
+                    {
+                        echo '<a href="#" class="js_btn_target" data-target="purchase-order" data-target-id="'.$column->item->target_id.'" data-target-cash-flow="0">'.$column->item->target_code.'</a>';
+                    }
+                    else
+                    {
+                        echo '<a href="#" class="js_btn_target" data-target="cash-flow" data-target-id="'.$column->item->target_id.'">'.$column->item->target_code.'</a>';
+                    }
+
                 }
                 else
                 {
@@ -282,12 +298,16 @@ class Debt extends SKDObjectTable
 
         $this->_column_headers['amount'] = [
             'label'  => trans('Giá trị'),
-            'column' => fn($item, $args) => ColumnText::make('amount', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('amount', $item, $args)
+                ->value(function ($item) { return $item->amount*-1;})
+                ->number()
         ];
 
         $this->_column_headers['total'] = [
             'label'  => trans('Nợ cần trả NCC'),
-            'column' => fn($item, $args) => ColumnText::make('balance', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('balance', $item, $args)
+                ->value(function ($item) { return $item->balance*-1;})
+                ->number()
         ];
 
         return $this->_column_headers;
@@ -353,6 +373,11 @@ class Debt extends SKDObjectTable
             if($object->target_type === 'PC')
             {
                 $object->target_type_name = 'Thanh toán';
+            }
+
+            if($object->target_type === \Stock\Prefix::adjustment->value)
+            {
+                $object->target_type_name = 'Điều chỉnh';
             }
 
             $object->time = !empty($object->time) ? $object->time : strtotime($object->created);

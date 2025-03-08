@@ -4,6 +4,29 @@ use SkillDo\Validate\Rule;
 
 class StockPurchaseReturnAdminAjax
 {
+    static function detail(\SkillDo\Http\Request $request): void
+    {
+        $id = $request->input('id');
+
+        $object = \Stock\Model\PurchaseReturn::find($id);
+
+        if(empty($object))
+        {
+            response()->error('phiếu trả hàng nhập không có trên hệ thống');
+        }
+        $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
+        $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
+        $object->status         = Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($object->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($object->status)->label());
+        $object->total        = \Prd::price($object->sub_total - $object->total_payment - $object->return_discount);
+        $object->sub_total      = \Prd::price($object->sub_total);
+        $object->return_discount = \Prd::price($object->return_discount);
+        $object->total_payment  = \Prd::price($object->total_payment);
+
+        response()->success('load dữ liệu thành công', [
+            'item' => $object->toObject()
+        ]);
+    }
+
     static function loadProductsDetail(\SkillDo\Http\Request $request): void
     {
         $page   = $request->input('page');
@@ -1579,6 +1602,7 @@ class StockPurchaseReturnAdminAjax
     }
 }
 
+Ajax::admin('StockPurchaseReturnAdminAjax::detail');
 Ajax::admin('StockPurchaseReturnAdminAjax::loadProductsDetail');
 Ajax::admin('StockPurchaseReturnAdminAjax::loadProductsEdit');
 Ajax::admin('StockPurchaseReturnAdminAjax::addDraft');

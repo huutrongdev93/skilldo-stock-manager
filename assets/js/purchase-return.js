@@ -15,13 +15,6 @@ class PurchaseReturnIndexHandle extends WarehouseIndexHandle
         let handle = this;
 
         $(document)
-            .on('click', '.js_purchase_return_btn_detail', function () {
-                handle.clickButtonDetail($(this))
-            })
-            .on('click', '#js_purchase_return_modal_detail .pagination .page-link', function () {
-                handle.clickPaginationDetail($(this))
-                return false
-            })
             .on('click', '.js_purchase_return_btn_print', function () {
                 handle.clickButtonPrint($(this))
                 return false

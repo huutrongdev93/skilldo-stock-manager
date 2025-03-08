@@ -4,6 +4,29 @@ use SkillDo\Validate\Rule;
 
 class StockPurchaseOrderAdminAjax
 {
+    static function detail(\SkillDo\Http\Request $request): void
+    {
+        $id = $request->input('id');
+
+        $object = \Stock\Model\PurchaseOrder::find($id);
+
+        if(empty($object))
+        {
+            response()->error('phiếu nhập hàng không có trên hệ thống');
+        }
+        $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
+        $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
+        $object->status         = Admin::badge(\Stock\Status\PurchaseOrder::tryFrom($object->status)->badge(), \Stock\Status\PurchaseOrder::tryFrom($object->status)->label());
+        $object->payment        = \Prd::price($object->sub_total - $object->total_payment - $object->discount);
+        $object->sub_total      = \Prd::price($object->sub_total);
+        $object->discount       = \Prd::price($object->discount);
+        $object->total_payment  = \Prd::price($object->total_payment);
+
+        response()->success('load dữ liệu thành công', [
+            'item' => $object->toObject()
+        ]);
+    }
+
     static function loadProductsDetail(\SkillDo\Http\Request $request): void
     {
         $page   = $request->input('page');
@@ -76,7 +99,7 @@ class StockPurchaseOrderAdminAjax
         $id   = (int)$request->input('id');
 
         $cashFlows = \Stock\Model\CashFlow::widthChildren()
-            ->select('id', 'target_id', 'target_code', 'parent_id', 'created', 'amount', 'order_value', 'need_pay_value', 'paid_value')
+            ->select('id', 'code', 'target_id', 'target_code', 'parent_id', 'created', 'amount', 'order_value', 'need_pay_value', 'paid_value')
             ->where('target_id', $id)
             ->where('target_type', \Stock\Prefix::purchaseOrder->value)
             ->get();
@@ -1550,6 +1573,7 @@ class StockPurchaseOrderAdminAjax
     }
 }
 
+Ajax::admin('StockPurchaseOrderAdminAjax::detail');
 Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsDetail');
 Ajax::admin('StockPurchaseOrderAdminAjax::loadCashFlowDetail');
 Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsEdit');

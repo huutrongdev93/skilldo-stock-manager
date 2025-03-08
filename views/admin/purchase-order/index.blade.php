@@ -2,7 +2,6 @@
     'name'      => 'Phiếu nhập hàng',
     'table'     => $table,
 ]) !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-info', compact('tableProduct')); !!}
 {!! Plugin::partial(STOCK_NAME, 'admin/purchase-order/print'); !!}
 {!! Plugin::partial(STOCK_NAME, 'admin/export', [
     'action' => 'StockPurchaseOrderAdminAjax::exportDetail',

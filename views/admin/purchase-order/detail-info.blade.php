@@ -14,7 +14,7 @@
                 {!! Admin::tabs([
                     'products' => [
                         'label'   => 'Sản phẩm', //Tiêu đề của tab
-                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-products', ['table' => $tableProduct])
+                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-products', ['table' => (new \Stock\Table\PurchaseOrder\ProductDetail())])
                     ],
                     'cashFlow' => [
                         'label'   => 'Lịch sử thanh toán',

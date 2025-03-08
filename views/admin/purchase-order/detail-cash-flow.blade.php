@@ -13,7 +13,7 @@
 
 <script id="purchase_order_detail_cash_flow_table_item_template" type="text/x-custom-template">
     <tr>
-        <td><a href="#" class="js_btn_target" data-target="cash-flow" data-target-id="${target_id}">${target_code}</a></td>
+        <td><a href="#" class="js_btn_target" data-target="cash-flow" data-target-id="${id}">${code}</a></td>
         <td>${created}</td>
         <td>${need_pay_value}</td>
         <td>${paid_value}</td>

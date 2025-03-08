@@ -2,7 +2,6 @@
     'name'      => 'Phiếu trả hàng',
     'table'     => $table,
 ]) !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/purchase-return/detail-info', compact('tableProduct')); !!}
 {!! Plugin::partial(STOCK_NAME, 'admin/purchase-return/print'); !!}
 {!! Plugin::partial(STOCK_NAME, 'admin/export', [
     'action' => 'StockPurchaseReturnAdminAjax::exportDetail',

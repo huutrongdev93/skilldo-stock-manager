@@ -81,9 +81,11 @@ class CashFlow extends SKDObjectTable
         $buttons[] = Admin::button('blue', [
             'icon' => '<i class="fa-sharp-duotone fa-solid fa-eye"></i>',
             'tooltip' => 'Chi tiết',
-            'data-id' => $item->id,
             'data-bill' => htmlspecialchars(json_encode($item->toObject())),
-            'class' => 'js_cash_flow_btn_detail'
+            'data-id' => $item->id,
+            'data-target' => 'cash-flow',
+            'data-target-id' => $item->id,
+            'class' => 'js_btn_target'
         ]);
 
         $buttons[] = Admin::button('blue', [

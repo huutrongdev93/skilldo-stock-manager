@@ -29,16 +29,6 @@ class CashFlowIndexHandle
                 modal: $('#js_cash_flow_partner_modal_add'),
                 modelAction: new bootstrap.Modal('#js_cash_flow_partner_modal_add', {backdrop: "static", keyboard: false}),
                 form: $('#js_cash_flow_partner_form')
-            },
-            detail: {
-                modalId: `#js_cash_flow_modal_detail`,
-                modal: $(`#js_cash_flow_modal_detail`),
-                modelAction: new bootstrap.Modal('#js_cash_flow_modal_detail', {backdrop: "static", keyboard: false}),
-                loading: $(`#js_cash_flow_modal_detail .loading`),
-                info: $(`#js_cash_flow_modal_detail .js_detail_content`),
-                __templateInfo: `#cash_flow_detail_template`,
-                __templateTable: `#cash_flow_detail_table_template`,
-                __templateTableItem: `#cash_flow_detail_table_item_template`,
             }
         }
 
@@ -70,9 +60,6 @@ class CashFlowIndexHandle
             .on('submit', '.js_cash_flow_modal_add', function () {
                 handler.add($(this))
                 return false;
-            })
-            .on('click', '.js_cash_flow_btn_detail', function () {
-                handler.clickButtonDetail($(this))
             })
 
     }
@@ -190,72 +177,6 @@ class CashFlowIndexHandle
             loading.stop()
 
         }.bind(this))
-    }
-
-    clickButtonDetail(button) {
-
-        let id = button.data('id')
-
-        if(this.id != id)
-        {
-            let loading = SkilldoUtil.buttonLoading(button)
-
-            loading.start()
-
-            this.elements.detail.info.html('')
-
-            this.id = id
-
-            let data = {
-                action: this.ajax.detail,
-                id: id
-            }
-
-            request.post(ajax, data).then(function(response)
-            {
-                if (response.status === 'success')
-                {
-                    response.data.item.target_table = ''
-
-                    if(response.data.item?.targets && response.data.item?.targets.length > 0)
-                    {
-                        let targetItems = ''
-
-                        for (const [key, target] of Object.entries(response.data.item?.targets)) {
-                            targetItems += ([target].map(() => {
-
-                                target.need_pay_value = SkilldoUtil.formatNumber(target.need_pay_value)
-
-                                target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
-
-                                target.amount = SkilldoUtil.formatNumber(target.amount)
-
-                                return $(this.elements.detail.__templateTableItem)
-                                    .html()
-                                    .split(/\$\{(.+?)\}/g)
-                                    .map(render(target))
-                                    .join('');
-                            }))
-                        }
-
-                        response.data.item.target_table = ([{}].map(() => {
-                            return $(this.elements.detail.__templateTable).html().split(/\$\{(.+?)\}/g).map(render({
-                                items : targetItems
-                            })).join('');
-                        }))
-                    }
-
-                    this.elements.detail.info.html(() => {
-                        return $(this.elements.detail.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
-                    });
-
-                    this.elements.detail.modelAction.show()
-
-                    loading.stop()
-                }
-            }.bind(this))
-        }
-
     }
 
     cancelSuccess(response, button)

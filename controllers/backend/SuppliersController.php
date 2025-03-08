@@ -56,6 +56,14 @@ class SuppliersController extends MY_Controller {
 
         Cms::setData('tableDebt', $tableDebt);
 
+        Cms::setData('supplier', htmlspecialchars(json_encode([
+            'id' => $object->id,
+            'name' => $object->name,
+            'code' => $object->code,
+            'phone' => $object->phone,
+            'debt' => $object->debt,
+        ])));
+
         $this->template->setView(STOCK_NAME.'/views/admin/suppliers/detail', 'plugin');
 
         $this->template->render();

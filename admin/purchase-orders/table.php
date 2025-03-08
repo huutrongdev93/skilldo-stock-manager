@@ -92,9 +92,10 @@ class PurchaseOrder extends SKDObjectTable
         $buttons[] = Admin::button('blue', [
             'icon' => '<i class="fa-sharp-duotone fa-solid fa-eye"></i>',
             'tooltip' => 'Chi tiết',
-            'data-id' => $item->id,
+            'data-target' => 'purchase-order',
+            'data-target-id' => $item->id,
             'data-bill' => htmlspecialchars(json_encode($data)),
-            'class' => 'js_purchase_order_btn_detail'
+            'class' => 'js_btn_target'
         ]);
 
         if($item->status === \Stock\Status\PurchaseOrder::draft->value)

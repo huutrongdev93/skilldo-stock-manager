@@ -857,15 +857,13 @@ class WarehouseLocation {
 
 }
 
-class WarehouseDetail {
-
+class CashFlowModalDetail
+{
     constructor()
     {
-        this.ajax = {
-            cashFlow: 'CashFlowAdminAjax::detail',
-        }
+        this.ajax = 'CashFlowAdminAjax::detail'
 
-        this.cashFlow = {
+        this.elements = {
             modalId: `#js_cash_flow_modal_detail`,
             modal: $(`#js_cash_flow_modal_detail`),
             modelAction: new bootstrap.Modal('#js_cash_flow_modal_detail', {backdrop: "static", keyboard: false}),
@@ -882,26 +880,12 @@ class WarehouseDetail {
         }
     }
 
-    onClickTarget(button)
+    handle(button)
     {
-        this.data.type = button.data('target')
-
-        this.data.id = button.data('target-id')
-
-        if(this.data.type == 'cash-flow')
-        {
-            this.onClickCashFlow(button)
-        }
-
-        return false
-    }
-
-    onClickCashFlow(button)
-    {
-        this.cashFlow.info.html('')
+        this.elements.info.html('')
 
         let data = {
-            action: this.ajax.cashFlow,
+            action: this.ajax,
             id: this.data.id,
         }
 
@@ -922,9 +906,14 @@ class WarehouseDetail {
 
                             target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
 
+                            if(target.amount < 0)
+                            {
+                                target.amount = target.amount*-1;
+                            }
+
                             target.amount = SkilldoUtil.formatNumber(target.amount)
 
-                            return $(this.cashFlow.__templateTableItem)
+                            return $(this.elements.__templateTableItem)
                                 .html()
                                 .split(/\$\{(.+?)\}/g)
                                 .map(render(target))
@@ -933,19 +922,425 @@ class WarehouseDetail {
                     }
 
                     response.data.item.target_table = ([{}].map(() => {
-                        return $(this.cashFlow.__templateTable).html().split(/\$\{(.+?)\}/g).map(render({
+                        return $(this.elements.__templateTable).html().split(/\$\{(.+?)\}/g).map(render({
                             items : targetItems
                         })).join('');
                     }))
                 }
 
-                this.cashFlow.info.html(() => {
-                    return $(this.cashFlow.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
+                this.elements.info.html(() => {
+                    response.data.item.amount = SkilldoUtil.formatNumber(response.data.item.amount)
+                    return $(this.elements.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
                 });
 
-                this.cashFlow.modelAction.show()
+                this.elements.modelAction.show()
             }
         }.bind(this))
+
+        return false
+    }
+}
+
+class PurchaseOrderModalDetail
+{
+    constructor()
+    {
+        this.ajax = {
+            detail: 'StockPurchaseOrderAdminAjax::detail',
+            products: 'StockPurchaseOrderAdminAjax::loadProductsDetail',
+            cashFlow: 'StockPurchaseOrderAdminAjax::loadCashFlowDetail',
+        }
+
+        let modalId = '#js_purchase_order_modal_detail'
+
+        this.elements = {
+            modalId: modalId,
+            modal: $(modalId),
+            modelAction: new bootstrap.Modal(modalId, {backdrop: "static", keyboard: false}),
+            loading: $(`${modalId} .loading`),
+            info: $(`${modalId} .js_detail_content`),
+            __templateInfo: `#purchase_order_detail_template`,
+            products: {
+                tbody: $(`#js_purchase_order_detail_products tbody`),
+                pagination: $(`${modalId} .pagination`),
+                __templateTable: `#purchase_order_detail_table_template`,
+                __templateTableItem: `#purchase_order_detail_table_item_template`,
+            },
+            cashFlow: {
+                tbody: $(`#js_purchase_order_detail_cash_flow tbody`),
+                __templateTableItem: `#purchase_order_detail_cash_flow_table_item_template`,
+            },
+
+        }
+
+        this.data = {
+            id: 0,
+            pagination: new Pagination({
+                limit: 10,
+                page : 1
+            }),
+        }
+    }
+
+    handle(button)
+    {
+        let loadCashFlow = button.data('target-cash-flow')
+
+        let object = button.data('bill')
+
+        this.elements.info.html('')
+
+        this.elements.modelAction.show()
+
+        if(object !== undefined && object?.code)
+        {
+            this.elements.info.html(() => {
+                return $(this.elements.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(object)).join('');
+            });
+
+            this.loadProductDetail()
+
+            if(loadCashFlow == 0)
+            {
+                this.elements.modal.find('.nav-tabs').hide()
+            }
+            else
+            {
+                this.elements.modal.find('.nav-tabs').show()
+                this.loadCashFlow()
+            }
+        }
+        else
+        {
+            let data = {
+                action: this.ajax.detail,
+                id: this.data.id,
+            }
+
+            request.post(ajax, data).then(function(response)
+            {
+                if (response.status === 'success')
+                {
+                    this.elements.info.html(() => {
+                        return $(this.elements.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
+                    });
+
+                    this.loadProductDetail()
+
+                    if(loadCashFlow == 0)
+                    {
+                        this.elements.modal.find('.nav-tabs').hide()
+                    }
+                    else
+                    {
+                        this.elements.modal.find('.nav-tabs').show()
+                        this.loadCashFlow()
+                    }
+                }
+            }.bind(this))
+        }
+
+        return false
+    }
+
+    loadProductDetail()
+    {
+        this.elements.products.tbody.html('');
+
+        this.elements.products.pagination.html('');
+
+        this.elements.loading.show();
+
+        let data = {
+            action    : this.ajax.products,
+            page      : this.elements.products.pagination.page,
+            limit     : this.elements.products.pagination.limit,
+            id        : this.data.id,
+        }
+
+        request.post(ajax, data)
+            .then(function(response) {
+
+                if (response.status === 'error') SkilldoMessage.response(response);
+
+                if (response.status === 'success')
+                {
+                    response.data.html = decodeURIComponent(atob(response.data.html).split('').map(function (c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    this.data.pagination.setLimit(response.pagination.limit);
+
+                    this.data.pagination.setTotal(response.pagination.total);
+
+                    this.data.pagination.setCurrentPage(response.pagination.page);
+
+                    this.elements.products.tbody.html(response.data.html);
+
+                    this.elements.products.pagination.html(this.data.pagination.render());
+
+                }
+
+                this.elements.loading.hide();
+
+            }.bind(this))
+    }
+
+    loadCashFlow()
+    {
+        this.elements.cashFlow.tbody.html('')
+
+        let data = {
+            action: this.ajax.cashFlow,
+            id: this.data.id,
+        }
+
+        request.post(ajax, data).then(function(response)
+        {
+            if (response.status === 'success')
+            {
+                if(response.data.length > 0)
+                {
+                    let targetItems = ''
+
+                    for (const [key, target] of Object.entries(response.data)) {
+
+                        targetItems += (([target].map(() => {
+
+                            target.need_pay_value = SkilldoUtil.formatNumber(target.need_pay_value)
+
+                            target.paid_value = SkilldoUtil.formatNumber(target.paid_value)
+
+                            target.amount = SkilldoUtil.formatNumber(target.amount)
+
+                            return $(this.elements.cashFlow.__templateItem)
+                                .html()
+                                .split(/\$\{(.+?)\}/g)
+                                .map(render(target))
+                                .join('');
+                        })))
+                    }
+
+                    this.elements.cashFlow.tbody.html(targetItems)
+                }
+            }
+        }.bind(this))
+
+        return false
+    }
+
+    clickPaginationDetail(button)
+    {
+        let page = button.data('number');
+
+        if(page !== undefined)
+        {
+            this.data.pagination.setCurrentPage(page);
+            this.loadProductDetail();
+        }
+
+        return false;
+    }
+
+    events() {
+
+        let handler = this;
+
+        $(document)
+            .on('click', '#js_purchase_order_modal_detail .pagination .page-link', function () {
+                handler.clickPaginationDetail($(this))
+                return false
+            })
+    }
+}
+
+class PurchaseReturnModalDetail
+{
+    constructor()
+    {
+        this.ajax = {
+            detail: 'StockPurchaseReturnAdminAjax::detail',
+            products: 'StockPurchaseReturnAdminAjax::loadProductsDetail',
+        }
+
+        let modalId = '#js_purchase_return_modal_detail'
+
+        this.elements = {
+            modalId: modalId,
+            modal: $(modalId),
+            modelAction: new bootstrap.Modal(modalId, {backdrop: "static", keyboard: false}),
+            loading: $(`${modalId} .loading`),
+            info: $(`${modalId} .js_detail_content`),
+            __templateInfo: `#purchase_return_detail_template`,
+            products: {
+                tbody: $(`#js_purchase_return_detail_products tbody`),
+                pagination: $(`${modalId} .pagination`),
+                __templateTable: `#purchase_return_detail_table_template`,
+                __templateTableItem: `#purchase_return_detail_table_item_template`,
+            },
+        }
+
+        this.data = {
+            id: 0,
+            pagination: new Pagination({
+                limit: 10,
+                page : 1
+            }),
+        }
+    }
+
+    handle(button)
+    {
+        let object = button.data('bill')
+
+        this.elements.info.html('')
+
+        this.elements.modelAction.show()
+
+        if(object !== undefined && object?.code)
+        {
+            this.elements.info.html(() => {
+                return $(this.elements.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(object)).join('');
+            });
+
+            this.loadProductDetail()
+        }
+        else
+        {
+            let data = {
+                action: this.ajax.detail,
+                id: this.data.id,
+            }
+
+            request.post(ajax, data).then(function(response)
+            {
+                if (response.status === 'success')
+                {
+                    this.elements.info.html(() => {
+                        return $(this.elements.__templateInfo).html().split(/\$\{(.+?)\}/g).map(render(response.data.item)).join('');
+                    });
+
+                    this.loadProductDetail()
+                }
+            }.bind(this))
+        }
+
+        return false
+    }
+
+    loadProductDetail()
+    {
+        this.elements.products.tbody.html('');
+
+        this.elements.products.pagination.html('');
+
+        this.elements.loading.show();
+
+        let data = {
+            action    : this.ajax.products,
+            page      : this.elements.products.pagination.page,
+            limit     : this.elements.products.pagination.limit,
+            id        : this.data.id,
+        }
+
+        request.post(ajax, data)
+            .then(function(response) {
+
+                if (response.status === 'error') SkilldoMessage.response(response);
+
+                if (response.status === 'success')
+                {
+                    response.data.html = decodeURIComponent(atob(response.data.html).split('').map(function (c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    this.data.pagination.setLimit(response.pagination.limit);
+
+                    this.data.pagination.setTotal(response.pagination.total);
+
+                    this.data.pagination.setCurrentPage(response.pagination.page);
+
+                    this.elements.products.tbody.html(response.data.html);
+
+                    this.elements.products.pagination.html(this.data.pagination.render());
+
+                }
+
+                this.elements.loading.hide();
+
+            }.bind(this))
+    }
+
+    clickPaginationDetail(button)
+    {
+        let page = button.data('number');
+
+        if(page !== undefined)
+        {
+            this.data.pagination.setCurrentPage(page);
+            this.loadProductDetail();
+        }
+
+        return false;
+    }
+
+    events() {
+
+        let handler = this;
+
+        $(document)
+            .on('click', '#js_purchase_return_modal_detail .pagination .page-link', function () {
+                handler.clickPaginationDetail($(this))
+                return false
+            })
+    }
+}
+
+class WarehouseDetail {
+
+    constructor()
+    {
+        this.ajax = {
+            cashFlow: 'CashFlowAdminAjax::detail',
+            purchaseOrder: 'CashFlowAdminAjax::detail',
+        }
+
+        this.cashFlow = new CashFlowModalDetail()
+
+        this.purchaseOrder = new PurchaseOrderModalDetail()
+
+        this.purchaseReturn = new PurchaseReturnModalDetail()
+
+        this.data = {
+            id: 0,
+            type: undefined,
+        }
+    }
+
+    onClickTarget(button)
+    {
+        this.data.type = button.data('target')
+
+        this.data.id = button.data('target-id')
+
+        //Xem chi tiết phiếu thu/chi
+        if(this.data.type == 'cash-flow')
+        {
+            this.cashFlow.data.id = this.data.id
+            this.cashFlow.handle(button)
+        }
+        //Xem chi tiết phiếu nhập hàng
+        if(this.data.type == 'purchase-order')
+        {
+            this.purchaseOrder.data.id = this.data.id
+            this.purchaseOrder.handle(button)
+        }
+        //Xem chi tiết phiếu trả hàng nhập
+        if(this.data.type == 'purchase-return')
+        {
+            this.purchaseReturn.data.id = this.data.id
+            this.purchaseReturn.handle(button)
+        }
 
         return false
     }

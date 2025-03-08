@@ -16,11 +16,7 @@ class PurchaseOrdersController extends MY_Controller {
     {
         $table = new \Stock\Table\PurchaseOrder();
 
-        $tableProduct = new \Stock\Table\PurchaseOrder\ProductDetail();
-
         Cms::setData('table', $table);
-
-        Cms::setData('tableProduct', $tableProduct);
 
         $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/index', 'plugin');
 

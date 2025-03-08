@@ -120,7 +120,7 @@ class SuppliersAdminAjax
         //Tạo công nợ cho phiêu chi
         \Stock\Model\Debt::create([
             'before'        => ($supplier->debt)*-1,
-            'amount'        => $payment*-1,
+            'amount'        => $payment,
             'balance'       => $balance*-1,
             'partner_id'    => $supplier->id,
             'target_id'     => $idCashFlow,
@@ -255,8 +255,76 @@ class SuppliersAdminAjax
             ])
             ->class(['js_supplier_btn_status'])->view());
     }
+
+    static function updateBalance(\SkillDo\Http\Request $request): void
+    {
+        $validate = $request->validate([
+            'id' => Rule::make('Id nhà sản xuất')->notEmpty()->integer()->min(1),
+            'balance' => Rule::make('Giá trị nợ điều chỉnh')->notEmpty()->integer()->min(0),
+        ]);
+
+        if ($validate->fails()) {
+            response()->error($validate->errors());
+        }
+
+        $id = (int)$request->input('id');
+
+        $object = \Stock\Model\Suppliers::widthStop()->whereKey($id)->first();
+
+        if(!have_posts($object))
+        {
+            response()->error('Nhà sản xuất không tồn tại');
+        }
+
+        $balance = (int)$request->input('balance');
+
+        if($balance === $object->debt)
+        {
+            response()->error('Giá trị nợ sau khi điều chỉnh không thay đổi');
+        }
+
+        $amount = $balance - $object->debt;
+
+        //Tạo phiếu điều chỉnh
+        $id = \Stock\Model\SupplierAdjustment::create([
+            'balance'       => $balance,
+            'partner_id'    => $object->id,
+            'debt_before'   => $object->debt,
+            'time'          => time(),
+            'user_id'       => Auth::id(),
+            'user_code'     => Auth::user()->username,
+            'user_name'     => Auth::user()->firstname.' '.Auth::user()->lastname,
+            'note'          => $request->input('note'),
+        ]);
+
+        if(empty($id) || is_skd_error($id))
+        {
+            response()->error($id);
+        }
+
+        //Khởi tạo lịch sử thay đổi công nợ
+        \Stock\Model\Debt::create([
+            'before'        => ($object->debt)*-1,
+            'amount'        => $amount*-1,
+            'balance'       => $balance*-1,
+            'partner_id'    => $object->id,
+            'target_id'     => $id,
+            'target_code'   => \Stock\Helper::code(\Stock\Prefix::adjustment->value, $id),
+            'target_type'   => \Stock\Prefix::adjustment->value,
+            'time'          => time()
+        ]);
+
+        $object->debt = $balance;
+
+        $object->save();
+
+        response()->success(trans('ajax.update.success'), [
+            'debt' => $balance
+        ]);
+    }
 }
 
 Ajax::admin('SuppliersAdminAjax::loadDebtPayment');
 Ajax::admin('SuppliersAdminAjax::addCashFlow');
 Ajax::admin('SuppliersAdminAjax::status');
+Ajax::admin('SuppliersAdminAjax::updateBalance');

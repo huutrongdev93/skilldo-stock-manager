@@ -8,27 +8,33 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="row mb-3">
-                            <div class="col-md-6"><b>Nợ hiện tại</b></div>
-                            <div class="col-md-6"><span class="js_supplier_debt_total"></span></div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-md-6"><b>Trả cho NCC:</b></div>
-                            <div class="col-md-6">
-                                <input type="text" min="0" name="supplier_payment" value="0" class="form-control js_input_supplier_total_payment" />
-                            </div>
-                        </div>
+                <div class="box">
+                    <div class="box-header"><span class="js_supplier_debt_modal_name">Nhà cung cấp</span></div>
+                    <div class="box-content">
                         <div class="row">
-                            <div class="col-md-6"><b>Nợ sau:</b></div>
                             <div class="col-md-6">
-                                <div class="col-md-6"><span class="js_supplier_debt_balance"></span></div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6"><b>Nợ hiện tại</b></div>
+                                    <div class="col-md-6"><span class="js_supplier_debt_total"></span></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><b>Trả cho NCC:</b></div>
+                                    <div class="col-md-6">
+                                        <input type="text" min="0" name="supplier_payment" value="0" class="form-control js_input_supplier_total_payment" />
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6"><b>Nợ sau:</b></div>
+                                    <div class="col-md-6">
+                                        <div class="col-md-6"><span class="js_supplier_debt_balance"></span></div>
+                                    </div>
+                                </div>
                             </div>
+                            <div class="col-md-6"></div>
                         </div>
                     </div>
-                    <div class="col-md-6"></div>
                 </div>
+
 
                 <table class="display table table-striped media-table mt-4">
                     <thead>

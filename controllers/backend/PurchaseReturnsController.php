@@ -16,11 +16,7 @@ class PurchaseReturnsController extends MY_Controller {
     {
         $table = new \Stock\Table\PurchaseReturn();
 
-        $tableProduct = new \Stock\Table\PurchaseReturn\ProductDetail();
-
         Cms::setData('table', $table);
-
-        Cms::setData('tableProduct', $tableProduct);
 
         $this->template->setView(STOCK_NAME.'/views/admin/purchase-return/index', 'plugin');
 
