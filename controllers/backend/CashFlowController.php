@@ -46,7 +46,7 @@ class CashFlowController extends MY_Controller {
             ]
         ];
 
-        $branches = \Branch::all()->pluck('name', 'id')->toArray();
+        $branches = \Stock\Helper::getBranchAll()->pluck('name', 'id')->toArray();
 
         $groups = \Stock\Model\CashFlowGroup::where('type', $type)
             ->get()
