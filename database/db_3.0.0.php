@@ -7,14 +7,46 @@ return new class () extends Migration {
 
     public function up(): void
     {
+        if(schema()->hasColumn('products', 'stock_status')) {
+            schema()->table('products', function (Blueprint $table) {
+                $table->dropColumn('stock_status');
+            });
+        }
+
         \Stock\Model\Inventory::where('branch_id', '')->delete();
 
         if(schema()->hasTable('inventories')) {
             schema()->table('inventories', function (Blueprint $table) {
                 $table->integer('product_id')->default(0)->change();
                 $table->integer('branch_id')->default(0)->change();
+                $table->integer('price_cost')->default(0);
+                $table->unique(['product_id', 'branch_id']);
             });
         }
+
+        if(!schema()->hasColumn('users', 'branch_id')) {
+            schema()->table('users', function (Blueprint $table) {
+                $table->integer('branch_id')->default(0);
+            });
+        }
+
+        $branch = Branch::where('default', 1)->first();
+
+        if(!have_posts($branch))
+        {
+            $branch = Branch::get();
+
+            if(!have_posts($branch))
+            {
+                response()->error('Không tìm thấy chi nhánh');
+            }
+
+            $branch->default = 1;
+
+            $branch->save();
+        }
+
+        \SkillDo\Model\User::where('branch_id', 0)->update(['branch_id' => $branch->id]);
 
         if(!schema()->hasColumn('inventories_history', 'product_id')) {
             schema()->table('inventories_history', function (Blueprint $table) {
@@ -47,8 +79,8 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('inventories_purchase_order_details')) {
-            schema()->create('inventories_purchase_order_details', function (Blueprint $table) {
+        if(!schema()->hasTable('inventories_purchase_orders_details')) {
+            schema()->create('inventories_purchase_orders_details', function (Blueprint $table) {
                 $table->increments('purchase_order_detail_id');
                 $table->integer('purchase_order_id')->default(0);
                 $table->integer('product_id')->default(0);
@@ -347,6 +379,59 @@ return new class () extends Migration {
                 $table->integer('time')->default(0); //thời gian
                 $table->integer('user_created')->default(0);
                 $table->integer('user_updated')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('transfers')) {
+            schema()->create('transfers', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('code', 50)->nullable();
+                $table->integer('from_branch_id')->default(0)->comment('Id chi nhánh chuyển hàng');
+                $table->string('from_branch_name', 100)->nullable()->comment('Tên chi nhánh chuyển hàng');
+                $table->integer('to_branch_id')->default(0)->comment('Id chi nhánh nhận hàng');
+                $table->string('to_branch_name', 100)->nullable()->comment('Tên chi nhánh nhận hàng');
+
+                $table->integer('from_user_id')->default(0)->comment('Id người chuyển hàng');
+                $table->string('from_user_name', 100)->nullable()->comment('tên người chuyển hàng');
+
+                $table->integer('to_user_id')->default(0)->comment('Id người nhận hàng');
+                $table->string('to_user_name', 100)->nullable()->comment('tên người nhận hàng');
+
+                $table->integer('send_date')->default(0)->comment('ngày chuyển hàng');
+
+                $table->integer('receive_date')->default(0)->comment('ngày nhận hàng');
+
+                $table->integer('total_send_quantity')->default(0)->comment('Tổng số lượng chuyển hàng');
+                $table->integer('total_send_price')->default(0)->comment('Tổng giá trị hàng chuyển');
+
+                $table->integer('total_receive_quantity')->default(0)->comment('Tổng số lượng nhận hàng');
+                $table->integer('total_receive_price')->default(0)->comment('Tổng giá trị hàng nhận');
+
+                $table->string('status', 20)->default('draft');
+                $table->text('note')->nullable();
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('transfers_details')) {
+            schema()->create('transfers_details', function (Blueprint $table) {
+                $table->increments('transfer_detail_id');
+                $table->integer('transfer_id')->default(0);
+                $table->integer('product_id')->default(0);
+                $table->string('product_name', 200)->nullable();
+                $table->string('product_attribute', 200)->nullable();
+                $table->string('product_code', 100)->nullable();
+                $table->integer('price')->default(0)->comment('Giá trị sản phẩm');
+                $table->integer('send_quantity')->default(0)->comment('Số lượng chuyển');
+                $table->integer('send_price')->default(0)->comment('Tổng tiền hàng chuyển');
+
+                $table->integer('receive_quantity')->default(0)->comment('Số lượng nhận');
+                $table->integer('receive_price')->default(0)->comment('Tổng tiền hàng nhận');
+
+                $table->string('status', 20)->default('draft');
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });

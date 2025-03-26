@@ -27,6 +27,10 @@ Route::middleware([AdminAuthMiddleware::class, AdminPermissionMiddleware::class]
     Route::get('/stock-take/new', 'StockTakesController@add', ['namespace' => $controller])->name('admin.stock.stockTakes.new');
     Route::get('/stock-take/{num:id}', 'StockTakesController@edit', ['namespace' => $controller])->name('admin.stock.stockTakes.edit');
 
+    Route::get('/transfers', 'TransfersController@index', ['namespace' => $controller])->name('admin.stock.transfers');
+    Route::get('/transfers/new', 'TransfersController@add', ['namespace' => $controller])->name('admin.stock.transfers.new');
+    Route::get('/transfers/{num:id}', 'TransfersController@edit', ['namespace' => $controller])->name('admin.stock.transfers.edit');
+
     //Sổ quỹ
     //Nhóm thu
     Route::get('/cash-flow-group/receipt', 'CashFlowGroupController@receiptIndex', ['namespace' => $controller])->name('admin.cashFlow.group.receipt');

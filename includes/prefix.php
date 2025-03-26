@@ -9,6 +9,7 @@ enum Prefix: string
     case purchaseReturn     = 'THN'; //phiếu trả hàng
     case damageItem         = 'XH'; //Phiếu xuất hủy hàng
     case adjustment         = 'CB'; //Phiếu điều chỉnh ncc
+    case transfer           = 'TRF'; //Phiếu chuyển hàng
 
     static function has(string $value): bool
     {
