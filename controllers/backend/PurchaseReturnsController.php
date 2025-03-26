@@ -74,7 +74,7 @@ class PurchaseReturnsController extends MY_Controller {
 
     public function form($object = []): \SkillDo\Form\Form
     {
-        $branches = \Branch::all()->pluck('name', 'id')->toArray();
+        $branches = \Stock\Helper::getBranchAll()->pluck('name', 'id')->toArray();
 
         $form = form()
             ->startDefault('<div class="stock-form-group form-group">')
@@ -83,7 +83,11 @@ class PurchaseReturnsController extends MY_Controller {
         $form
 
             ->addGroup(function ($f) use ($branches, $object) {
-                $f->select2('branch_id', $branches, ['label' => 'Chi nhánh', 'start' => 6], $object->branch_id ?? 0);
+                $f->text('code', [
+                    'label' => 'Mã phiếu trả hàng',
+                    'start' => 6,
+                    'placeholder' => 'Mã phiếu nhập tự động'
+                ], $object->code ?? '');
                 $f->datetime('time', [
                     'label' => 'Ngày trả hàng',
                     'start' => 6
@@ -111,19 +115,15 @@ class PurchaseReturnsController extends MY_Controller {
                 'start' => '<div class="form-group"><div class="row">',
                 'end' => '</div></div>',
             ])
-            ->text('code', [
-                'label' => 'Mã phiếu trả hàng',
-                'placeholder' => 'Mã phiếu nhập tự động'
-            ], $object->code ?? '')
-            ->none('<p class="d-flex justify-content-between mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseReturn::draft->label().'</b></p>')
-            ->none('<p class="d-flex justify-content-between mb-4"><b>Tổng tiền hàng</b>  <b class="js_purchase_return_cost_total">0</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseReturn::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Tổng tiền hàng</b>  <b class="js_purchase_return_cost_total">0</b></p>')
             ->price('return_discount', [
                 'label' => 'Giảm giá',
             ], number_format($object->return_discount ?? 0))
             ->price('total_payment', [
                 'label' => 'NCC đã trả',
             ], number_format($object->total_payment ?? 0))
-            ->none('<p class="d-flex justify-content-between mb-4">Nhà cung cấp cần trả  <b class="js_purchase_return_total_payment">0</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4">Nhà cung cấp cần trả  <b class="js_purchase_return_total_payment">0</b></p>')
             ->textarea('note', [
                 'label' => 'Ghi chú'
             ], $object->note ?? '');

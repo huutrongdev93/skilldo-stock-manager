@@ -15,7 +15,7 @@
                 </div>
                 {!! Plugin::partial(STOCK_NAME, 'admin/import', [
                     'module' => 'purchase_return',
-                    'examples' => 'MauFileNhapHang'
+                    'examples' => 'MauFileTraHangNhap'
                 ]) !!}
             </div>
         </div>

@@ -73,13 +73,13 @@
     }
 </style>
 <script id="purchase_return_print_template" type="text/x-custom-template">
-    <div class="mb10" style="text-align:center;"><strong class="fs18">PHIẾU TRẢ HÀNG</strong></div>
+    <div class="mb10" style="text-align:center;"><strong class="fs18">PHIẾU TRẢ HÀNG NHẬP</strong></div>
     <div class="mb5" style="text-align:center;"><strong>Mã phiếu: ${code}</strong></div>
     <div class="mb20" style="text-align:center;"><em>Ngày: ${purchase_date}</em></div>
     <table width="100%" class="mb10">
         <tbody>
             <tr>
-                <td>Chi nhánh nhập: ${branch_name}</td>
+                <td>Chi nhánh: ${branch_name}</td>
             </tr>
             <tr>
                 <td>Người tạo: ${user_created_name}</td>
@@ -98,8 +98,9 @@
                 <td style="text-align:right;">STT</td>
                 <td>Mã hàng</td>
                 <td>Tên hàng</td>
-                <td style="text-align:right;">Đơn giá</td>
                 <td style="text-align:right;">Số lượng</td>
+                <td style="text-align:right;">Giá nhập</td>
+                <td style="text-align:right;">Giá trả lại</td>
                 <td style="text-align:right;">Thành tiền</td>
             </tr>
             ${details}
@@ -109,23 +110,23 @@
         <tbody>
         <tr>
             <td style="width:33%;"></td>
-            <td style="width:33%;">Tổng số lượng hàng:</td>
-            <td style="text-align:right;">${count}</td>
+            <td style="width:33%;">Tổng số lượng:</td>
+            <td style="text-align:right;">${total_quantity}</td>
         </tr>
         <tr>
             <td></td>
             <td>Tổng tiền hàng:</td>
-            <td style="text-align:right;">${total}</td>
+            <td style="text-align:right;">${sub_total}</td>
         </tr>
         <tr>
             <td></td>
-            <td>Chiết khấu hóa đơn:</td>
-            <td style="text-align:right;"></td>
+            <td>Giảm giá:</td>
+            <td style="text-align:right;">${return_discount}</td>
         </tr>
         <tr>
             <td></td>
-            <td>Tiền cần trả NCC:</td>
-            <td style="text-align:right;">${total}</td>
+            <td>Tiền NCC trả:</td>
+            <td style="text-align:right;">${total_payment}</td>
         </tr>
         <tr>
             <td colspan="3">Ghi chú: ${note}</td>
@@ -146,8 +147,9 @@
         <td style="text-align:right;">${stt}</td>
         <td>${product_code}</td>
         <td>${product_name} ${product_attribute}</td>
-        <td style="text-align:right;">${cost}</td>
         <td style="text-align:right;">${quantity}</td>
-        <td style="text-align:right;">${total}</td>
+        <td style="text-align:right;">${cost}</td>
+        <td style="text-align:right;">${price}</td>
+        <td style="text-align:right;">${sub_total}</td>
     </tr>
 </script>

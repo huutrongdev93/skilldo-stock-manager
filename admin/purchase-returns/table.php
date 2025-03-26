@@ -87,12 +87,13 @@ class PurchaseReturn extends SKDObjectTable
             'branch_name' => $item->branch_name,
             'user_created_name' => $item->user_created_name,
             'purchase_name' => $item->purchase_name,
+            'supplier_name' => $item->supplier_name,
             'status' => Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($item->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($item->status)->label()),
             'return_discount' => \Prd::price($item->return_discount),
             'sub_total' => \Prd::price($item->sub_total),
             'total' => \Prd::price($item->sub_total - $item->return_discount),
             'total_payment' => \Prd::price($item->total_payment),
-            'total_quantity' => $item->sub_total,
+            'total_quantity' => $item->total_quantity,
         ];
 
         $buttons[] = Admin::button('blue', [
@@ -134,16 +135,6 @@ class PurchaseReturn extends SKDObjectTable
 
     function headerFilter(Form $form, Request $request)
     {
-        $branch = Branch::gets();
-
-        $branchOptions = [];
-
-        foreach ($branch as $item) {
-            $branchOptions[$item->id] = $item->name;
-        }
-
-        $form->select2('branch', $branchOptions, [], request()->input('branch'));
-
         return apply_filters('admin_'.$this->module.'_table_form_filter', $form);
     }
 
@@ -199,13 +190,11 @@ class PurchaseReturn extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branchId = (int)$request->input('branch');
+        $branch = \Stock\Helper::getBranchCurrent();
 
-        if($branchId == 0) $branchId = 1;
-
-        if(!empty($branchId))
+        if(!empty($branch))
         {
-            $query->where('branch_id', $branchId);
+            $query->where('branch_id', $branch->id);
         }
 
         return $query;

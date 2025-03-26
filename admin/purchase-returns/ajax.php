@@ -110,7 +110,7 @@ class StockPurchaseReturnAdminAjax
                 'products.code',
                 'products.image',
                 'products.attribute_label',
-                'products.price_cost',
+                'po.price as price_cost',
                 'po.price',
                 'po.quantity',
             ];
@@ -134,7 +134,7 @@ class StockPurchaseReturnAdminAjax
                 'products.code',
                 'products.image',
                 'products.attribute_label',
-                'products.price_cost',
+                'po.cost as price_cost',
                 'po.price',
                 'po.quantity',
                 'po.sub_total',
@@ -336,7 +336,7 @@ class StockPurchaseReturnAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -414,8 +414,6 @@ class StockPurchaseReturnAdminAjax
             return $sum + ($item['quantity']);
         }, 0);
 
-        $productsId = [];
-
         //Danh sách sản phẩm phiếu trả hàng (nếu đang cập nhật)
         $productsDetail = [];
 
@@ -431,9 +429,19 @@ class StockPurchaseReturnAdminAjax
 
         foreach($productsPurchase as $product)
         {
-            $productsId[$product['id']] = $product['id'];
+            $purchaseReturnDetail = [
+                'purchase_return_id'        => $object->id ?? 0,
+                'product_id'                => $product['id'],
+                'product_code'              => $product['code'] ?? '',
+                'product_name'              => $product['title'],
+                'product_attribute'         => $product['attribute_label'] ?? '',
+                'quantity'                  => $product['quantity'],
+                'price'                     => $product['price'],
+                'sub_total'                 => $product['quantity']*$product['price'],
+                'cost'                      => Str::price($product['cost']),
+            ];
 
-            if (isset($productsDetail[$product['id']]))
+            if ($productsDetail->has($product['id']))
             {
                 $productDetail = $productsDetail[$product['id']];
 
@@ -444,33 +452,17 @@ class StockPurchaseReturnAdminAjax
                     continue;
                 }
 
-                $purchaseReturnDetails[] = [
-                    'purchase_return_detail_id'  => $productDetail->purchase_return_detail_id,
-                    'purchase_return_id'         => $object->id,
-                    'product_id'                => $product['id'],
-                    'product_code'              => $product['code'] ?? '',
-                    'product_name'              => $product['title'],
-                    'product_attribute'         => $product['attribute_label'] ?? '',
-                    'quantity'                  => $product['quantity'],
-                    'price'                     => $product['price'],
-                    'sub_total'                 => $product['quantity']*$product['price'],
-                ];
+                $purchaseReturnDetail['purchase_return_detail_id'] = $productDetail->purchase_return_detail_id;
+
+                $purchaseReturnDetails[] = $purchaseReturnDetail;
 
                 unset($productsDetail[$product['id']]);
+
                 continue;
             }
 
             // Thêm sản phẩm mới
-            $purchaseReturnDetails[] = [
-                'purchase_return_id'  => $object->id ?? 0,
-                'product_id'         => $product['id'],
-                'product_code'       => $product['code'] ?? '',
-                'product_name'       => $product['title'],
-                'product_attribute'  => $product['attribute_label'] ?? '',
-                'quantity'           => $product['quantity'],
-                'price'              => $product['price'],
-                'sub_total'          => $product['quantity']*$product['price'],
-            ];
+            $purchaseReturnDetails[] = $purchaseReturnDetail;
         }
 
         return [
@@ -495,7 +487,7 @@ class StockPurchaseReturnAdminAjax
             $inventories, // Kho hàng
             $products, // Sản phẩm
             $purchaseReturnDetails, // Chi tiết phiếu trả hàng
-            $productCosts, //danh sách sản phẩm cập nhật giá vốn
+            $inventoryCosts, //danh sách sản phẩm cập nhật giá vốn
             $productsDetail // Chi tiết sản phẩm xóa đi
         ] = static::purchaseData($request);
 
@@ -504,9 +496,6 @@ class StockPurchaseReturnAdminAjax
 
         //Cập nhật lịch sử
         $inventoriesHistories = [];
-
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
 
         foreach ($purchaseReturnDetails as $detail)
         {
@@ -527,11 +516,23 @@ class StockPurchaseReturnAdminAjax
 
             $newStock = $inventory->stock - $detail['quantity'];
 
-            $inventoriesUpdate[] = [
+            $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
             ];
+
+            foreach ($inventoryCosts as $keyCost => $inventoryCost)
+            {
+                if($inventoryCost['id'] == $inventory->id)
+                {
+                    $inventoryUpdate['price_cost'] = $inventoryCost['price_cost'];
+
+                    unset($inventoryCosts[$keyCost]);
+                }
+            }
+
+            $inventoriesUpdate[] = $inventoryUpdate;
 
             $inventoriesHistories[] = [
                 'inventory_id'  => $inventory->id,
@@ -545,16 +546,6 @@ class StockPurchaseReturnAdminAjax
                 'action'        => 'tru',
                 'type'          => 'stock',
             ];
-
-            if ($newStock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
         }
 
         try {
@@ -598,17 +589,9 @@ class StockPurchaseReturnAdminAjax
             DB::table('inventories_history')->insert($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
-            if(have_posts($productCosts))
+            if(have_posts($inventoryCosts))
             {
-                \Ecommerce\Model\Product::updateBatch($productCosts, 'id');
-            }
-
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
+                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -658,7 +641,7 @@ class StockPurchaseReturnAdminAjax
             $inventories, // Kho hàng
             $products, // Sản phẩm
             $purchaseReturnDetails, // Chi tiết phiếu trả hàng
-            $productCosts, //danh sách sản phẩm cập nhật giá vốn
+            $inventoryCosts, //danh sách sản phẩm cập nhật giá vốn
             $productsDetail // Chi tiết sản phẩm xóa đi
         ] = static::purchaseData($request, $object);
 
@@ -674,9 +657,6 @@ class StockPurchaseReturnAdminAjax
 
         //Cập nhật lịch sử
         $inventoriesHistories = [];
-
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
 
         foreach ($purchaseReturnDetails as $key => $detail)
         {
@@ -697,11 +677,23 @@ class StockPurchaseReturnAdminAjax
 
             $newStock = $inventory->stock - $detail['quantity'];
 
-            $inventoriesUpdate[] = [
+            $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
             ];
+
+            foreach ($inventoryCosts as $keyCost => $inventoryCost)
+            {
+                if($inventoryCost['id'] == $inventory->id)
+                {
+                    $inventoryUpdate['price_cost'] = $inventoryCost['price_cost'];
+
+                    unset($inventoryCosts[$keyCost]);
+                }
+            }
+
+            $inventoriesUpdate[] = $inventoryUpdate;
 
             $inventoriesHistories[] = [
                 'inventory_id'  => $inventory->id,
@@ -715,16 +707,6 @@ class StockPurchaseReturnAdminAjax
                 'action'        => 'tru',
                 'type'          => 'stock',
             ];
-
-            if ($newStock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
 
             if(empty($detail['purchase_return_id']))
             {
@@ -775,17 +757,9 @@ class StockPurchaseReturnAdminAjax
             DB::table('inventories_history')->insert($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
-            if(have_posts($productCosts))
+            if(have_posts($inventoryCosts))
             {
-                \Ecommerce\Model\Product::updateBatch($productCosts, 'id');
-            }
-
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
+                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -810,7 +784,6 @@ class StockPurchaseReturnAdminAjax
     static function validate(\SkillDo\Http\Request $request, $rules = []): void
     {
         $validate = $request->validate([
-            'branch_id'         => Rule::make('Chi nhánh')->notEmpty()->integer(),
             'return_discount'   => Rule::make('Giảm giá')->notEmpty()->integer()->min(0),
             'total_payment'     => Rule::make('NCC đã trả')->notEmpty()->integer()->min(0),
             'products'          => Rule::make('Danh sách sản phẩm')->notEmpty(),
@@ -854,7 +827,7 @@ class StockPurchaseReturnAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -983,7 +956,20 @@ class StockPurchaseReturnAdminAjax
                 $discount = $percent * $purchaseReturn['return_discount'] / 100;
             }
 
-            if (isset($productsDetail[$product['id']]))
+            $purchaseReturnDetail = [
+                'purchase_return_id'  => $object->id ?? 0,
+                'product_id'         => $product['id'],
+                'product_code'       => $product['code'] ?? '',
+                'product_name'       => $product['title'],
+                'product_attribute'  => $product['attribute_label'] ?? '',
+                'quantity'           => $product['quantity'],
+                'price'              => $product['price'],
+                'sub_total'          => $product['price']*$product['quantity'],
+                'status'             => \Stock\Status\PurchaseReturn::success->value,
+                'discount'           => $discount,
+            ];
+
+            if ($productsDetail->has($product['id']))
             {
                 $productDetail = $productsDetail[$product['id']];
 
@@ -994,40 +980,20 @@ class StockPurchaseReturnAdminAjax
                     continue;
                 }
 
-                $purchaseReturnDetails[] = [
-                    'purchase_return_detail_id'  => $productDetail->purchase_return_detail_id,
-                    'purchase_return_id'         => $object->id,
-                    'product_id'                => $product['id'],
-                    'product_code'              => $product['code'] ?? '',
-                    'product_name'              => $product['title'],
-                    'product_attribute'         => $product['attribute_label'] ?? '',
-                    'quantity'                  => $product['quantity'],
-                    'price'                     => $product['price'],
-                    'sub_total'                 => $product['price']*$product['quantity'],
-                    'status'                    => \Stock\Status\PurchaseReturn::success->value,
-                    'discount'                  => $discount,
-                ];
+                $purchaseReturnDetail['purchase_return_detail_id'] = $productDetail->purchase_return_detail_id;
+
+                $purchaseReturnDetails[] = $purchaseReturnDetail;
 
                 unset($productsDetail[$product['id']]);
                 continue;
             }
 
             // Thêm sản phẩm mới
-            $purchaseReturnDetails[] = [
-                'purchase_return_id'  => $object->id ?? 0,
-                'product_id'         => $product['id'],
-                'product_code'       => $product['code'] ?? '',
-                'product_name'       => $product['title'],
-                'product_attribute'  => $product['attribute_label'] ?? '',
-                'quantity'                  => $product['quantity'],
-                'price'                     => $product['price'],
-                'sub_total'                 => $product['price']*$product['quantity'],
-                'status'                    => \Stock\Status\PurchaseReturn::success->value,
-                'discount'                  => $discount,
-            ];
+            $purchaseReturnDetails[] = $purchaseReturnDetail;
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status'])->whereIn('product_id', $productsId)
+        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+            ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
 
@@ -1040,14 +1006,14 @@ class StockPurchaseReturnAdminAjax
 
         $products = \Ecommerce\Model\Product::widthVariation()
             ->whereIn('id', $productsId)
-            ->select('id', 'title', 'price_cost')
+            ->select('id', 'title')
             ->get();
 
         $purchaseMap = (\Illuminate\Support\Collection::make($purchaseReturnDetails))
             ->keyBy('product_id');
 
         //Biến chứa danh sách sản phẩm cập nhật giá vốn
-        $productCosts = [];
+        $inventoryCosts = [];
 
         foreach ($products as $product)
         {
@@ -1060,14 +1026,14 @@ class StockPurchaseReturnAdminAjax
             $purchase = $purchaseMap[$product->id];
 
             $priceCost = ($inventory->stock == $purchase['quantity'])
-                ? $product->price_cost
-                : (($product->price_cost * $inventory->stock - $product->price_cost * $purchase['quantity']) / ($inventory->stock - $purchase['quantity']));
+                ? $inventory->price_cost
+                : (($inventory->price_cost * $inventory->stock - $inventory->price_cost * $purchase['quantity']) / ($inventory->stock - $purchase['quantity']));
 
             $priceCost = ceil($priceCost);
 
-            $purchaseMap->transform(function ($item, $key) use ($priceCost, $product) {
+            $purchaseMap->transform(function ($item, $key) use ($inventory, $priceCost, $product) {
                 if ($key === $product->id) {
-                    $item['cost'] = $product->price_cost;
+                    $item['cost'] = $inventory->price_cost;
                     $item['cost_new'] = $priceCost;
                     unset($item['discount']);
                 }
@@ -1075,9 +1041,9 @@ class StockPurchaseReturnAdminAjax
             });
 
             // Nếu giá vốn thay đổi, thêm vào productCosts
-            if ($priceCost != $product->price_cost) {
-                $productCosts[] = [
-                    'id'          => $product->id,
+            if ($priceCost != $inventory->price_cost) {
+                $inventoryCosts[] = [
+                    'id'          => $inventory->id,
                     'price_cost'  => $priceCost
                 ];
             }
@@ -1093,7 +1059,7 @@ class StockPurchaseReturnAdminAjax
             $inventories,
             $products,
             $purchaseReturnDetails,
-            $productCosts,
+            $inventoryCosts,
             $productsDetail
         ];
     }
@@ -1240,14 +1206,18 @@ class StockPurchaseReturnAdminAjax
         $userCreated = User::find($object->user_created);
         $object->user_created_name = (have_posts($userCreated)) ? $userCreated->firstname.' '.$userCreated->lastname : '';
 
-        $products = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
+        $object->sub_total = Prd::price($object->sub_total);
 
-        $object->count = $products->count();
+        $object->total_payment = Prd::price($object->total_payment);
+
+        $products = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
             'items' => $products->map(function ($item, $key) {
                 $item->stt = $key+1;
+                $item->cost = Prd::price($item->cost);
+                $item->sub_total = Prd::price($item->sub_total);
                 return $item->toObject();
             })
         ]);
@@ -1496,9 +1466,7 @@ class StockPurchaseReturnAdminAjax
                 return;
             }
 
-            $rowDatasId = [];
-
-            $rowDatasCode = [];
+            $rowDatas = [];
 
             foreach ($schedules as $numberRow => $schedule) {
 
@@ -1509,25 +1477,21 @@ class StockPurchaseReturnAdminAjax
                 }
 
                 $rowData = [
-                    'id'        => (int)trim($schedule[1]),
-                    'code'      => trim($schedule[2]),
-                    'quantity'  => trim($schedule[5]),
-                    'price'     => trim($schedule[6])
+                    'code'          => trim($schedule[1]),
+                    'quantity'      => trim($schedule[4]),
+                    'price_cost'    => trim($schedule[5]),
+                    'price'         => trim($schedule[6])
                 ];
 
-                if(empty($rowData['id']) && empty($rowData['code']))
+                if(empty($rowData['code']))
                 {
                     continue;
                 }
 
-                if(!empty($rowData['id']))
-                {
-                    $rowDatasId[] = $rowData;
-                    continue;
-                }
-
-                $rowDatasCode[] = $rowData;
+                $rowDatas[] = $rowData;
             }
+
+            $branch = \Stock\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1535,26 +1499,20 @@ class StockPurchaseReturnAdminAjax
                 'products.title',
                 'products.attribute_label',
                 'products.image',
-                'products.price_cost',
+                DB::raw("MAX(cle_inventories.price_cost) AS price_cost")
             ];
 
-            $productsId = Product::widthVariation()->whereIn('id', array_map(function ($item) {
-                return $item['id'];
-            }, $rowDatasId))
+            $products = Product::widthVariation()->whereIn('code', array_map(function ($item) {
+                    return $item['code'];
+                }, $rowDatas))
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
                 ->whereNotNull('public')
                 ->select($selected)
+                ->groupBy('products.id')
                 ->get();
-
-            $productsCode = Product::widthVariation()->whereIn('code', array_map(function ($item) {
-                return $item['code'];
-            }, $rowDatasCode))
-                ->whereNotNull('public')
-                ->select($selected)
-                ->get();
-
-            $products = $productsId->merge($productsCode);
-
-            $rowDatas = array_merge($rowDatasId, $rowDatasCode);
 
             $response = [];
 
@@ -1577,17 +1535,18 @@ class StockPurchaseReturnAdminAjax
 
                     foreach ($rowDatas as $row)
                     {
-                        if($row['id'] == $item->id || $row['code'] == $item->code)
+                        if($row['code'] == $item->code)
                         {
                             $response[] = [
-                                'id'        => $item->id,
-                                'title'     => $item->title,
-                                'fullname'  => $item->fullname,
+                                'id'            => $item->id,
+                                'code'         => $item->code,
+                                'title'         => $item->title,
+                                'fullname'      => $item->fullname,
                                 'attribute_label' => $item->attribute_label ?? '',
-                                'image'     => $item->image,
-                                'price_cost' => $item->price_cost,
-                                'price'      => (empty($row['price'])) ? $item->price_cost : $row['price'],
-                                'quantity'   => $row['quantity'],
+                                'image'         => $item->image,
+                                'price_cost'    => (empty($row['price_cost'])) ? $item->price_cost : $row['price_cost'],
+                                'price'         => (empty($row['price'])) ? $item->price_cost : $row['price'],
+                                'quantity'      => $row['quantity'],
                             ];
                             break;
                         }

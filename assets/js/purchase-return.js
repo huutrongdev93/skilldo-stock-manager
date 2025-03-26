@@ -85,7 +85,8 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
                 title: item.title,
                 attribute_label: item?.attribute_label,
                 quantity: item.quantity,
-                price: item.price
+                price: item.price,
+                cost: parseFloat(item.cost.replace(/,/g, ''))
             })
         }
 
