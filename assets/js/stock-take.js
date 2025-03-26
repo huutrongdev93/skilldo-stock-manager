@@ -85,7 +85,7 @@ class StockTakeNewHandle extends WarehouseNewHandle
                 code: item.code,
                 title: item.title,
                 attribute_label: item?.attribute_label,
-                stock: item.stock,
+                stock: item.stock.replace(/,/g, '')*1,
                 price: item.price,
                 quantity: item.quantity
             })
@@ -100,7 +100,7 @@ class StockTakeNewHandle extends WarehouseNewHandle
 
         for (const [key, item] of Object.entries(this.products.items)) {
 
-            this.totalActualQuantity += item.quantity;
+            this.totalActualQuantity += item.quantity*1;
         }
 
         this.elements.totalActualQuantity.html(SkilldoUtil.formatNumber(this.totalActualQuantity))

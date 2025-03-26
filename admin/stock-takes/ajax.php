@@ -83,8 +83,8 @@ class StockTakeAdminAjax
             'products.code',
             'products.attribute_label',
             'products.image',
-            'products.price_cost',
             'products.attribute_label',
+            'po.price as price_cost',
             'po.actual_quantity as quantity',
         ];
 
@@ -305,7 +305,7 @@ class StockTakeAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -364,8 +364,6 @@ class StockTakeAdminAjax
 
         $productStockTakes = $request->input('products');
 
-        $productsId = [];
-
         //Danh sách sản phẩm phiếu kiểm kho hàng (nếu đang cập nhật)
         $productsDetail = [];
 
@@ -381,8 +379,6 @@ class StockTakeAdminAjax
 
         foreach($productStockTakes as $product)
         {
-            $productsId[$product['id']] = $product['id'];
-
             $adjustment_quantity = $product['quantity'] - $product['stock'];
 
             $adjustment_price    = ($product['quantity'] - $product['stock'])*$product['price'];
@@ -471,7 +467,6 @@ class StockTakeAdminAjax
             $stockTake,
             $branch,
             $inventories,
-            $products,
             $stockTakeDetails,
             $productsDetail
         ] = static::data($request);
@@ -481,11 +476,6 @@ class StockTakeAdminAjax
 
         //Cập nhật lịch sử
         $inventoriesHistories = [];
-
-        //Cập nhật trạng thái sản phẩm chính
-        $productsOut = [];
-
-        $productsIn = [];
 
         foreach ($stockTakeDetails as $detail)
         {
@@ -516,22 +506,6 @@ class StockTakeAdminAjax
                 'action'        => ($detail['actual_quantity'] > $inventory->stock) ? 'cong' : 'tru',
                 'type'          => 'stock',
             ];
-
-            //Nếu stock từ 0 thì chuyển sản phẩm và biến thể thành còn hàng
-            if($inventory->stock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsIn[] = $inventory->parent_id;
-                }
-
-                $productsIn[] = $inventory->product_id;
-            }
-            //Chuyển từ còn hàng sang hết hàng
-            if($newStock == 0 && $inventory->stock > 0)
-            {
-                $productsOut[] = $inventory->product_id;
-            }
         }
 
         try {
@@ -568,20 +542,6 @@ class StockTakeAdminAjax
 
             //Cập nhật lịch sử
             DB::table('inventories_history')->insert($inventoriesHistories);
-
-            //Cập nhật trạng thái
-            if(have_posts($productsOut))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsOut)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
-            }
-            if(have_posts($productsIn))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsIn)
-                    ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
-            }
 
             DB::commit();
 
@@ -621,7 +581,6 @@ class StockTakeAdminAjax
             $stockTake,
             $branch,
             $inventories,
-            $products,
             $stockTakeDetails,
             $productsDetail
         ] = static::data($request, $object);
@@ -639,11 +598,6 @@ class StockTakeAdminAjax
 
         //Cập nhật lịch sử
         $inventoriesHistories = [];
-
-        //Cập nhật trạng thái sản phẩm chính
-        $productsIn = [];
-
-        $productsOut = [];
 
         foreach ($stockTakeDetails as $key => $detail)
         {
@@ -671,23 +625,6 @@ class StockTakeAdminAjax
                     'action'        => ($detail['actual_quantity'] > $inventory->stock) ? 'cong' : 'tru',
                     'type'          => 'stock',
                 ];
-
-                //Nếu stock từ 0 thì chuyển sản phẩm và biến thể thành còn hàng
-                if($inventory->stock == 0)
-                {
-                    if(!empty($inventory->parent_id))
-                    {
-                        $productsIn[] = $inventory->parent_id;
-                    }
-
-                    $productsIn[] = $inventory->product_id;
-                }
-
-                //Chuyển từ còn hàng sang hết hàng
-                if($newStock == 0 && $inventory->stock > 0)
-                {
-                    $productsOut[] = $inventory->product_id;
-                }
             }
 
             if(empty($detail['stock_take_id']))
@@ -738,21 +675,6 @@ class StockTakeAdminAjax
             //Cập nhật lịch sử
             DB::table('inventories_history')->insert($inventoriesHistories);
 
-            //Cập nhật trạng thái
-            if(have_posts($productsOut))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsOut)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
-            }
-
-            if(have_posts($productsIn))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsIn)
-                    ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
-            }
-
             DB::commit();
 
             response()->success('Lưu tạm phiếu kiểm kho hàng thành công');
@@ -768,7 +690,6 @@ class StockTakeAdminAjax
     static function validate(\SkillDo\Http\Request $request, $rules = []): void
     {
         $validate = $request->validate([
-            'branch_id'             => Rule::make('Chi nhánh')->notEmpty()->integer(),
             'products'              => Rule::make('Danh sách sản phẩm')->notEmpty(),
             'products.*.id'         => Rule::make('Id sản phẩm')->notEmpty()->integer(),
             'products.*.quantity'   => Rule::make('Số lượng sản phẩm')->notEmpty()->integer()->min(1),
@@ -819,7 +740,7 @@ class StockTakeAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -886,7 +807,7 @@ class StockTakeAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status'])->whereIn('product_id', $productsId)
+        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
 
@@ -896,12 +817,6 @@ class StockTakeAdminAjax
         }
 
         $inventories = $inventories->keyBy('product_id');
-
-        $products = \Ecommerce\Model\Product::widthVariation()
-            ->whereIn('id', $productsId)
-            ->select('id', 'title', 'price_cost')
-            ->get()
-            ->keyBy('id');
 
         //Danh sách sản phẩm phiếu kiểm kho hàng (nếu đang cập nhật)
         $productsDetail = [];
@@ -932,11 +847,6 @@ class StockTakeAdminAjax
                 response()->error('Không tìm thấy tồn kho của sản phẩm '.$productStockTake['title'].$productStockTake['attribute_label']);
             }
 
-            if (!$products->has($productId))
-            {
-                response()->error('Không tìm thấy sản phẩm '.$productStockTake['title'].$productStockTake['attribute_label']);
-            }
-
             if($productStockTake['quantity'] < 0)
             {
                 response()->error('Số lượng thực tế của sản phẩm '.$productStockTake['title'].$productStockTake['attribute_label'].' không được nhỏ hơn 0');
@@ -944,9 +854,7 @@ class StockTakeAdminAjax
 
             $inventory = $inventories[$productId];
 
-            $product = $products[$productId];
-
-            $productStockTake['price'] = $product->price_cost;
+            $productStockTake['price'] = $inventory->price_cost;
 
             $productStockTake['stock'] = $inventory->stock;
 
@@ -1026,7 +934,6 @@ class StockTakeAdminAjax
             $stockTake,
             $branch,
             $inventories,
-            $products,
             $stockTakeDetails,
             $productsDetail
         ];
@@ -1346,37 +1253,30 @@ class StockTakeAdminAjax
                 return;
             }
 
-            $rowDatasId = [];
-
-            $rowDatasCode = [];
+            $rowDatas = [];
 
             foreach ($schedules as $numberRow => $schedule) {
 
                 if($numberRow == 1) continue;
 
-                if(count($schedule) < 6) {
+                if(count($schedule) < 2) {
                     continue;
                 }
 
                 $rowData = [
-                    'id'        => (int)trim($schedule[1]),
-                    'code'      => trim($schedule[2]),
-                    'quantity'  => trim($schedule[5])
+                    'code'      => trim($schedule[1]),
+                    'quantity'  => trim($schedule[2])
                 ];
 
-                if(empty($rowData['id']) && empty($rowData['code']))
+                if(empty($rowData['code']))
                 {
                     continue;
                 }
 
-                if(!empty($rowData['id']))
-                {
-                    $rowDatasId[] = $rowData;
-                    continue;
-                }
-
-                $rowDatasCode[] = $rowData;
+                $rowDatas[] = $rowData;
             }
+
+            $branch = \Stock\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1384,26 +1284,21 @@ class StockTakeAdminAjax
                 'products.title',
                 'products.attribute_label',
                 'products.image',
-                'products.price_cost',
+                DB::raw("MAX(cle_inventories.price_cost) AS price_cost"),
+                DB::raw("SUM(cle_inventories.stock) AS stock")
             ];
 
-            $productsId = Product::widthVariation()->whereIn('id', array_map(function ($item) {
-                return $item['id'];
-            }, $rowDatasId))
-                ->whereNotNull('public')
-                ->select($selected)
-                ->get();
-
-            $productsCode = Product::widthVariation()->whereIn('code', array_map(function ($item) {
+            $products = Product::widthVariation()->whereIn('code', array_map(function ($item) {
                 return $item['code'];
-            }, $rowDatasCode))
+            }, $rowDatas))
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
                 ->whereNotNull('public')
                 ->select($selected)
+                ->groupBy('products.id')
                 ->get();
-
-            $products = $productsId->merge($productsCode);
-
-            $rowDatas = array_merge($rowDatasId, $rowDatasCode);
 
             $response = [];
 
@@ -1426,15 +1321,17 @@ class StockTakeAdminAjax
 
                     foreach ($rowDatas as $row)
                     {
-                        if($row['id'] == $item->id || $row['code'] == $item->code)
+                        if($row['code'] == $item->code)
                         {
                             $response[] = [
                                 'id'        => $item->id,
+                                'code'     => $item->code,
                                 'title'     => $item->title,
                                 'fullname'  => $item->fullname,
                                 'attribute_label' => $item->attribute_label ?? '',
                                 'image'     => $item->image,
                                 'price_cost'    => $item->price_cost,
+                                'stock'    => $item->stock,
                                 'quantity'      => $row['quantity'],
                             ];
                             break;

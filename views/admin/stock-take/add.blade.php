@@ -26,7 +26,7 @@
                 </div>
                 {!! Plugin::partial(STOCK_NAME, 'admin/import', [
                     'module' => 'stock_take',
-                    'examples' => 'MauFileNhapHang'
+                    'examples' => 'MauFileKiemKho'
                 ]) !!}
             </div>
         </div>
