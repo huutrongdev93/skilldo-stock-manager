@@ -125,7 +125,7 @@ class PurchaseOrder extends SKDObjectTable
             $buttons[] = Admin::button('green', [
                 'icon' => '<i class="fa fa-reply-all"></i>',
                 'href' => \Url::route('admin.stock.purchaseReturns.edit', ['id' => $item->id]).'?type=purchase-orders',
-                'tooltip' => 'Trả nhập hàng',
+                'tooltip' => 'Trả hàng nhập hàng',
                 'target' => '_blank'
             ]);
         }
@@ -137,16 +137,6 @@ class PurchaseOrder extends SKDObjectTable
 
     function headerFilter(Form $form, Request $request)
     {
-        $branch = Branch::gets();
-
-        $branchOptions = [];
-
-        foreach ($branch as $item) {
-            $branchOptions[$item->id] = $item->name;
-        }
-
-        $form->select2('branch', $branchOptions, [], request()->input('branch'));
-
         return apply_filters('admin_'.$this->module.'_table_form_filter', $form);
     }
 
@@ -204,13 +194,11 @@ class PurchaseOrder extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branchId = (int)$request->input('branch');
+        $branch = \Stock\Helper::getBranchCurrent();
 
-        if($branchId == 0) $branchId = 1;
-
-        if(!empty($branchId))
+        if(!empty($branch))
         {
-            $query->where('branch_id', $branchId);
+            $query->where('branch_id', $branch->id);
         }
 
         return $query;

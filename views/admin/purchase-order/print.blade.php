@@ -8,6 +8,8 @@
     @media print {
         body * {
             display: none;
+            padding: 0;
+            margin:0;
         }
         /* Chỉ hiện phần cần in */
         body .wrapper,
@@ -24,6 +26,8 @@
         body .wrapper .page-content .page-body .ui-layout,
         body .printBox {
             display: block!important;
+            max-height: 100vh;
+            overflow: hidden;
         }
         body .printBox * {
             display: block!important;
@@ -151,7 +155,7 @@
         <td style="text-align:right;">${stt}</td>
         <td>${product_code}</td>
         <td>${product_name} ${product_attribute}</td>
-        <td style="text-align:right;">${cost}</td>
+        <td style="text-align:right;">${price}</td>
         <td style="text-align:right;">${quantity}</td>
         <td style="text-align:right;">${total}</td>
     </tr>

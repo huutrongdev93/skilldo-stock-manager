@@ -117,7 +117,6 @@ class StockPurchaseOrderAdminAjax
             'products.code',
             'products.attribute_label',
             'products.image',
-            'products.price_cost',
             'products.attribute_label',
             'po.quantity',
             'po.price',
@@ -317,7 +316,7 @@ class StockPurchaseOrderAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -474,7 +473,7 @@ class StockPurchaseOrderAdminAjax
             $inventories, // Kho hàng
             $products, // Sản phẩm
             $purchaseOrderDetails, // Chi tiết phiếu nhập
-            $productCosts, //danh sách sản phẩm cập nhật giá vốn
+            $inventoryCosts, //danh sách sản phẩm cập nhật giá vốn
             $productsDetail // Chi tiết sản phẩm xóa đi
         ] = static::purchaseData($request);
 
@@ -483,9 +482,6 @@ class StockPurchaseOrderAdminAjax
 
         //Cập nhật lịch sử
         $inventoriesHistories = [];
-
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
 
         foreach ($purchaseOrderDetails as $detail)
         {
@@ -497,11 +493,23 @@ class StockPurchaseOrderAdminAjax
 
             $newStock = $inventory->stock + $detail['quantity'];
 
-            $inventoriesUpdate[] = [
+            $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => \Stock\Status\Inventory::in->value
             ];
+
+            foreach ($inventoryCosts as $keyCost => $inventoryCost)
+            {
+                if($inventoryCost['id'] == $inventory->id)
+                {
+                    $inventoryUpdate['price_cost'] = $inventoryCost['price_cost'];
+
+                    unset($inventoryCosts[$keyCost]);
+                }
+            }
+
+            $inventoriesUpdate[] = $inventoryUpdate;
 
             $inventoriesHistories[] = [
                 'inventory_id'  => $inventory->id,
@@ -515,17 +523,6 @@ class StockPurchaseOrderAdminAjax
                 'action'        => 'cong',
                 'type'          => 'stock',
             ];
-
-            //Nếu stock từ 0 thì chuyển sản phẩm và biến thể thành còn hàng
-            if($inventory->stock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
         }
 
         try {
@@ -569,17 +566,9 @@ class StockPurchaseOrderAdminAjax
             DB::table('inventories_history')->insert($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
-            if(have_posts($productCosts))
+            if(have_posts($inventoryCosts))
             {
-                \Ecommerce\Model\Product::updateBatch($productCosts, 'id');
-            }
-
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
+                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -629,7 +618,7 @@ class StockPurchaseOrderAdminAjax
             $inventories, // Kho hàng
             $products, // Sản phẩm
             $purchaseOrderDetails, // Chi tiết phiếu nhập,
-            $productCosts, //danh sách sản phẩm cập nhật giá vốn
+            $inventoryCosts, //danh sách sản phẩm cập nhật giá vốn
             $productsDetail // Chi tiết sản phẩm xóa đi
         ] = static::purchaseData($request, $object);
 
@@ -647,9 +636,6 @@ class StockPurchaseOrderAdminAjax
         //Cập nhật lịch sử
         $inventoriesHistories = [];
 
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
-
         foreach ($purchaseOrderDetails as $key => $detail)
         {
             if (!$inventories->has($detail['product_id']))
@@ -661,11 +647,23 @@ class StockPurchaseOrderAdminAjax
 
             $newStock = $inventory->stock + $detail['quantity'];
 
-            $inventoriesUpdate[] = [
+            $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => \Stock\Status\Inventory::in->value
             ];
+
+            foreach ($inventoryCosts as $keyCost => $inventoryCost)
+            {
+                if($inventoryCost['id'] == $inventory->id)
+                {
+                    $inventoryUpdate['price_cost'] = $inventoryCost['price_cost'];
+
+                    unset($inventoryCosts[$keyCost]);
+                }
+            }
+
+            $inventoriesUpdate[] = $inventoryUpdate;
 
             $inventoriesHistories[] = [
                 'inventory_id'  => $inventory->id,
@@ -679,17 +677,6 @@ class StockPurchaseOrderAdminAjax
                 'action'        => 'cong',
                 'type'          => 'stock',
             ];
-
-            //Nếu stock từ 0 thì chuyển sản phẩm và biến thể thành còn hàng
-            if($inventory->stock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
 
             if(empty($detail['purchase_order_id']))
             {
@@ -740,23 +727,16 @@ class StockPurchaseOrderAdminAjax
             DB::table('inventories_history')->insert($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
-            if(have_posts($productCosts))
+            if(have_posts($inventoryCosts))
             {
-                \Ecommerce\Model\Product::updateBatch($productCosts, 'id');
-            }
-
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
+                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
             {
                 static::debt($supplier, $id, $purchaseOrder);
             }
+
             DB::commit();
 
             response()->success('Lưu tạm phiếu nhập hàng thành công');
@@ -772,7 +752,6 @@ class StockPurchaseOrderAdminAjax
     static function validate(\SkillDo\Http\Request $request, $rules = []): void
     {
         $validate = $request->validate([
-            'branch_id'             => Rule::make('Chi nhánh')->notEmpty()->integer(),
             'discount'              => Rule::make('Giảm giá')->notEmpty()->integer()->min(0),
             'total_payment'         => Rule::make('Đã trả NCC')->notEmpty()->integer()->min(0),
             'products'              => Rule::make('Danh sách sản phẩm')->notEmpty(),
@@ -819,7 +798,7 @@ class StockPurchaseOrderAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -995,7 +974,8 @@ class StockPurchaseOrderAdminAjax
             ];
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status'])->whereIn('product_id', $productsId)
+        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+            ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
 
@@ -1008,14 +988,14 @@ class StockPurchaseOrderAdminAjax
 
         $products = \Ecommerce\Model\Product::widthVariation()
             ->whereIn('id', $productsId)
-            ->select('id', 'title', 'price_cost')
+            ->select('id', 'title')
             ->get();
 
         $purchaseMap = (\Illuminate\Support\Collection::make($purchaseOrderDetails))
             ->keyBy('product_id');
 
         //Biến chứa danh sách sản phẩm cập nhật giá vốn
-        $productCosts = [];
+        $inventoryCosts = [];
 
         foreach ($products as $product)
         {
@@ -1028,14 +1008,14 @@ class StockPurchaseOrderAdminAjax
             $purchase = $purchaseMap[$product->id];
 
             $priceCost = (
-                (($purchase['quantity']*$purchase['price'] - $purchase['discount']) + $inventory->stock*$product->price_cost) /
+                (($purchase['quantity']*$purchase['price'] - $purchase['discount']) + $inventory->stock*$inventory->price_cost) /
                 ($inventory->stock+$purchase['quantity']));
 
             $priceCost = ceil($priceCost);
 
-            $purchaseMap->transform(function ($item, $key) use ($priceCost, $product) {
+            $purchaseMap->transform(function ($item, $key) use ($priceCost, $product, $inventory) {
                 if ($key === $product->id) {
-                    $item['cost_old'] = $product->price_cost;
+                    $item['cost_old'] = $inventory->price_cost;
                     $item['cost_new'] = $priceCost;
                     unset($item['discount']);
                 }
@@ -1043,9 +1023,9 @@ class StockPurchaseOrderAdminAjax
             });
 
             // Nếu giá vốn thay đổi, thêm vào productCosts
-            if ($priceCost != $product->price_cost) {
-                $productCosts[] = [
-                    'id'          => $product->id,
+            if ($priceCost != $inventory->price_cost) {
+                $inventoryCosts[] = [
+                    'id'          => $inventory->id,
                     'price_cost'  => $priceCost
                 ];
             }
@@ -1061,7 +1041,7 @@ class StockPurchaseOrderAdminAjax
             $inventories,
             $products,
             $purchaseOrderDetails,
-            $productCosts,
+            $inventoryCosts,
             $productsDetail
         ];
     }
@@ -1215,8 +1195,8 @@ class StockPurchaseOrderAdminAjax
             'purchase' => $object->toObject(),
             'items' => $products->map(function ($item, $key) {
                 $item->stt = $key+1;
-                $item->total = Prd::price($item->cost*$item->quantity);
-                $item->cost = Prd::price($item->cost);
+                $item->total = Prd::price($item->price*$item->quantity);
+                $item->price = Prd::price($item->price);
                 return $item->toObject();
             })
         ]);
@@ -1461,38 +1441,31 @@ class StockPurchaseOrderAdminAjax
                 return;
             }
 
-            $rowDatasId = [];
-
-            $rowDatasCode = [];
+            $rowDatas = [];
 
             foreach ($schedules as $numberRow => $schedule) {
 
                 if($numberRow == 1) continue;
 
-                if(count($schedule) < 6) {
+                if(count($schedule) < 5) {
                     continue;
                 }
 
                 $rowData = [
-                    'id'        => (int)trim($schedule[1]),
-                    'code'      => trim($schedule[2]),
+                    'code'      => trim($schedule[1]),
+                    'price'     => trim($schedule[4]),
                     'quantity'  => trim($schedule[5]),
-                    'price'     => trim($schedule[6])
                 ];
 
-                if(empty($rowData['id']) && empty($rowData['code']))
+                if(empty($rowData['code']))
                 {
                     continue;
                 }
 
-                if(!empty($rowData['id']))
-                {
-                    $rowDatasId[] = $rowData;
-                    continue;
-                }
-
-                $rowDatasCode[] = $rowData;
+                $rowDatas[] = $rowData;
             }
+
+            $branch = \Stock\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1502,29 +1475,22 @@ class StockPurchaseOrderAdminAjax
                 'products.image',
                 'products.price',
                 'products.price_sale',
-                'products.price_cost',
-                'products.stock_status',
                 'products.hasVariation',
                 'products.parent_id',
+                DB::raw("MAX(cle_inventories.price_cost) AS price_cost")
             ];
 
-            $productsId = Product::widthVariation()->whereIn('id', array_map(function ($item) {
-                return $item['id'];
-            }, $rowDatasId))
+            $products = Product::widthVariation()->whereIn('code', array_map(function ($item) {
+                    return $item['code'];
+                }, $rowDatas))
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
                 ->whereNotNull('public')
                 ->select($selected)
+                ->groupBy('products.id')
                 ->get();
-
-            $productsCode = Product::widthVariation()->whereIn('code', array_map(function ($item) {
-                return $item['code'];
-            }, $rowDatasCode))
-                ->whereNotNull('public')
-                ->select($selected)
-                ->get();
-
-            $products = $productsId->merge($productsCode);
-
-            $rowDatas = array_merge($rowDatasId, $rowDatasCode);
 
             $response = [];
 
@@ -1547,18 +1513,19 @@ class StockPurchaseOrderAdminAjax
 
                     foreach ($rowDatas as $row)
                     {
-                        if($row['id'] == $item->id || $row['code'] == $item->code)
+                        if($row['code'] == $item->code)
                         {
                             $response[] = [
-                                'id'        => $item->id,
-                                'title'     => $item->title,
-                                'fullname'  => $item->fullname,
-                                'attribute_label' => $item->attribute_label ?? '',
-                                'image'     => $item->image,
-                                'parent_id' => $item->parent_id,
-                                'hasVariation'  => $item->hasVariation,
-                                'price_cost'    => (empty($row['price_cost'])) ? $item->price_cost : $row['price_cost'],
-                                'quantity'      => $row['quantity'],
+                                'id'                => $item->id,
+                                'code'              => $item->code,
+                                'title'             => $item->title,
+                                'fullname'          => $item->fullname,
+                                'attribute_label'   => $item->attribute_label ?? '',
+                                'image'             => $item->image,
+                                'parent_id'         => $item->parent_id,
+                                'hasVariation'      => $item->hasVariation,
+                                'price'             => (empty($row['price'])) ? $item->price_cost : $row['price'],
+                                'quantity'          => $row['quantity'],
                             ];
                             break;
                         }
