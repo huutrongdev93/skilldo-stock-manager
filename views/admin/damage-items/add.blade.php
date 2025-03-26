@@ -15,7 +15,7 @@
                 </div>
                 {!! Plugin::partial(STOCK_NAME, 'admin/import', [
                     'module' => 'damage_items',
-                    'examples' => 'MauFileNhapHang'
+                    'examples' => 'MauFileXuatHuy'
                 ]) !!}
             </div>
         </div>
@@ -63,7 +63,7 @@
             <span>${cost}</span>
         </td>
         <td class="sub_total column-sub_total">
-            <span>${sub_total}</span>
+            <span class="js_sub_total">${sub_total}</span>
         </td>
         <td class="action column-action">
             <button class="btn btn-red js_damage_items_btn_delete" data-id="${id}">{!! Admin::icon('delete') !!}</button>

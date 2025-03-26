@@ -130,7 +130,7 @@ class DamageItemsNewHandle extends WarehouseNewHandle
 
                 this.products.update(item)
 
-                element.closest('.js_column').find('.js_input_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
+                element.closest('.js_column').find('.js_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
 
                 this.calculate()
             }

@@ -430,9 +430,6 @@ class StockDamageItemsAdminAjax
         //Cập nhật lịch sử
         $inventoriesHistories = [];
 
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
-
         foreach ($damageItemsDetails as $detail)
         {
             if (!$inventories->has($detail['product_id']))
@@ -470,16 +467,6 @@ class StockDamageItemsAdminAjax
                 'action'        => 'tru',
                 'type'          => 'stock',
             ];
-
-            if ($newStock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
         }
 
         try {
@@ -513,14 +500,6 @@ class StockDamageItemsAdminAjax
 
             //Cập nhật lịch sử
             DB::table('inventories_history')->insert($inventoriesHistories);
-
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
-            }
 
             DB::commit();
 
@@ -583,9 +562,6 @@ class StockDamageItemsAdminAjax
         //Cập nhật lịch sử
         $inventoriesHistories = [];
 
-        //Cập nhật trạng thái sản phẩm chính
-        $productsUp = [];
-
         foreach ($damageItemsDetails as $key => $detail)
         {
             if (!$inventories->has($detail['product_id']))
@@ -623,16 +599,6 @@ class StockDamageItemsAdminAjax
                 'action'        => 'tru',
                 'type'          => 'stock',
             ];
-
-            if ($newStock == 0)
-            {
-                if(!empty($inventory->parent_id))
-                {
-                    $productsUp[] = $inventory->parent_id;
-                }
-
-                $productsUp[] = $inventory->product_id;
-            }
 
             if(empty($detail['damage_item_id']))
             {
@@ -681,14 +647,6 @@ class StockDamageItemsAdminAjax
             //Cập nhật lịch sử
             DB::table('inventories_history')->insert($inventoriesHistories);
 
-            //Cập nhật trạng thái
-            if(have_posts($productsUp))
-            {
-                \Ecommerce\Model\Product::widthVariation()
-                    ->whereIn('id', $productsUp)
-                    ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
-            }
-
             DB::commit();
 
             response()->success('Lưu phiếu xuất hủy hàng thành công');
@@ -731,7 +689,7 @@ class StockDamageItemsAdminAjax
         ];
 
         //Chi nhánh
-        $branch = Branch::find($request->input('branch_id'));
+        $branch = \Stock\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -798,31 +756,6 @@ class StockDamageItemsAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $products = \Ecommerce\Model\Product::widthVariation()
-            ->whereIn('id', $productsId)
-            ->select('id', 'title', 'price_cost')
-            ->get();
-
-        $purchaseMap = (\Illuminate\Support\Collection::make($productDamageItems))
-            ->keyBy('product_id');
-
-        foreach ($products as $product)
-        {
-            if (!$purchaseMap->has($product->id))
-            {
-                continue;
-            }
-
-            $purchaseMap->transform(function ($item, $key) use ($product) {
-                if ($key === $product->id) {
-                    $item['price'] = $product->price_cost;
-                }
-                return $item;
-            });
-        }
-
-        $productDamageItems = $purchaseMap->values()->toArray();
-
         $damageItems['sub_total'] = array_reduce($productDamageItems, function ($sum, $item) {
             return $sum + ($item['quantity'] * $item['price']);
         }, 0);
@@ -886,7 +819,7 @@ class StockDamageItemsAdminAjax
             ];
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status'])
+        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
@@ -1233,38 +1166,30 @@ class StockDamageItemsAdminAjax
                 return;
             }
 
-            $rowDatasId = [];
-
-            $rowDatasCode = [];
+            $rowDatas = [];
 
             foreach ($schedules as $numberRow => $schedule) {
 
                 if($numberRow == 1) continue;
 
-                if(count($schedule) < 6) {
+                if(count($schedule) < 4) {
                     continue;
                 }
 
                 $rowData = [
-                    'id'        => (int)trim($schedule[1]),
-                    'code'      => trim($schedule[2]),
-                    'stock'     => trim($schedule[5]),
-                    'cost'      => trim($schedule[6])
+                    'code'      => trim($schedule[1]),
+                    'quantity'  => trim($schedule[4]),
                 ];
 
-                if(empty($rowData['id']) && empty($rowData['code']))
+                if(empty($rowData['code']))
                 {
                     continue;
                 }
 
-                if(!empty($rowData['id']))
-                {
-                    $rowDatasId[] = $rowData;
-                    continue;
-                }
-
-                $rowDatasCode[] = $rowData;
+                $rowDatas[] = $rowData;
             }
+
+            $branch = \Stock\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1273,31 +1198,23 @@ class StockDamageItemsAdminAjax
                 'products.image',
                 'products.price',
                 'products.price_sale',
-                'products.price_cost',
-                'products.stock_status',
                 'products.hasVariation',
                 'products.parent_id',
+                DB::raw("MAX(cle_inventories.price_cost) AS price_cost"),
+                DB::raw("SUM(cle_inventories.stock) AS stock")
             ];
 
-            $productsId = Product::whereIn('id', array_map(function ($item) {
-                return $item['id'];
-            }, $rowDatasId))
-                ->where('type', '<>', 'null')
-                ->where('public', '<>', null)
-                ->select($selected)
-                ->get();
-
-            $productsCode = Product::whereIn('code', array_map(function ($item) {
+            $products = Product::widthVariation()->whereIn('code', array_map(function ($item) {
                 return $item['code'];
-            }, $rowDatasCode))
-                ->where('type', '<>', 'null')
-                ->where('public', '<>', null)
+            }, $rowDatas))
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
+                ->whereNotNull('public')
                 ->select($selected)
+                ->groupBy('products.id')
                 ->get();
-
-            $products = $productsId->merge($productsCode);
-
-            $rowDatas = array_merge($rowDatasId, $rowDatasCode);
 
             $response = [];
 
@@ -1320,18 +1237,19 @@ class StockDamageItemsAdminAjax
 
                     foreach ($rowDatas as $row)
                     {
-                        if($row['id'] == $item->id || $row['code'] == $item->code)
+                        if($row['code'] == $item->code)
                         {
                             $response[] = [
                                 'id'    => $item->id,
+                                'code'     => $item->code,
                                 'title' => $item->title,
                                 'fullname' => $item->fullname,
                                 'attribute_label' => $item->attribute_label ?? '',
                                 'image' => $item->image,
                                 'parent_id' => $item->parent_id,
                                 'hasVariation' => $item->hasVariation,
-                                'cost' => (empty($row['cost'])) ? $item->price_cost : $row['cost'],
-                                'stock' => $row['stock'],
+                                'price_cost' => $item->price_cost,
+                                'quantity' => $row['quantity'],
                             ];
                             break;
                         }
