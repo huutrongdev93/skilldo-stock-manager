@@ -120,9 +120,6 @@ Class StockInventoryAdminAjax
                 'productId' => Rule::make('Id sản phẩm')->notEmpty()->integer()->errorMessage([
                     'notEmpty' => 'Bạn chưa chọn :attribute',
                 ]),
-                'branchId'  => Rule::make('chi nhánh')->notEmpty()->integer()->errorMessage([
-                    'notEmpty' => 'Bạn chưa chọn :attribute',
-                ]),
             ]);
 
             if ($validate->fails())
@@ -134,21 +131,19 @@ Class StockInventoryAdminAjax
 
             $productId  = (int)$request->input('productId');
 
-            $branchId   = (int)$request->input('branchId');
-
-            $inventory  = Inventory::where('product_id', $productId)
-                ->where('branch_id', $branchId)
-                ->first();
-
-            if(!have_posts($inventory)) {
-                response()->error(trans('Tồn kho chưa tồn tại'));
-            }
-
-            $branch = Branch::find($branchId);
+            $branch   = \Stock\Helper::getBranchCurrent();
 
             if(!have_posts($branch))
             {
                 response()->error(trans('Kho hàng chứa sản phẩm không tồn tại hoặc không còn được sử dụng'));
+            }
+
+            $inventory  = Inventory::where('product_id', $productId)
+                ->where('branch_id', $branch->id)
+                ->first();
+
+            if(!have_posts($inventory)) {
+                response()->error(trans('Tồn kho chưa tồn tại'));
             }
 
             if($stock > $inventory->stock) {

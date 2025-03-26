@@ -25,6 +25,7 @@
             <div class="box h-100">
                 <div class="box-content">
                     <input type="hidden" value="{!! $action !!}" id="purchase_order_action">
+                    <input type="hidden" value="{!! $source ?? '' !!}" id="purchase_order_source">
                     @if(!empty($purchaseOrder->id))
                     <input type="hidden" name="purchase_order_id" value="{!! $purchaseOrder->id !!}" id="purchase_order_input_id">
                     @endif

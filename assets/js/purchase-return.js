@@ -46,6 +46,28 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
         this.elements.paymentTotal = $(`.js_${module}_total_payment`)
 
         this.subTotal = 0;
+
+        this.source = $(`#${module}_source`).val()
+
+        if(this.source == 'products')
+        {
+            let data = SkilldoUtil.storage.get('stock_purchase_return_add_source')
+
+            if(data?.product_id)
+            {
+                this.action = 'source-product'
+
+                this.idEdit = data?.product_id
+
+                this.loadProduct()
+
+                //SkilldoUtil.storage.remove('stock_purchase_return_add_source')
+
+                this.action = 'add'
+
+                this.idEdit = 0
+            }
+        }
     }
 
     productItem(item) {

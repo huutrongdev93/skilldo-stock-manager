@@ -9,7 +9,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                {!! SkillDo\Form\Form::number('stock', [
+                {!! \SkillDo\Form\Form::number('stock', [
                     'label' => 'Số lượng sản phẩm nhập thêm'
                 ]) !!}
             </div>
@@ -104,207 +104,59 @@
 <script defer>
 	$(function () {
 
-		let productId = 0;
+        class InventoriesIndexHandle
+        {
+            constructor()
+            {
+                this.data = {
+                    id: 0
+                }
+            }
 
-		let branchId = 0;
+            onClickPurchaseOrder(button)
+            {
+                let productId = button.attr('data-id');
 
-		let modelPurchaseOrder = $('#js_inventories_model_purchase_order');
+                let data = {
+                    product_id: productId,
+                }
 
-		let modelPurchaseOrderHandel = new bootstrap.Modal('#js_inventories_model_purchase_order', {backdrop: "static", keyboard: false})
+                SkilldoUtil.storage.set('stock_purchase_order_add_source', data)
 
-		let modelPurchaseReturn = $('#js_inventories_model_purchase_return');
+                window.open(button.attr('href'),'_blank');
+            }
 
-		let modelPurchaseReturnHandel = new bootstrap.Modal('#js_inventories_model_purchase_return', {backdrop: "static", keyboard: false})
+            onClickPurchaseReturn(button)
+            {
+                let productId = button.attr('data-id');
 
-		let modelHistories = $('#js_inventories_model_histories');
+                let data = {
+                    product_id: productId,
+                }
 
-		let modelHistoriesHandel = new bootstrap.Modal('#js_inventories_model_histories', {backdrop: "static", keyboard: false})
+                SkilldoUtil.storage.set('stock_purchase_return_add_source', data)
 
-		let InventoryHandler = function () {
-			$(document)
-				.on('click', '.js_btn_purchase_order', this.modelPurchaseOrder)
-				.on('click', '.js_btn_purchase_return', this.modelPurchaseReturn)
-				.on('click', '.js_inventories_btn_purchase_order', this.purchaseOrder)
-				.on('click', '.js_inventories_btn_purchase_return', this.purchaseReturn)
-				.on('click', '.js_btn_inventories_history', this.history)
-		};
+                window.open(button.attr('href'),'_blank');
+            }
 
-		InventoryHandler.prototype.modelPurchaseOrder = function (e) {
+            events()
+            {
+                let handle = this;
 
-			productId = $(this).attr('data-id');
+                $(document)
+                    .on('click', '.js_inventory_btn_purchase_order', function () {
+                        handle.onClickPurchaseOrder($(this))
+                        return false
+                    })
+                    .on('click', '.js_inventory_btn_purchase_return', function () {
+                        handle.onClickPurchaseReturn($(this))
+                        return false
+                    })
+            }
+        }
 
-            branchId = $(this).attr('data-branch-id');
+        const handler = new InventoriesIndexHandle()
 
-			modelPurchaseOrderHandel.show();
-
-			return false
-		};
-
-		InventoryHandler.prototype.modelPurchaseReturn = function (e) {
-
-			productId = $(this).attr('data-id');
-
-            branchId = $(this).attr('data-branch-id');
-
-			modelPurchaseReturnHandel.show();
-
-			return false
-		};
-
-		InventoryHandler.prototype.purchaseOrder = function (e) {
-
-			let branchId = $('select[name="branch"]').val();
-
-			let loading = SkilldoUtil.buttonLoading($(this))
-
-			let data = {
-				action: 'StockInventoryAdminAjax::purchaseOrder',
-				stock: modelPurchaseOrder.find('input[name="stock"]').val(),
-				productId: productId,
-				branchId: branchId
-			}
-
-			loading.start()
-
-			request
-                .post(ajax, data)
-				.then(function (response) {
-
-					SkilldoMessage.response(response);
-
-					loading.stop();
-
-					if(response.status === 'success') {
-
-						let column = $('.tr_' + response.data.id);
-
-						column.find('.column-stock span').html(response.data.stock);
-
-						column.find('.column-status .badge').text(response.data.label);
-
-						column.find('.column-status .badge').removeClass(function (index, className) {
-							return (className.match (/(^|\s)text-bg-\S+/g) || []).join(' ');
-						});
-
-						column.find('.column-status .badge').addClass(response.data.color);
-
-						modelPurchaseOrderHandel.hide();
-					}
-				})
-				.catch(function (error) {
-					loading.stop();
-				});
-
-			return false;
-		}
-
-		InventoryHandler.prototype.purchaseReturn = function (e) {
-
-			let branchId = $('select[name="branch"]').val();
-
-			let loading = SkilldoUtil.buttonLoading($(this))
-
-			let data = {
-				action: 'StockInventoryAdminAjax::purchaseReturn',
-				stock: modelPurchaseReturn.find('input[name="stock"]').val(),
-                productId: productId,
-				branchId: branchId
-			}
-
-			loading.start()
-
-			request
-				.post(ajax, data)
-				.then(function (response) {
-
-					SkilldoMessage.response(response);
-
-					loading.stop();
-
-					if(response.status === 'success') {
-
-						let column = $('.tr_' + response.data.id);
-
-						column.find('.column-stock span').html(response.data.stock);
-
-						column.find('.column-status .badge').text(response.data.label);
-
-						column.find('.column-status .badge').removeClass(function (index, className) {
-							return (className.match (/(^|\s)text-bg-\S+/g) || []).join(' ');
-						});
-
-						column.find('.column-status .badge').addClass(response.data.color);
-
-						modelPurchaseReturnHandel.hide();
-					}
-				})
-				.catch(function (error) {
-					loading.stop();
-				});
-
-			return false;
-		}
-
-		InventoryHandler.prototype.history = function (e) {
-
-			modelHistories.find('.loading').show();
-
-			modelHistoriesHandel.show();
-
-			let data = {
-                productId : $(this).data('id'),
-                branchId : $(this).data('branch-id'),
-				action : 'StockInventoryAdminAjax::inventoryHistory'
-			}
-
-			request.post(ajax, data).then(function (response) {
-
-				if(response.status === 'success') {
-
-					let historyStockHtml = ''
-
-					if(Object.keys(response.data.stock).length !== 0) {
-						for (let [index, history] of Object.entries(response.data.stock)) {
-							historyStockHtml += [history].map(function(item) {
-								if(item.action === 'cong') {
-									item.action = '<span class="badge text-bg-green">Nhập kho</span>'
-                                }
-								if(item.action === 'tru') {
-									item.action = '<span class="badge text-bg-red">Xuất kho</span>'
-								}
-								return $('#js_inventories_template_history').html().split(/\$\{(.+?)}/g).map(render(item)).join('');
-							});
-						}
-					}
-
-					let historyReservedHtml = ''
-
-					if(Object.keys(response.data.reserved).length !== 0) {
-						for (let [index, history] of Object.entries(response.data.reserved)) {
-							historyReservedHtml += [history].map(function(item) {
-								if(item.action === 'cong') {
-									item.action = '<span class="badge text-bg-green">Nhập kho</span>'
-								}
-								if(item.action === 'tru') {
-									item.action = '<span class="badge text-bg-red">Xuất kho</span>'
-								}
-								return $('#js_inventories_template_history').html().split(/\$\{(.+?)}/g).map(render(item)).join('');
-							});
-						}
-					}
-
-					modelHistories.find('.loading').hide();
-					modelHistories.find('.history-content-stock').html(historyStockHtml);
-					modelHistories.find('.history-content-reserved').html(historyReservedHtml);
-				}
-				else {
-					SkilldoMessage.response(response);
-				}
-			});
-
-			return false;
-		};
-
-		new InventoryHandler();
+        handler.events()
 	})
 </script>

@@ -772,22 +772,31 @@ class WarehouseNewHandle
 
             if(response.status === 'success')
             {
-                this.elements.tableBody.html('');
-
-                for (const [key, item] of Object.entries(response.data))
+                if(response.data.length > 0)
                 {
-                    this.products.add(item)
+                    this.elements.tableBody.html('');
 
-                    this.elements.tableBody.append([item].map(function(item) {
-                        return self.elements.templateTableItems.html().split(/\$\{(.+?)\}/g).map(render(item)).join('');
-                    }));
+                    for (let [key, item] of Object.entries(response.data))
+                    {
+                        item = this.productItem({...item})
+
+                        this.products.add(item)
+
+                        this.elements.tableBody.append([item].map(function(item) {
+                            return self.elements.templateTableItems.html().split(/\$\{(.+?)\}/g).map(render(item)).join('');
+                        }));
+                    }
+
+                    this.elements.table.show();
+
+                    this.elements.import.hide();
+
+                    this.calculate()
                 }
-
-                this.elements.table.show();
-
-                this.elements.import.hide();
-
-                this.calculate()
+                else
+                {
+                    SkilldoMessage.error('File không có sản phẩm nào hợp lệ');
+                }
             }
 
             $('.file-upload-text').html('Chọn File upload');

@@ -102,7 +102,33 @@ class StockPurchaseReturnAdminAjax
 
         $id  = $request->input('id');
 
-        if($type == 'purchase-orders')
+        if($type == 'source-product')
+        {
+            $branch  = \Stock\Helper::getBranchCurrent();
+
+            $selected = [
+                'products.id',
+                'products.title',
+                'products.code',
+                'products.attribute_label',
+                'products.image',
+                'products.attribute_label',
+                DB::raw("MAX(cle_inventories.price_cost) AS price_cost"),
+                DB::raw("MAX(cle_inventories.price_cost) AS price"),
+                DB::raw("SUM(cle_inventories.stock) AS quantity")
+            ];
+
+            $products = Product::widthVariation()->where('products.id', $id)
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
+                ->whereNotNull('public')
+                ->select($selected)
+                ->groupBy('products.id')
+                ->get();
+        }
+        else if($type == 'purchase-orders')
         {
             $selected = [
                 'products.id',

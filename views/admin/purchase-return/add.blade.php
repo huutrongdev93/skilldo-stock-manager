@@ -25,6 +25,7 @@
             <div class="box h-100">
                 <div class="box-content">
                     <input type="hidden" value="{!! $action !!}" id="purchase_return_action">
+                    <input type="hidden" value="{!! $source ?? '' !!}" id="purchase_return_source">
                     @if(!empty($id))
                         <input type="hidden" name="purchase_return_id" value="{!! $id !!}" id="purchase_return_input_id">
                     @endif

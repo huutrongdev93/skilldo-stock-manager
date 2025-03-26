@@ -25,6 +25,8 @@ class PurchaseOrdersController extends MY_Controller {
 
     public function add(Request $request): void
     {
+        $source = $request->input('source');
+
         $table = new \Stock\Table\PurchaseOrder\ProductAdd();
 
         Cms::setData('table', $table);
@@ -32,6 +34,8 @@ class PurchaseOrdersController extends MY_Controller {
         Cms::setData('form', $this->form());
 
         Cms::setData('action', 'add');
+
+        Cms::setData('source', $source);
 
         $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/add', 'plugin');
 

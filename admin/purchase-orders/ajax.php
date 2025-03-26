@@ -109,48 +109,81 @@ class StockPurchaseOrderAdminAjax
 
     static function loadProductsEdit(\SkillDo\Http\Request $request): void
     {
+        $type  = $request->input('type');
+
         $id  = $request->input('id');
 
-        $selected = [
-            'products.id',
-            'products.title',
-            'products.code',
-            'products.attribute_label',
-            'products.image',
-            'products.attribute_label',
-            'po.quantity',
-            'po.price',
-        ];
-
-        $query = Qr::select($selected);
-
-        $query->leftJoin('inventories_purchase_orders_details as po', function ($join) use ($id) {
-            $join->on('po.product_id', '=', 'products.id');
-        });
-
-        $query->where('po.purchase_order_id', $id);
-
-        $query
-            ->limit(500)
-            ->orderBy('products.order')
-            ->orderBy('products.created', 'desc');
-
-        $products = \Ecommerce\Model\Product::widthVariation($query)->get();
-
-        foreach ($products as $key => $item)
+        if($type == 'source-product')
         {
-            $item = $item->toObject();
+            $branch  = \Stock\Helper::getBranchCurrent();
 
-            $item->fullname = $item->title;
+            $selected = [
+                'products.id',
+                'products.title',
+                'products.code',
+                'products.attribute_label',
+                'products.image',
+                'products.attribute_label',
+                DB::raw("MAX(cle_inventories.price_cost) AS price"),
+                DB::raw("SUM(cle_inventories.stock) AS quantity")
+            ];
 
-            if(!empty($item->attribute_label))
+            $products = Product::widthVariation()->where('products.id', $id)
+                ->leftJoin('inventories', function ($join) use ($branch) {
+                    $join->on('products.id', '=', 'inventories.product_id');
+                    $join->where('inventories.branch_id', $branch->id);
+                })
+                ->whereNotNull('public')
+                ->select($selected)
+                ->groupBy('products.id')
+                ->get();
+        }
+        else
+        {
+            $selected = [
+                'products.id',
+                'products.title',
+                'products.code',
+                'products.attribute_label',
+                'products.image',
+                'products.attribute_label',
+                'po.quantity',
+                'po.price',
+            ];
+
+            $query = Qr::select($selected);
+
+            $query->leftJoin('inventories_purchase_orders_details as po', function ($join) use ($id) {
+                $join->on('po.product_id', '=', 'products.id');
+            });
+
+            $query->where('po.purchase_order_id', $id);
+
+            $query
+                ->limit(500)
+                ->orderBy('products.order')
+                ->orderBy('products.created', 'desc');
+
+            $products = \Ecommerce\Model\Product::widthVariation($query)->get();
+        }
+
+        if(have_posts($products))
+        {
+            foreach ($products as $key => $item)
             {
-                $item->fullname .= ' <span class="fw-bold sugg-attr">'.$item->attribute_label.'</span>';
+                $item = $item->toObject();
+
+                $item->fullname = $item->title;
+
+                if(!empty($item->attribute_label))
+                {
+                    $item->fullname .= ' <span class="fw-bold sugg-attr">'.$item->attribute_label.'</span>';
+                }
+
+                $item->image = Image::medium($item->image)->html();
+
+                $products[$key] = $item;
             }
-
-            $item->image = Image::medium($item->image)->html();
-
-            $products[$key] = $item;
         }
 
         response()->success('Load dữ liệu thành công', $products);

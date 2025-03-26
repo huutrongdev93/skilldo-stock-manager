@@ -1,10 +1,6 @@
 <?php
 class AdminInventoriesButton {
-    /**
-     * Thêm buttons action cho header của table
-     * @param $buttons
-     * @return array
-     */
+
     static function tableHeaderButton($buttons): array
     {
         $buttons[] = Admin::button('blue', [
