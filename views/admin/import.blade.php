@@ -1,4 +1,4 @@
-<form method="post" enctype="multipart/form-data" class="text-center" id="js_{{ $module }}_import_form">
+<form method="post" enctype="multipart/form-data" class="text-center p-4" id="js_{{ $module }}_import_form">
     {!! Admin::loading() !!}
     <h3 class="fw-bold mb-3">Thêm sản phẩm từ file excel</h3>
     <p>(Tải về file mẫu: <a href="{!! Url::admin('plugins/stock-file-demo?file='.$examples) !!}" download>Excel file</a>)</p>

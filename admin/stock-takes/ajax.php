@@ -465,7 +465,7 @@ class StockTakeAdminAjax
 
         [
             $stockTake,
-            $branch,
+            $user,
             $inventories,
             $stockTakeDetails,
             $productsDetail
@@ -498,13 +498,17 @@ class StockTakeAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'stockTakeCode'  => '',
-                ],
-                'action'        => ($detail['actual_quantity'] > $inventory->stock) ? 'cong' : 'tru',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id'   => $user->id ?? 0,
+                'partner_code' => $user->username ?? '',
+                'partner_name' => $user->firstname.' '.$user->lastname,
+                'partner_type' => !empty($user->id) ? 'C' : '',
+                //Thông tin
+                'cost'          => $detail['price'],
+                'price'         => $detail['adjustment_price'],
+                'quantity'      => $detail['adjustment_quantity'],
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
         }
 
@@ -520,11 +524,18 @@ class StockTakeAdminAjax
                 response()->error('Tạo phiếu kiểm kho hàng thất bại');
             }
 
+            if(empty($stockTake['code']))
+            {
+                $stockTake['code'] = \Stock\Helper::code(\Stock\Prefix::stockTake->value, $stockTakeId);
+            }
+
             // Cập nhật mã phiếu vào lịch sử kho
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['stockTakeCode'] = (!(empty($stockTake['code']))) ? $stockTake['code'] : \Stock\Helper::code('KK', $stockTakeId);
-                $history['message'] = InventoryHistory::message('stock_take_update', $history['message']);
+                $history['target_id'] = $stockTakeId;
+                $history['target_code'] = $stockTake['code'];
+                $history['target_name'] = 'Kiểm hàng';
+                $history['target_type'] = \Stock\Prefix::stockTake->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -579,7 +590,7 @@ class StockTakeAdminAjax
 
         [
             $stockTake,
-            $branch,
+            $user,
             $inventories,
             $stockTakeDetails,
             $productsDetail
@@ -617,13 +628,22 @@ class StockTakeAdminAjax
                     'inventory_id'  => $inventory->id,
                     'product_id'    => $inventory->product_id,
                     'branch_id'     => $inventory->branch_id,
-                    'message'       => InventoryHistory::message('stock_take_update', [
-                        'stockBefore'   => $inventory->stock,
-                        'stockAfter'    => $newStock,
-                        'stockTakeCode'  => $object->code,
-                    ]),
-                    'action'        => ($detail['actual_quantity'] > $inventory->stock) ? 'cong' : 'tru',
-                    'type'          => 'stock',
+                    //Đối tác
+                    'partner_id'   => $user->id ?? 0,
+                    'partner_code' => $user->username ?? '',
+                    'partner_name' => $user->firstname.' '.$user->lastname,
+                    'partner_type' => !empty($user->id) ? 'C' : '',
+                    //Đối tượng
+                    'target_id'   => $object->id ?? 0,
+                    'target_code' => $object->code ?? '',
+                    'target_type' => \Stock\Prefix::stockTake->value,
+                    'target_name' => 'Kiểm hàng',
+                    //Thông tin
+                    'cost'          => $detail['price'],
+                    'price'         => $detail['adjustment_price'],
+                    'quantity'      => $detail['adjustment_quantity'],
+                    'start_stock'   => $inventory->stock,
+                    'end_stock'     => $newStock,
                 ];
             }
 
@@ -932,7 +952,7 @@ class StockTakeAdminAjax
 
         return [
             $stockTake,
-            $branch,
+            $user,
             $inventories,
             $stockTakeDetails,
             $productsDetail

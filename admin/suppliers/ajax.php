@@ -17,8 +17,9 @@ class SuppliersAdminAjax
         }
 
         $purchaseOrders = \Stock\Model\PurchaseOrder::where('supplier_id', $id)
+            ->where('status', \Stock\Status\PurchaseOrder::success->value)
             ->where('is_payment', 0)
-            ->orderByDesc('created')
+            ->orderBy('created')
             ->get();
 
         response()->success(trans('Load dữ liệu thành công'), [
@@ -97,8 +98,8 @@ class SuppliersAdminAjax
             'phone'         => $supplier->phone,
             'partner_type'  => 'S',
             //Loại
-            'group_id' => -2,
-            'group_name' => 'Chi tiền trả NCC',
+            'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
+            'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
             'origin' => 'purchase',
             'method' => 'cash',
             'amount' => $payment*-1,
@@ -181,8 +182,8 @@ class SuppliersAdminAjax
                     'phone'         => $supplier->phone,
                     'partner_type'  => 'S',
                     //Loại
-                    'group_id'   => -2,
-                    'group_name' => 'Chi tiền trả NCC',
+                    'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
+                    'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
                     'origin'     => 'purchase',
                     'method'     => 'cash',
                     'amount'     => $purchaseOrderPayload['payment']*-1,

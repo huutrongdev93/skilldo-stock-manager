@@ -417,7 +417,7 @@ class StockDamageItemsAdminAjax
 
         [
             $damageItems,
-            $branch,
+            $user,
             $productDamageItems,
             $inventories,
             $damageItemsDetails,
@@ -459,13 +459,17 @@ class StockDamageItemsAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'damageCode'  => '',
-                ],
-                'action'        => 'tru',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id'   => $user->id ?? 0,
+                'partner_code' => $user->username ?? '',
+                'partner_name' => $user->firstname.' '.$user->lastname,
+                'partner_type' => !empty($user->id) ? 'C' : '',
+                //Thông tin
+                'cost'          => $detail['price'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity'],
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
         }
 
@@ -480,10 +484,17 @@ class StockDamageItemsAdminAjax
                 response()->error('Tạo phiếu xuất hủy hàng thất bại');
             }
 
+            if(empty($purchaseOrder['code']))
+            {
+                $damageItems['code'] = \Stock\Helper::code(\Stock\Prefix::damageItem->value, $damageItemsId);
+            }
+
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['damageCode'] = (!empty($damageItems['code'])) ? $damageItems['code'] : \Stock\Helper::code('XH', $damageItemsId);;
-                $history['message'] = InventoryHistory::message('damage_items_update', $history['message']);
+                $history['target_id']   = $damageItemsId;
+                $history['target_code'] = $damageItems['code'];
+                $history['target_name'] = 'Xuất Hủy Hàng';
+                $history['target_type'] = \Stock\Prefix::damageItem->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -542,7 +553,7 @@ class StockDamageItemsAdminAjax
 
         [
             $damageItems,
-            $branch,
+            $user,
             $productDamageItems,
             $inventories,
             $damageItemsDetails,
@@ -591,13 +602,22 @@ class StockDamageItemsAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => InventoryHistory::message('damage_items_update', [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'damageCode'  => $object->code,
-                ]),
-                'action'        => 'tru',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id'   => $user->id ?? 0,
+                'partner_code' => $user->username ?? '',
+                'partner_name' => $user->firstname.' '.$user->lastname,
+                'partner_type' => !empty($user->id) ? 'C' : '',
+                //Đối tượng
+                'target_id'   => $object->id ?? 0,
+                'target_code' => $object->code ?? '',
+                'target_type' => \Stock\Prefix::damageItem->value,
+                'target_name' => 'Xuất hủy hàng',
+                //Thông tin
+                'cost'          => $detail['price'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity'],
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
 
             if(empty($detail['damage_item_id']))
@@ -702,15 +722,15 @@ class StockDamageItemsAdminAjax
         //Người hủy hàng
         $damageId = (int)$request->input('damage');
 
-        $damage = (!empty($damageId)) ? \SkillDo\Model\User::find($damageId) : Auth::user();
+        $user = (!empty($damageId)) ? \SkillDo\Model\User::find($damageId) : Auth::user();
 
-        if(empty($damage))
+        if(empty($user))
         {
             response()->error('Không tìm thấy Nhân viên xuất hủy hàng');
         }
 
-        $damageItems['damage_id']     = $damage->id ?? 0;
-        $damageItems['damage_name']   = $damage->firstname.' '.$damage->lastname;
+        $damageItems['damage_id']     = $user->id ?? 0;
+        $damageItems['damage_name']   = $user->firstname.' '.$user->lastname;
 
         //Mã code
         $code = $request->input('code');
@@ -833,7 +853,7 @@ class StockDamageItemsAdminAjax
 
         return [
             $damageItems,
-            $branch,
+            $user,
             $productDamageItems,
             $inventories,
             $damageItemsDetails,

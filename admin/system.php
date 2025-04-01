@@ -18,6 +18,13 @@ class AdminInventoriesSystem
     {
         $form = form();
 
+        $brands = \Stock\Helper::getBranchAll()->pluck('name', 'id')->prepend('Lấy theo chi nhánh mặc định', 0)->toArray();
+
+        $form->select2('inventoriesConfig[website]', $brands, [
+            'label' => 'Chi nhánh website',
+            'note'  => 'Chi nhánh để hiển thị số lượng ở website'
+        ], \Stock\Config::get('website'));
+
         $order = [
             'one' => 'Cho phép mua hàng dựa trên kho tổng',
             'all' => 'Cho phép mua hàng dưa trên tất cả kho',
@@ -25,7 +32,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[stockOrder]', $order, [
             'label' => 'Khách mua hàng'
-        ], \Stock\Helper::config('stockOrder'));
+        ], \Stock\Config::get('stockOrder'));
 
         $purchaseOrder = [
             'shipping'      => 'Khi đơn hàng ở trạng thái đang vận chuyển',
@@ -36,7 +43,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[purchaseOrder]', $purchaseOrder, [
             'label' => 'Trừ kho'
-        ], \Stock\Helper::config('purchaseOrder'));
+        ], \Stock\Config::get('purchaseOrder'));
 
         $purchaseOrder = [
             'handmade' => 'Thao tác thủ công',
@@ -45,7 +52,7 @@ class AdminInventoriesSystem
 
         $form->radio('inventoriesConfig[lackStock]', $purchaseOrder, [
             'label' => 'Kho hàng thiếu sản phẩm'
-        ], \Stock\Helper::config('lackStock'));
+        ], \Stock\Config::get('lackStock'));
 
         Admin::view('components/system-default', [
             'title'         => 'Cấu hình kho hàng',
@@ -70,9 +77,9 @@ class AdminInventoriesSystem
     {
         $inventoriesConfig = $request->input('inventoriesConfig');
 
-        if(is_array($inventoriesConfig) && !empty($inventoriesConfig)) {
-
-            Option::update('inventoriesConfig', $inventoriesConfig);
+        if(is_array($inventoriesConfig) && !empty($inventoriesConfig))
+        {
+            \Stock\Config::save($inventoriesConfig);
         }
     }
 }

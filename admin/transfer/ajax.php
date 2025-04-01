@@ -432,11 +432,14 @@ class TransferAdminAjax
             $transfer,
             $inventories,
             $transferDetails,
-            $productsDetail
+            $productsDetail,
         ] = static::data($request);
 
         //Cập nhật tồn kho
         $inventoriesUpdate = [];
+
+        //Cập nhật lịch sử
+        $inventoriesHistories = [];
 
         foreach ($transferDetails as $detail)
         {
@@ -448,6 +451,18 @@ class TransferAdminAjax
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+            ];
+
+            $inventoriesHistories[] = [
+                'inventory_id'  => $inventory->id,
+                'product_id'    => $inventory->product_id,
+                'branch_id'     => $inventory->branch_id,
+                //Thông tin
+                'cost'          => $detail['price'],
+                'price'         => $detail['price']*$detail['send_quantity'],
+                'quantity'      => $detail['send_quantity']*1,
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
         }
 
@@ -463,6 +478,21 @@ class TransferAdminAjax
                 response()->error('Tạo phiếu chuyển hàng thất bại');
             }
 
+            if(empty($transfer['code']))
+            {
+                $transfer['code'] = \Stock\Helper::code(\Stock\Prefix::transfer->value, $transferId);
+            }
+
+            // Cập nhật mã phiếu vào lịch sử kho
+            foreach ($inventoriesHistories as $key => $history)
+            {
+                $history['target_id'] = $transferId;
+                $history['target_code'] = $transfer['code'];
+                $history['target_name'] = 'Chuyển hàng';
+                $history['target_type'] = \Stock\Prefix::transfer->value;
+                $inventoriesHistories[$key] = $history;
+            }
+
             // Cập nhật transfer_id
             foreach ($transferDetails as &$detail)
             {
@@ -474,6 +504,9 @@ class TransferAdminAjax
 
             //Cập nhật kho hàng
             \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+
+            //Cập nhật lịch sử
+            DB::table('inventories_history')->insert($inventoriesHistories);
 
             DB::commit();
 
@@ -527,6 +560,9 @@ class TransferAdminAjax
         //Cập nhật tồn kho
         $inventoriesUpdate = [];
 
+        //Cập nhật lịch sử
+        $inventoriesHistories = [];
+
         foreach ($transferDetails as $key => $detail)
         {
             $inventory = $inventories[$detail['product_id']];
@@ -537,6 +573,23 @@ class TransferAdminAjax
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
                 'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+            ];
+
+            $inventoriesHistories[] = [
+                'inventory_id'  => $inventory->id,
+                'product_id'    => $inventory->product_id,
+                'branch_id'     => $inventory->branch_id,
+                //Đối tượng
+                'target_id'   => $object->id ?? 0,
+                'target_code' => $object->code ?? '',
+                'target_type' => \Stock\Prefix::transfer->value,
+                'target_name' => 'Chuyển hàng',
+                //Thông tin
+                'cost'          => $detail['price'],
+                'price'         => $detail['price']*$detail['send_quantity'],
+                'quantity'      => $detail['send_quantity']*-1,
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
 
             if(empty($detail['transfer_id']))
@@ -584,6 +637,9 @@ class TransferAdminAjax
 
             //Cập nhật kho hàng
             \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+
+            //Cập nhật lịch sử
+            DB::table('inventories_history')->insert($inventoriesHistories);
 
             DB::commit();
 
@@ -1515,6 +1571,7 @@ class TransferAdminAjax
             $transferDetails,
             $inventories,
             $toInventoriesUpdate,
+            $inventoriesHistories,
             $fromInventoriesUpdate,
             $productsDetail
         ] = static::dataReceive($request, $object);
@@ -1546,16 +1603,36 @@ class TransferAdminAjax
 
             if(have_posts($fromInventoriesUpdate))
             {
+                //Lịch sử
+                $conditions = array_map(function ($item) {
+                    return ['product_id' => $item['product_id'], 'branch_id' => $item['branch_id']];
+                }, $fromInventoriesUpdate);
+
+                $histories = \Stock\Model\History::where('target_code', $object->code)
+                    ->where('target_id', $object->id)
+                    ->where('target_type', \Stock\Prefix::transfer->value)
+                    ->whereIn(DB::raw('(product_id, branch_id)'), $conditions)
+                    ->get();
+
                 $cases = [];
                 $bindings = [];
                 $conditions = [];
 
-                foreach ($fromInventoriesUpdate as $item) {
+                foreach ($fromInventoriesUpdate as &$item) {
                     $cases[] = "WHEN product_id = ? AND branch_id = ? THEN stock + ?";
                     $bindings[] = $item['product_id'];
                     $bindings[] = $item['branch_id'];
                     $bindings[] = $item['stock'];
                     $conditions[] = "({$item['product_id']}, {$item['branch_id']})";
+
+                    foreach ($histories as $history)
+                    {
+                        if($history->product_id == $item['product_id'] && $history->branch_id == $item['branch_id'])
+                        {
+                            $item['history'] = $history;
+                            break;
+                        }
+                    }
                 }
 
                 $sql = "UPDATE cle_inventories SET stock = CASE " . implode(' ', $cases) . " END, status = ? WHERE (product_id, branch_id) IN (" . implode(',', $conditions) . ")";
@@ -1563,6 +1640,41 @@ class TransferAdminAjax
                 $bindings[] = \Stock\Status\Inventory::in->value;
 
                 DB::statement($sql, $bindings);
+
+                unset($item);
+
+                foreach ($fromInventoriesUpdate as $item) {
+
+                    $queryUpdate = DB::table('inventory_histories')
+                        ->where('product_id', $item['history']->product_id)
+                        ->where('branch_id', $item['history']->branch_id)
+                        ->where('id', '>=', $item['history']->id);
+
+                    if(!empty($item['history']))
+                    {
+                        $stop = \Stock\Model\History::where('product_id', $item['history']->product_id)
+                            ->where('branch_id', $item['history']->branch_id)
+                            ->where('id', '>', $item['history']->id)
+                            ->where('target_type', \Stock\Prefix::stockTake->value)
+                            ->first();
+
+                        if(!empty($stop))
+                        {
+                            $stop->start_stock = $stop->start_stock + $item['stock'];
+
+                            $stop->quantity = $stop->end_stock - $stop->start_stock;
+
+                            $stop->save();
+
+                            $queryUpdate->where('id', '<', $stop->id);
+                        }
+                    }
+
+                    $queryUpdate->update([
+                        'start_stock' => DB::raw("`start_stock` + {$item['stock']}"),
+                        'end_stock' => DB::raw("`end_stock` + {$item['stock']}")
+                    ]);
+                }
             }
 
             DB::commit();
@@ -1621,15 +1733,15 @@ class TransferAdminAjax
             'status'                 => \Stock\Status\Transfer::success->value
         ];
 
-        //Từ Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        //Đến Chi nhánh
+        $branchTo = \Stock\Helper::getBranchCurrent();
 
-        if(empty($branch))
+        if(empty($branchTo))
         {
             response()->error('Chi nhánh nhận hàng đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($branch->id !== $object->to_branch_id)
+        if($branchTo->id !== $object->to_branch_id)
         {
             response()->error('Phiếu chuyển hàng không thuộc chi nhánh này');
         }
@@ -1647,7 +1759,7 @@ class TransferAdminAjax
 
         $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
-            ->where('branch_id', $branch->id)
+            ->where('branch_id', $branchTo->id)
             ->get();
 
         if($inventories->count() !== count($productsId))
@@ -1670,6 +1782,8 @@ class TransferAdminAjax
         $toInventoriesUpdate = [];
 
         $fromInventoriesUpdate = [];
+
+        $inventoriesHistories = [];
 
         foreach($productTransfers as $key => $product)
         {
@@ -1725,6 +1839,23 @@ class TransferAdminAjax
                         'stock'  => $inventory->stock + $product['receive_quantity'],
                         'status' => \Stock\Status\Inventory::in->value
                     ];
+
+                    $inventoriesHistories[] = [
+                        'inventory_id'  => $inventory->id,
+                        'product_id'    => $inventory->product_id,
+                        'branch_id'     => $inventory->branch_id,
+                        //Đối tượng
+                        'target_id'   => $object->id ?? 0,
+                        'target_code' => $object->code ?? '',
+                        'target_type' => \Stock\Prefix::transfer->value,
+                        'target_name' => 'Nhận hàng',
+                        //Thông tin
+                        'cost'          => $product['price'],
+                        'price'         => $product['price']*$product['receive_quantity'],
+                        'quantity'      => $product['receive_quantity'],
+                        'start_stock'   => $inventory->stock,
+                        'end_stock'     => $inventory->stock + $product['receive_quantity'],
+                    ];
                 }
 
                 //Trả hàng về kho chuyển
@@ -1764,8 +1895,9 @@ class TransferAdminAjax
             $transferDetails,
             $inventories,
             $toInventoriesUpdate,
+            $inventoriesHistories,
             $fromInventoriesUpdate,
-            $productsDetail
+            $productsDetail,
         ];
     }
 }

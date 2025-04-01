@@ -5,29 +5,38 @@ class StockManagerAdmin {
      */
     static function button($buttons)
     {
-        $buttons['stock'] = \Plugin::partial(STOCK_NAME, 'admin/button');
+        $branches = \Stock\Helper::getBranchAll();
+
+        $currentBranch = \Stock\Helper::getBranchCurrent();
+
+        $buttons['stock'] = \Plugin::partial(STOCK_NAME, 'admin/button', [
+            'branches' => $branches,
+            'currentBranch' => $currentBranch
+        ]);
 
         return $buttons;
     }
 
     static function navigation(): void
     {
-        AdminMenu::add('stock_inventory', 'Kho hàng', 'stock-inventories', [
+        AdminMenu::addSub('order', 'orderReturn', 'Trả hàng', 'order-return', [
+            'position' => 'order',
+        ]);
+
+        AdminMenu::add('stock_inventory', 'Kho hàng', 'inventories', [
             'position' => 'products',
             'icon' => '<i class="fa-duotone fa-regular fa-boxes-stacked"></i>'
         ]);
 
         AdminMenu::addSub('stock_inventory', 'inventories', 'Hàng hóa', 'inventories');
+        if(Auth::hasCap('product_cate_list')) {
+            AdminMenu::addSub('stock_inventory', 'suppliers', 'Nhà cung cấp', 'suppliers');
+        }
         AdminMenu::addSub('stock_inventory', 'purchaseOrders', 'Nhập hàng', 'purchase-order');
         AdminMenu::addSub('stock_inventory', 'purchaseReturns', 'Trả hàng', 'purchase-return');
         AdminMenu::addSub('stock_inventory', 'damageItems', 'Xuất hủy hàng', 'damage-items');
         AdminMenu::addSub('stock_inventory', 'stockTakes', 'Kiểm kho', 'stock-take');
-
-        if(Auth::hasCap('product_cate_list')) {
-            AdminMenu::addSub('products', 'suppliers', 'Nhà cung cấp', 'suppliers', [
-                'position' => 'products_categories'
-            ]);
-        }
+        AdminMenu::addSub('stock_inventory', 'transfers', 'Chuyển hàng', 'transfers');
 
         AdminMenu::add('cashFlow', 'Sổ quỹ', 'cash-flow', [
             'position' => 'stock_inventory',

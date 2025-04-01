@@ -17,7 +17,7 @@ Class StockTake extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code('KK', $object->id)]);
+                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::stockTake->value, $object->id)]);
             }
         });
     }

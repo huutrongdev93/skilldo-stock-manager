@@ -25,11 +25,7 @@ class Helper {
             'outstock' => [
                 'label' => trans('stock.status.outstock'),
                 'color' => 'red',
-            ],
-            'onbackorder' => [
-                'label' => trans('stock.status.onbackorder'),
-                'color' => 'yellow',
-            ],
+            ]
         ];
         if(!empty($key) && !empty($type) && isset($status[$key])) {
             if(!empty($status[$key][$type])) return apply_filters('inventory_status_'.$type, $status[$key][$type], $key, $type);
@@ -65,7 +61,7 @@ class Helper {
 
         if(empty($branch))
         {
-            $branch = Branch::where('default', 1)->first();
+            $branch = Branch::where('isDefault', 1)->first();
         }
 
         if(empty($branch))
@@ -77,7 +73,7 @@ class Helper {
                 response()->error('Không tìm thấy chi nhánh');
             }
 
-            $branch->default = 1;
+            $branch->isDefault = 1;
 
             $branch->save();
         }
@@ -101,7 +97,7 @@ class Helper {
 
         if(!have_posts($website) || empty($website))
         {
-            $branch = Branch::where('default', 1)->first();
+            $branch = Branch::where('isDefault', 1)->first();
         }
 
         if(!have_posts($branch))
@@ -189,8 +185,8 @@ class Helper {
     }
 }
 
-class CashFlowHelper {
-
+class CashFlowHelper
+{
     static function partnerType(): Collection
     {
         return Collection::make([

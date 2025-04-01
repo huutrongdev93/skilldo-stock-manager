@@ -564,13 +564,17 @@ class StockPurchaseReturnAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'purchaseReturnCode'  => '',
-                ],
-                'action'        => 'tru',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id' => $supplier->id ?? 0,
+                'partner_code' => $supplier->code ?? '',
+                'partner_name' => $supplier->name ?? '',
+                'partner_type' => !empty($supplier->id) ? 'S' : '',
+                //Thông tin
+                'cost'          => $detail['cost_new'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity']*-1,
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
         }
 
@@ -594,8 +598,10 @@ class StockPurchaseReturnAdminAjax
             // Cập nhật mã phiếu vào lịch sử kho
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['purchaseReturnCode'] = $purchaseReturn['code'];
-                $history['message'] = InventoryHistory::message('purchase_returns_update', $history['message']);
+                $history['target_id'] = $purchaseReturnId;
+                $history['target_code'] = $purchaseReturn['code'];
+                $history['target_name'] = 'Trả hàng';
+                $history['target_type'] = \Stock\Prefix::purchaseReturn->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -725,13 +731,23 @@ class StockPurchaseReturnAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => InventoryHistory::message('purchase_returns_update', [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'purchaseCode'  => $object->code,
-                ]),
-                'action'        => 'tru',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id' => $supplier->id ?? 0,
+                'partner_code' => $supplier->code ?? '',
+                'partner_name' => $supplier->name ?? '',
+                'partner_type' => !empty($supplier->id) ? 'S' : '',
+                //Đối tượng
+                'target_id'   => $object->id ?? 0,
+                'target_code' => $object->code ?? '',
+                'target_type' => \Stock\Prefix::purchaseReturn->value,
+                'target_name' => 'Trả hàng',
+
+                //Thông tin
+                'cost'          => $detail['cost_new'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity']*-1,
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
 
             if(empty($detail['purchase_return_id']))
@@ -1110,7 +1126,7 @@ class StockPurchaseReturnAdminAjax
         if($purchaseReturn['total_payment'] > 0)
         {
             //Tạo phiếu thu
-            $code = \Stock\Helper::code('PT'.\Stock\Prefix::purchaseReturn->value, $purchaseReturnId);
+            $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseReturn->value, $purchaseReturnId);
 
             $idCashFlow = \Stock\Model\CashFlow::create([
                 'code'      => $code,
@@ -1128,8 +1144,8 @@ class StockPurchaseReturnAdminAjax
                 'partner_type' => 'S',
 
                 //Loại
-                'group_id' => -3,
-                'group_name' => 'Thu tiền NCC hoàn trả',
+                'group_id' => \Stock\CashFlowGroup\Transaction::supplierReceipt->id(),
+                'group_name' => \Stock\CashFlowGroup\Transaction::supplierReceipt->label(),
                 'origin' => 'purchase',
                 'method' => 'cash',
                 'amount' => $purchaseReturn['total_payment'],
@@ -1209,7 +1225,7 @@ class StockPurchaseReturnAdminAjax
     static function print(\SkillDo\Http\Request $request): void
     {
         $validate = $request->validate([
-            'id' => Rule::make('phiếu trả hàng')->notEmpty()->integer(),
+            'id' => Rule::make('phiếu trả hàng nhập')->notEmpty()->integer(),
         ]);
 
         if ($validate->fails())

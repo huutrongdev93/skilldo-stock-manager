@@ -12,6 +12,7 @@ Class StockAsset
         Admin::asset()->location('footer')->add(STOCK_NAME, Path::plugin(STOCK_NAME).'/assets/js/cash-flow.js');
         Admin::asset()->location('footer')->add(STOCK_NAME, Path::plugin(STOCK_NAME).'/assets/js/suppliers.js');
         Admin::asset()->location('footer')->add(STOCK_NAME, Path::plugin(STOCK_NAME).'/assets/js/transfers.js');
+        Admin::asset()->location('footer')->add(STOCK_NAME, Path::plugin(STOCK_NAME).'/assets/js/order-return.js');
     }
 }
 

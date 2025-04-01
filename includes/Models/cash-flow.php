@@ -56,16 +56,19 @@ class CashFlow extends \Skilldo\Model\Model
 
                 if($object->target_type == 'Order')
                 {
-                    $code = \Stock\Helper::code('TTDH', $object->id);
+                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrder->value, $object->id);
+                }
+                if($object->target_type == 'OrderReturn')
+                {
+                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrderReturn->value, $object->id);
                 }
                 if($object->target_type == \Stock\Prefix::purchaseOrder->value)
                 {
-                    $code = \Stock\Helper::code('TT'.\Stock\Prefix::purchaseOrder->value, $object->id);
+                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseOrder->value, $object->id);
                 }
-
                 if($object->target_type == \Stock\Prefix::purchaseReturn->value)
                 {
-                    $code = \Stock\Helper::code('PT'.\Stock\Prefix::purchaseReturn->value, $object->id);
+                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseReturn->value, $object->id);
                 }
 
                 DB::table($object->getTable())

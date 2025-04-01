@@ -98,11 +98,16 @@ class Inventories extends SKDObjectTable
         if(empty($item->variations))
         {
             $listButton['edit'] = Admin::button('blue', [
-                'icon' => Admin::icon('edit'),
+                'icon'    => Admin::icon('edit'),
                 'tooltip' => 'Cập nhật',
                 'data-id' => $item->id,
-                'data-branch-id' => $item->branch_id,
-                'class' => 'js_inventory_btn_edit'
+                'data-bill' => htmlspecialchars(json_encode([
+                    'code'       => $item->code,
+                    'title'      => $item->title,
+                    'price_cost' => $item->price_cost,
+                    'stock'      => $item->stock,
+                ])),
+                'class'   => 'js_inventory_btn_edit'
             ]);
 
             $listButton['purchaseOrder'] = Admin::button('green', [
@@ -522,28 +527,35 @@ class ProductVariation extends SKDObjectTable
     {
         $listButton = [];
 
-        $listButton['purchaseOrder'] = Admin::button('blue', [
-            'icon'    => '<i class="fa-light fa-basket-shopping-plus"></i>',
+        $listButton['edit'] = Admin::button('blue', [
+            'icon' => Admin::icon('edit'),
+            'tooltip' => 'Cập nhật',
+            'data-id' => $item->id,
+            'data-bill' => htmlspecialchars(json_encode([
+                'code'       => $item->code,
+                'title'      => $item->title,
+                'price_cost' => $item->price_cost,
+                'stock'      => $item->stock,
+            ])),
+            'class' => 'js_inventory_btn_edit'
+        ]);
+
+        $listButton['purchaseOrder'] = Admin::button('green', [
+            'icon' => '<i class="fa-light fa-basket-shopping-plus"></i>',
             'tooltip' => 'Nhập hàng',
             'data-id' => $item->id,
             'data-branch-id' => $item->branch_id,
-            'class' => 'js_btn_purchase_order'
+            'href' => Url::route('admin.stock.purchaseOrders.new').'?source=products',
+            'class' => 'js_inventory_btn_purchase_order'
         ]);
 
         $listButton['purchaseReturn'] = Admin::button('red', [
-            'icon'    => '<i class="fa-light fa-basket-shopping-minus"></i>',
+            'icon' => '<i class="fa-light fa-basket-shopping-minus"></i>',
             'tooltip' => 'Xuất hàng',
             'data-id' => $item->id,
             'data-branch-id' => $item->branch_id,
-            'class' => 'js_btn_purchase_return'
-        ]);
-
-        $listButton['history'] = Admin::button('yellow', [
-            'icon'    => '<i class="fa-light fa-clock-rotate-left"></i>',
-            'tooltip' => 'Lịch sử thay đổi',
-            'data-id' => $item->id,
-            'data-branch-id' => $item->branch_id,
-            'class' => 'js_btn_inventories_history'
+            'href' => Url::route('admin.stock.purchaseReturns.new').'?source=products',
+            'class' => 'js_inventory_btn_purchase_return'
         ]);
 
         return $listButton;

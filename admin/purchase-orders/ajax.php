@@ -548,13 +548,17 @@ class StockPurchaseOrderAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'purchaseCode'  => '',
-                ],
-                'action'        => 'cong',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id' => $supplier->id ?? 0,
+                'partner_code' => $supplier->code ?? '',
+                'partner_name' => $supplier->name ?? '',
+                'partner_type' => !empty($supplier->id) ? 'S' : '',
+                //Thông tin
+                'cost'          => $detail['cost_new'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity'],
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
         }
 
@@ -578,8 +582,10 @@ class StockPurchaseOrderAdminAjax
             // Cập nhật mã phiếu vào lịch sử kho
             foreach ($inventoriesHistories as $key => $history)
             {
-                $history['message']['purchaseCode'] = $purchaseOrder['code'];
-                $history['message'] = InventoryHistory::message('purchase_update', $history['message']);
+                $history['target_id'] = $purchaseOrderId;
+                $history['target_code'] = $purchaseOrder['code'];
+                $history['target_name'] = 'Nhập hàng';
+                $history['target_type'] = \Stock\Prefix::purchaseOrder->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -702,13 +708,23 @@ class StockPurchaseOrderAdminAjax
                 'inventory_id'  => $inventory->id,
                 'product_id'    => $inventory->product_id,
                 'branch_id'     => $inventory->branch_id,
-                'message'       => InventoryHistory::message('purchase_update', [
-                    'stockBefore'   => $inventory->stock,
-                    'stockAfter'    => $newStock,
-                    'purchaseCode'  => $object->code,
-                ]),
-                'action'        => 'cong',
-                'type'          => 'stock',
+                //Đối tác
+                'partner_id' => $supplier->id ?? 0,
+                'partner_code' => $supplier->code ?? '',
+                'partner_name' => $supplier->name ?? '',
+                'partner_type' => !empty($supplier->id) ? 'S' : '',
+                //Đối tượng
+                'target_id'   => $object->id ?? 0,
+                'target_code' => $object->code ?? '',
+                'target_type' => \Stock\Prefix::purchaseOrder->value,
+                'target_name' => 'Nhập hàng',
+
+                //Thông tin
+                'cost'          => $detail['cost_new'],
+                'price'         => $detail['price']*$detail['quantity'],
+                'quantity'      => $detail['quantity'],
+                'start_stock'   => $inventory->stock,
+                'end_stock'     => $newStock,
             ];
 
             if(empty($detail['purchase_order_id']))
@@ -1097,7 +1113,7 @@ class StockPurchaseOrderAdminAjax
         if($purchaseOrder['total_payment'] > 0)
         {
             //Tạo phiếu chi
-            $code = \Stock\Helper::code('TT'.\Stock\Prefix::purchaseOrder->value, $purchaseOrderId);
+            $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseOrder->value, $purchaseOrderId);
 
             $idCashFlow = \Stock\Model\CashFlow::create([
                 'code'      => $code,
@@ -1115,8 +1131,8 @@ class StockPurchaseOrderAdminAjax
                 'partner_type' => 'S',
 
                 //Loại
-                'group_id' => -2,
-                'group_name' => 'Chi tiền trả NCC',
+                'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
+                'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
                 'origin' => 'purchase',
                 'method' => 'cash',
                 'amount' => $purchaseOrder['total_payment']*-1,

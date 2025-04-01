@@ -2,7 +2,8 @@
 
 use Ecommerce\Enum\Order\StatusPay;
 
-class CashFlowOrder {
+class CashFlowOrder
+{
     static function orderPaymentValidate($order, $status): void
     {
         if(empty($order->branch_id))
@@ -21,7 +22,7 @@ class CashFlowOrder {
     }
 
     //Tạo phiếu thu khi đơn hàng được thanh toán
-    static function orderPayment($order, $status)
+    static function orderPayment($order, $status): void
     {
         //Tạo phiếu thu nếu thanh toán thành công
         if($status === StatusPay::COMPLETED->value)
@@ -29,8 +30,8 @@ class CashFlowOrder {
             $cashFlow = [
                 'branch_id'     => $order->branch_id,
                 'branch_name'   => $order->branch_name,
-                'group_id'      => -1,
-                'group_name'    => 'Thu tiền khách trả',
+                'group_id'      => \Stock\CashFlowGroup\Transaction::orderSuccess->id(),
+                'group_name'    => \Stock\CashFlowGroup\Transaction::orderSuccess->label(),
                 'user_id'       => Auth::user()->id,
                 'user_name'     => Auth::user()->firstname.' '.Auth::user()->lastname,
                 'partner_id'    => $order->user_created,
@@ -52,6 +53,7 @@ class CashFlowOrder {
 
             \Stock\Model\CashFlow::create($cashFlow);
         }
+
         //hủy phiếu thu nếu thanh toán thất bại
         if($status !== StatusPay::COMPLETED->value && $order->status == StatusPay::COMPLETED->value)
         {

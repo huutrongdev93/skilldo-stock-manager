@@ -7,6 +7,7 @@
                     <button type="button" class="close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
+                    {!! Admin::loading() !!}
                     <div class="quickEditProductStockBody"></div>
                 </div>
                 <div class="modal-footer">
@@ -21,7 +22,7 @@
     .quickEditProductStockBody .table { border:1px solid #ccc!important; }
 </style>
 <script id="quick_edit_product_branch_template" type="text/x-custom-template">
-    <h3 style="font-size: 16px;">Kho ${name}</h3>
+    <h3 style="font-size: 16px;" class="mb-3">${name}</h3>
     <table class="table">
         <thead>
         <tr>
@@ -70,25 +71,20 @@
 
 		        if(response.status === 'success') {
 
-			        let tableHtml = ''
+                    let inventoriesHtml = ''
 
-			        if(Object.keys(response.data).length !== 0) {
-				        for (let [index, branch] of Object.entries(response.data)) {
+                    if(Object.keys(response.data.inventories).length !== 0) {
 
-					        let inventoriesHtml = ''
+                        for (let [index, inventory] of Object.entries(response.data.inventories)) {
 
-					        for (let [index, inventory] of Object.entries(branch.inventories)) {
-						        inventoriesHtml += [inventory].map(function(item) {
-							        return $('#quick_edit_product_stock_template').html().split(/\$\{(.+?)}/g).map(render(item)).join('');
-						        });
-					        }
+                            inventoriesHtml += $('#quick_edit_product_stock_template').html().split(/\$\{(.+?)}/g).map(render(inventory)).join('');
+                        }
+                    }
 
-					        tableHtml = $('#quick_edit_product_branch_template').html().split(/\$\{(.+?)}/g).map(render({
-                                name : branch.name,
-						        inventories : inventoriesHtml
-                            })).join('');
-				        }
-			        }
+                    let tableHtml = $('#quick_edit_product_branch_template').html().split(/\$\{(.+?)}/g).map(render({
+                        name : response.data.branch.name,
+                        inventories : inventoriesHtml
+                    })).join('');
 
 			        quickEditStockModal.find('.loading').hide();
 

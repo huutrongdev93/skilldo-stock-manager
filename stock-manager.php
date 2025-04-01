@@ -43,7 +43,7 @@ class stock_manager {
         $admin->add('inventory_list');
         $admin->add('inventory_edit');
 
-        AdminStockProduct::productStatusCreated();
+        \Stock\Helper::createInventories();
     }
 
     public function uninstall(): void
@@ -55,3 +55,13 @@ class stock_manager {
 }
 
 include_once 'autoload/autoload.php';
+
+if(!request()->ajax())
+{
+    if(Plugin::getCheckUpdate(STOCK_NAME) !== STOCK_VERSION)
+    {
+        $updater = new \Stock\Updater();
+
+        $updater->checkForUpdates();
+    }
+}

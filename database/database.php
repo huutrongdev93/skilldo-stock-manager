@@ -57,9 +57,37 @@ return new class () extends Migration {
                 $table->integer('inventory_id')->default(0);
                 $table->integer('product_id')->default(0);
                 $table->integer('branch_id')->default(0);
-                $table->text('message')->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('action', 200)->collate('utf8mb4_unicode_ci')->nullable();
-                $table->string('type', 50)->default('stock');
+
+                //Loại
+                //order - bán hàng
+                //order-cancel - Đơn hàng bị hủy
+                //purchase-order: nhập hàng
+                //purchase-return: trả hàng
+                //damage-item: hủy hàng
+                //transfer: chuyển hàng
+                //transfer-cancel: chuyển hàng bị hủy
+                //Target
+                $table->integer('target_id')->default(0);
+                $table->string('target_code', 100)->nullable();
+                $table->string('target_type', 50)->nullable();
+                $table->string('target_name', 100)->nullable();
+
+                //Đối tác
+                $table->integer('partner_id')->default(0);
+                $table->string('partner_code', 50)->nullable();
+                $table->string('partner_name', 255)->nullable();
+                //Loại
+                //C - khách hàng
+                //S - Nhà cung cấp
+                $table->string('partner_type', 50)->nullable();
+
+                //Thông tin
+                $table->integer('cost')->default(0)->comment('Giá vốn');
+                $table->integer('price')->default(0)->comment('Giá vốn');
+                $table->integer('quantity')->default(0)->comment('Số lượng tồn kho thay đổi');
+                $table->integer('start_stock')->default(0)->comment('Số lượng tồn kho đầu');
+                $table->integer('end_stock')->default(0)->comment('Số lượng tồn kho cuối');
+
                 $table->integer('user_created')->default(0);
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
@@ -425,6 +453,58 @@ return new class () extends Migration {
                 $table->integer('receive_quantity')->default(0)->comment('Số lượng nhận');
                 $table->integer('receive_price')->default(0)->comment('Tổng tiền hàng nhận');
 
+                $table->string('status', 20)->default('draft');
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('orders_returns')) {
+            schema()->create('orders_returns', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('code', 50)->nullable();
+                $table->integer('branch_id')->default(0)->comment('Id chi nhánh');
+                $table->string('branch_name', 100)->nullable()->comment('Tên chi nhánh');
+
+                $table->integer('user_id')->default(0)->comment('Id nhân viên xử lý');
+                $table->string('user_name', 100)->nullable()->comment('tên nhân viên xử lý');
+
+                $table->integer('customer_id')->default(0)->comment('Id khách hàng');
+                $table->string('customer_name', 100)->nullable()->comment('tên khách hàng');
+
+                $table->integer('order_id')->default(0)->comment('Id đơn hàng');
+                $table->string('order_code', 100)->nullable()->comment('mã đơn hàng');
+
+                $table->integer('discount')->default(0)->comment('Giảm giá');
+                $table->integer('surcharge')->default(0)->comment('Phí trả hàng');
+
+                $table->integer('total_quantity')->default(0)->comment('Tổng số lượng hàng trả');
+                $table->integer('total_return')->default(0)->comment('Tổng số giá trị hàng');
+                $table->integer('total_payment')->default(0)->comment('Tổng cần trả khách');
+                $table->integer('total_paid')->default(0)->comment('Tổng đã trả khách');
+
+                $table->string('status', 20)->default('draft');
+                $table->text('note')->nullable();
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('orders_returns_details')) {
+            schema()->create('orders_returns_details', function (Blueprint $table) {
+                $table->increments('order_return_detail_id');
+                $table->integer('order_return_id')->default(0);
+                $table->integer('order_id')->default(0);
+                $table->integer('detail_id')->default(0);
+                $table->integer('product_id')->default(0);
+                $table->string('product_name', 200)->nullable();
+                $table->string('product_attribute', 200)->nullable();
+                $table->string('product_code', 100)->nullable();
+                $table->integer('cost')->default(0)->comment('Giá vốn lúc bán');
+                $table->integer('price_sell')->default(0)->comment('Giá bán hàng');
+                $table->integer('price')->default(0)->comment('Giá trả hàng');
+                $table->integer('quantity')->default(0)->comment('Số lượng trả');
+                $table->integer('sub_total')->default(0)->comment('Tổng tiền hàng');
                 $table->string('status', 20)->default('draft');
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
