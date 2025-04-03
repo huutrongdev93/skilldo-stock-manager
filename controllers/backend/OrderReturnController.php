@@ -54,8 +54,36 @@ class OrderReturnController extends MY_Controller {
 
             Cms::setData('table', $table);
 
+            $orderReturnItems = \Stock\Model\OrderReturnDetail::where('order_id', $order->id)
+                ->where('status', \Stock\Status\OrderReturn::success->value)
+                ->get();
+
+            $discount = '500000';//$order->discount ?? 0;
+
+            $items = [];
+
             foreach($order->items as $item)
             {
+                $item->discount = 0;
+
+                if($discount !== 0)
+                {
+                    $item->discount = round((($item->subtotal /  $order->subtotal) * $discount)/$item->quantity, 2);
+                }
+
+                foreach ($orderReturnItems as $orderReturnItem)
+                {
+                    if($orderReturnItem->detail_id == $item->id)
+                    {
+                        $item->quantity = $item->quantity - $orderReturnItem->quantity;
+                    }
+                }
+
+                if($item->quantity <= 0)
+                {
+                    continue;
+                }
+
                 $item->option = @unserialize($item->option);
 
                 $attributes = OrderItem::getMeta($item->id, 'attribute', true);
@@ -72,9 +100,11 @@ class OrderReturnController extends MY_Controller {
                 }
 
                 $item->fullname = $item->title.(!empty($item->attributes) ? ' - '.$item->attributes : '');
+
+                $items[] = $item;
             }
 
-            Cms::setData('orderItems', $order->items);
+            Cms::setData('orderItems', $items);
 
             unset($order->items);
 

@@ -4,15 +4,15 @@ use Qr;
 use SkillDo\DB;
 use SkillDo\Model\Model;
 
-Class SupplierAdjustment extends Model {
+Class DebtAdjustment extends Model {
 
-    protected string $table = 'suppliers_adjustment';
+    protected string $table = 'debt_adjustment';
 
     protected static function boot(): void
     {
         parent::boot();
 
-        static::saved(function(SupplierAdjustment $object, $action) {
+        static::saved(function(DebtAdjustment $object, $action) {
             if($action == 'add' && empty($object->code))
             {
                 DB::table($object->getTable())

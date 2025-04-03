@@ -287,9 +287,10 @@ class SuppliersAdminAjax
         $amount = $balance - $object->debt;
 
         //Tạo phiếu điều chỉnh
-        $id = \Stock\Model\SupplierAdjustment::create([
+        $id = \Stock\Model\DebtAdjustment::create([
             'balance'       => $balance,
             'partner_id'    => $object->id,
+            'partner_type'  => 'supplier',
             'debt_before'   => $object->debt,
             'time'          => time(),
             'user_id'       => Auth::id(),

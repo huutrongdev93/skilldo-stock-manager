@@ -1153,7 +1153,7 @@ class StockPurchaseOrderAdminAjax
                 'partner_id'    => $supplier->id,
                 'target_id'     => $idCashFlow,
                 'target_code'   => $code,
-                'target_type'   => 'TT'.\Stock\Prefix::purchaseOrder->value,
+                'target_type'   => \Stock\Prefix::cashFlowPurchaseOrder->value,
                 'time'          => $purchaseOrder['purchase_date']
             ]);
         }

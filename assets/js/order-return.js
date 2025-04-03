@@ -127,6 +127,8 @@ class OrderReturnNewHandle
 
         this.isChangePaid = false;
 
+        this.isChangeDiscount = false;
+
         this.products = SkilldoUtil.reducer();
 
         this.order = this.elements.form.data('order')
@@ -158,6 +160,7 @@ class OrderReturnNewHandle
             fullname: item.fullname,
             title: item.title,
             attribute_label: item.attributes,
+            discount: item.discount,
             cost: item.cost,
             quantity_sell: item.quantity,
             price_sell: parseInt(item.price.replace(/,/g, '')),
@@ -205,7 +208,7 @@ class OrderReturnNewHandle
 
         if(quantity < 1)
         {
-            quantity = 1;
+            quantity = 0;
 
             element.val(quantity)
         }
@@ -273,18 +276,27 @@ class OrderReturnNewHandle
     calculate() {
 
         let totalQuantitySell = 0;
+
         let totalPriceSell = 0;
+
         let totalQuantity = 0;
+
         let totalPrice = 0;
+
+        let discount = 0;
 
         for (const [key, item] of Object.entries(this.products.items)) {
             totalQuantitySell += item.quantity_sell;
             totalPriceSell += item.quantity_sell * item.price_sell;
             totalQuantity += item.quantity;
             totalPrice += item.quantity * item.price;
+            discount += item.discount*item.quantity;
         }
 
-        let discount = parseFloat(this.elements.inputDiscount.val().replace(/,/g, ''));
+        if(this.isChangeDiscount)
+        {
+            discount = parseFloat(this.elements.inputDiscount.val().replace(/,/g, ''));
+        }
 
         let surcharge = parseFloat(this.elements.inputSurcharge.val().replace(/,/g, ''));
 
@@ -293,9 +305,9 @@ class OrderReturnNewHandle
         if(discount > (totalPrice + surcharge))
         {
             discount = totalPrice + surcharge;
-
-            this.elements.inputDiscount.val(SkilldoUtil.formatNumber(discount))
         }
+
+        this.elements.inputDiscount.val(SkilldoUtil.formatNumber(discount))
 
         let totalPayment = totalPrice - discount + surcharge;
 
@@ -355,6 +367,7 @@ class OrderReturnNewHandle
 
         $(document)
             .on('keyup', '#js_order_return_form input[name="discount"]', function () {
+                handler.isChangeDiscount = true;
                 handler.calculate() //function search
             })
             .on('keyup', '#js_order_return_form input[name="surcharge"]', function () {

@@ -171,6 +171,8 @@ class OrderReturnAdminAjax
 
         $user = Auth::user();
 
+        $customer = User::find($order->customer_id);
+
         $orderReturnAdd = [
             'branch_id'     => $branch->id,
             'branch_name'   => $branch->name,
@@ -374,15 +376,15 @@ class OrderReturnAdminAjax
                 $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrderReturn->value, $id);
 
                 $idCashFlow = \Stock\Model\CashFlow::create([
-                    'code'      => $code,
-                    'branch_id' => $orderReturnAdd['branch_id'],
-                    'branch_name' => $orderReturnAdd['branch_name'],
+                    'code'          => $code,
+                    'branch_id'     => $orderReturnAdd['branch_id'],
+                    'branch_name'   => $orderReturnAdd['branch_name'],
                     //Người chi
-                    'user_id' => $orderReturnAdd['user_id'],
-                    'user_name' => $orderReturnAdd['user_name'],
-                    //người nhận
-                    'partner_id' => $orderReturnAdd['customer_id'],
-                    'partner_code' => '',
+                    'user_id'       => $orderReturnAdd['user_id'],
+                    'user_name'     => $orderReturnAdd['user_name'],
+                    //Người nhận
+                    'partner_id'    => $orderReturnAdd['customer_id'],
+                    'partner_code'  => '',
                     'partner_name'  => $orderReturnAdd['customer_name'],
                     'address' => '',
                     'phone' => '',
@@ -407,6 +409,27 @@ class OrderReturnAdminAjax
                 {
                     throw new \Exception('Không tạo được phiếu chi');
                 }
+            }
+
+            if(!empty($customer) && $orderReturnAdd['total_paid'] != $orderReturnAdd['total_payment'])
+            {
+                $debt = $orderReturnAdd['total_payment'] - $orderReturnAdd['total_paid'];
+
+                \Stock\Model\UserDebt::create([
+                    'before'            => $customer->debt,
+                    'amount'            => $debt,
+                    'balance'           => $customer->debt + $debt,
+                    'partner_id'        => $customer->id,
+                    'target_id'         => $id,
+                    'target_code'       => $orderReturnAdd['code'],
+                    'target_type'       => \Stock\Prefix::orderReturn,
+                    'target_type_name'  => 'Trả hàng',
+                    'time'              => time()
+                ]);
+
+                $customer->debt += $debt;
+
+                $customer->save();
             }
 
             DB::commit();

@@ -24,29 +24,31 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasColumn('users', 'branch_id')) {
+        if(!schema()->hasColumn('users', 'branch_id'))
+        {
             schema()->table('users', function (Blueprint $table) {
                 $table->integer('branch_id')->default(0);
+                $table->integer('debt')->default(0)->comment('Công nợ khách hàng');
             });
-        }
 
-        $branch = Branch::where('default', 1)->first();
-
-        if(!have_posts($branch))
-        {
-            $branch = Branch::get();
+            $branch = Branch::where('default', 1)->first();
 
             if(!have_posts($branch))
             {
-                response()->error('Không tìm thấy chi nhánh');
+                $branch = Branch::get();
+
+                if(!have_posts($branch))
+                {
+                    response()->error('Không tìm thấy chi nhánh');
+                }
+
+                $branch->default = 1;
+
+                $branch->save();
             }
 
-            $branch->default = 1;
-
-            $branch->save();
+            \SkillDo\Model\User::where('branch_id', 0)->update(['branch_id' => $branch->id]);
         }
-
-        \SkillDo\Model\User::where('branch_id', 0)->update(['branch_id' => $branch->id]);
 
         if(!schema()->hasColumn('inventories_history', 'end_stock')) {
 
@@ -219,8 +221,9 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('suppliers_adjustment')) {
-            schema()->create('suppliers_adjustment', function (Blueprint $table) {
+        if(!schema()->hasTable('debt_adjustment'))
+        {
+            schema()->create('debt_adjustment', function (Blueprint $table) {
                 $table->increments('id');
 
                 $table->string('code', 200)
@@ -229,7 +232,10 @@ return new class () extends Migration {
 
                 $table->integer('partner_id')
                     ->default(0)
-                    ->comment('Id nhà cung cấp');
+                    ->comment('Id đối tượng điều chỉnh');
+
+                $table->string('partner_type', 50)
+                    ->comment('Loại đối tượng điều chỉnh');
 
                 $table->integer('debt_before')
                     ->default(0)
@@ -418,6 +424,27 @@ return new class () extends Migration {
                 $table->integer('time')->default(0); //thời gian
                 $table->integer('user_created')->default(0);
                 $table->integer('user_updated')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('users_debt')) {
+            schema()->create('users_debt', function (Blueprint $table) {
+                $table->increments('id');
+
+                $table->integer('before')->default(0); //giá trị công nợ trước điều chỉnh
+                $table->integer('amount')->default(0); //Số tiền thanh toán
+                $table->integer('balance')->default(0); // Công nợ sau khi điều chỉnh
+                $table->integer('partner_id')->default(0); //id user
+
+                //Target
+                $table->integer('target_id')->default(0);
+                $table->string('target_code', 100)->nullable();
+                $table->string('target_type', 10)->nullable();
+                $table->string('target_type_name', 50)->nullable();
+
+                $table->integer('time')->default(0); //thời gian
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });
