@@ -554,6 +554,12 @@ return new class () extends Migration {
                 $table->dateTime('updated')->nullable();
             });
         }
+
+        if(!schema()->hasColumn('orders', 'total_return')) {
+            schema()->table('orders', function (Blueprint $table) {
+                $table->integer('total_return')->default(0)->comment('Số lượng trả hàng');
+            });
+        }
     }
 
     public function down(): void

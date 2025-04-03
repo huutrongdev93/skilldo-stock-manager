@@ -202,8 +202,12 @@ class OrderReturnAdminAjax
 
         $productsId = [];
 
+        $totalQuantity = 0;
+
         foreach ($order->items as $item)
         {
+            $totalQuantity += $item->quantity;
+
             foreach ($orderReturnItems as $orderReturnItem)
             {
                 if($orderReturnItem->detail_id == $item->id)
@@ -329,6 +333,13 @@ class OrderReturnAdminAjax
             ];
         }
 
+        $order->total_return += $orderReturnAdd['total_quantity'];
+
+        if($order->total_return > $totalQuantity)
+        {
+            response()->error('Số lượng trả hàng lớn hơn số lượng đặt mua');
+        }
+
         try {
 
             DB::beginTransaction();
@@ -431,6 +442,8 @@ class OrderReturnAdminAjax
 
                 $customer->save();
             }
+
+            $order->save();
 
             DB::commit();
 
