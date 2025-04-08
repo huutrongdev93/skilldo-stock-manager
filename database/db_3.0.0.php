@@ -109,7 +109,7 @@ return new class () extends Migration {
                 $table->string('supplier_name', 100)->nullable();
                 $table->string('status', 20)->default('draft');
                 $table->integer('total_quantity')->default(0); //Tổng số lượng sản phẩm
-                $table->integer('sub_total')->default(0); //Tổng giá trị hàng hóa
+                $table->integer('subtotal')->default(0); //Tổng giá trị hàng hóa
                 $table->integer('discount')->default(0); //Giảm giá nhập hàng
                 $table->integer('total_payment')->default(0); //Đã trả cho nhà cung cấp
                 $table->integer('is_payment')->default(0); //Đã trả hết
@@ -145,7 +145,7 @@ return new class () extends Migration {
                 $table->integer('damage_id')->default(0); //người nhập hàng
                 $table->string('damage_name', 100)->nullable(); //người nhập hàng
                 $table->integer('damage_date')->default(0); //ngày nhập hàng
-                $table->integer('sub_total')->default(0); //tổng giá trị hàng hóa
+                $table->integer('subtotal')->default(0); //tổng giá trị hàng hóa
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
@@ -179,7 +179,7 @@ return new class () extends Migration {
                 $table->string('purchase_name', 100)->nullable(); //tên người trả hàng
                 $table->integer('purchase_date')->default(0); //ngày trả hàng
                 $table->integer('return_discount')->default(0); // Giảm giá trả hàng
-                $table->integer('sub_total')->default(0); // Tổng tiền trả hàng
+                $table->integer('subtotal')->default(0); // Tổng tiền trả hàng
                 $table->integer('total_payment')->default(0); //Tổng tiền khách trả
                 $table->integer('supplier_id')->default(0); //id nhà cung cấp
                 $table->string('supplier_name', 100)->nullable();
@@ -201,7 +201,7 @@ return new class () extends Migration {
                 $table->string('product_code', 100)->nullable();
                 $table->integer('quantity')->default(0); //số lượng nhập
                 $table->integer('price')->default(0); //Giá trị
-                $table->integer('sub_total')->default(0); //Tổng tiền hàng
+                $table->integer('subtotal')->default(0); //Tổng tiền hàng
                 $table->integer('cost')->default(0); //giá nhập hàng
                 $table->integer('cost_new')->default(0); //giá nhập hàng mới
                 $table->string('status', 20)->default('draft');
@@ -548,16 +548,26 @@ return new class () extends Migration {
                 $table->integer('price_sell')->default(0)->comment('Giá bán hàng');
                 $table->integer('price')->default(0)->comment('Giá trả hàng');
                 $table->integer('quantity')->default(0)->comment('Số lượng trả');
-                $table->integer('sub_total')->default(0)->comment('Tổng tiền hàng');
+                $table->integer('subtotal')->default(0)->comment('Tổng tiền hàng');
                 $table->string('status', 20)->default('draft');
                 $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->dateTime('updated')->nullable();
             });
         }
 
-        if(!schema()->hasColumn('orders', 'total_return')) {
-            schema()->table('orders', function (Blueprint $table) {
-                $table->integer('total_return')->default(0)->comment('Số lượng trả hàng');
+        if(!schema()->hasColumn('order', 'total_return_quantity')) {
+            schema()->table('order', function (Blueprint $table) {
+                $table->integer('total_return_quantity')->default(0)->comment('Tổng số lượng trả hàng');
+                $table->integer('total_return_price')->default(0)->comment('Tổng giá trị trả hàng');
+                $table->integer('total_return_cost')->default(0)->comment('Tổng tiên vốn trả hàng');
+                $table->integer('total_return_payment')->default(0)->comment('Tổng tiên trả hàng');
+            });
+        }
+
+        if(!schema()->hasColumn('order_detail', 'return_quantity')) {
+            schema()->table('order_detail', function (Blueprint $table) {
+                $table->integer('return_quantity')->default(0)->comment('Số lượng trả hàng');
+                $table->integer('return_price')->default(0)->comment('Giá trị trả hàng');
             });
         }
     }

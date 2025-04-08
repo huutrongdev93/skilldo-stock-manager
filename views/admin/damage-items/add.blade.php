@@ -62,8 +62,8 @@
         <td class="cost column-cost">
             <span>${cost}</span>
         </td>
-        <td class="sub_total column-sub_total">
-            <span class="js_sub_total">${sub_total}</span>
+        <td class="subtotal column-subtotal">
+            <span class="js_subtotal">${subtotal}</span>
         </td>
         <td class="action column-action">
             <button class="btn btn-red js_damage_items_btn_delete" data-id="${id}">{!! Admin::icon('delete') !!}</button>

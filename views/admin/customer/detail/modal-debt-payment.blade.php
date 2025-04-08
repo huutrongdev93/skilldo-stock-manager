@@ -77,7 +77,7 @@
     <tr>
         <td>${code}</td>
         <td>${created}</td>
-        <td>${sub_total}</td>
+        <td>${subtotal}</td>
         <td>${total_payment}</td>
         <td>${payment}</td>
         <td>

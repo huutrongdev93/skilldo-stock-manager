@@ -166,7 +166,7 @@ class OrderReturnNewHandle
             price_sell: parseInt(item.price.replace(/,/g, '')),
             quantity: 0,
             price: parseInt(item.price.replace(/,/g, '')),
-            sub_total: 0,
+            subtotal: 0,
         }
     }
 
@@ -228,7 +228,7 @@ class OrderReturnNewHandle
             {
                 item.quantity = quantity;
 
-                item.sub_total = quantity*item.price;
+                item.subtotal = quantity*item.price;
 
                 this.products.update(item)
 
@@ -262,11 +262,11 @@ class OrderReturnNewHandle
             {
                 item.price = price;
 
-                item.sub_total = price*item.quantity;
+                item.subtotal = price*item.quantity;
 
                 this.products.update(item)
 
-                column.find('.js_input_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
+                column.find('.js_input_subtotal').html(SkilldoUtil.formatNumber(item.subtotal))
 
                 this.calculate()
             }

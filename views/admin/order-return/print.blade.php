@@ -149,6 +149,6 @@
         <td style="text-align:right;">${price_sell}</td>
         <td style="text-align:right;">${quantity}</td>
         <td style="text-align:right;">${price}</td>
-        <td style="text-align:right;">${sub_total}</td>
+        <td style="text-align:right;">${subtotal}</td>
     </tr>
 </script>

@@ -17,8 +17,8 @@ class StockPurchaseReturnAdminAjax
         $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
         $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
         $object->status         = Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($object->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($object->status)->label());
-        $object->total        = \Prd::price($object->sub_total - $object->total_payment - $object->return_discount);
-        $object->sub_total      = \Prd::price($object->sub_total);
+        $object->total        = \Prd::price($object->subtotal - $object->total_payment - $object->return_discount);
+        $object->subtotal      = \Prd::price($object->subtotal);
         $object->return_discount = \Prd::price($object->return_discount);
         $object->total_payment  = \Prd::price($object->total_payment);
 
@@ -49,7 +49,7 @@ class StockPurchaseReturnAdminAjax
             'quantity',
             'price',
             'cost',
-            'sub_total',
+            'subtotal',
         ];
 
         $query->select($selected);
@@ -163,7 +163,7 @@ class StockPurchaseReturnAdminAjax
                 'po.cost as price_cost',
                 'po.price',
                 'po.quantity',
-                'po.sub_total',
+                'po.subtotal',
             ];
 
             $products = \Ecommerce\Model\Product::widthVariation()
@@ -191,12 +191,12 @@ class StockPurchaseReturnAdminAjax
 
             $item->image = Image::medium($item->image)->html();
 
-            if(!isset($item->sub_total))
+            if(!isset($item->subtotal))
             {
-                $item->sub_total = $item->price*$item->quantity;
+                $item->subtotal = $item->price*$item->quantity;
             }
 
-            $item->sub_total = Prd::price($item->sub_total);
+            $item->subtotal = Prd::price($item->subtotal);
 
             $products[$key] = $item;
         }
@@ -432,7 +432,7 @@ class StockPurchaseReturnAdminAjax
 
         $productsPurchase = $request->input('products');
 
-        $purchaseReturn['sub_total'] = array_reduce($productsPurchase, function ($sum, $item) {
+        $purchaseReturn['subtotal'] = array_reduce($productsPurchase, function ($sum, $item) {
             return $sum + ($item['quantity'] * $item['price']);
         }, 0);
 
@@ -463,7 +463,7 @@ class StockPurchaseReturnAdminAjax
                 'product_attribute'         => $product['attribute_label'] ?? '',
                 'quantity'                  => $product['quantity'],
                 'price'                     => $product['price'],
-                'sub_total'                 => $product['quantity']*$product['price'],
+                'subtotal'                 => $product['quantity']*$product['price'],
                 'cost'                      => Str::price($product['cost']),
             ];
 
@@ -959,7 +959,7 @@ class StockPurchaseReturnAdminAjax
             response()->error('Số tiền đã thanh toán không được lớn hơn số tiền nhà cung cấp phải trả');
         }
 
-        $purchaseReturn['sub_total'] = $total;
+        $purchaseReturn['subtotal'] = $total;
 
         $purchaseReturn['total_quantity'] = $quantity;
 
@@ -993,7 +993,7 @@ class StockPurchaseReturnAdminAjax
             {
                 $total = $product['quantity']*$product['price'];
 
-                $percent = ceil($total / $purchaseReturn['sub_total'] * 100);
+                $percent = ceil($total / $purchaseReturn['subtotal'] * 100);
 
                 $discount = $percent * $purchaseReturn['return_discount'] / 100;
             }
@@ -1006,7 +1006,7 @@ class StockPurchaseReturnAdminAjax
                 'product_attribute'  => $product['attribute_label'] ?? '',
                 'quantity'           => $product['quantity'],
                 'price'              => $product['price'],
-                'sub_total'          => $product['price']*$product['quantity'],
+                'subtotal'          => $product['price']*$product['quantity'],
                 'status'             => \Stock\Status\PurchaseReturn::success->value,
                 'discount'           => $discount,
             ];
@@ -1109,7 +1109,7 @@ class StockPurchaseReturnAdminAjax
     static function debt($supplier, $purchaseReturnId, $purchaseReturn): void
     {
         //Số tiền ncc cần thanh toán
-        $amount = $purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'];
+        $amount = $purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'];
 
         //Tạo công nợ cho đơn xuất hàng
         \Stock\Model\Debt::create([
@@ -1173,8 +1173,8 @@ class StockPurchaseReturnAdminAjax
 
         \Stock\Model\Suppliers::whereKey($supplier->id)
             ->update([
-                'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'])),
-                'debt' => DB::raw('debt - '. ($purchaseReturn['sub_total'] -  $purchaseReturn['return_discount'] + $purchaseReturn['total_payment'])),
+                'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'])),
+                'debt' => DB::raw('debt - '. ($purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'] + $purchaseReturn['total_payment'])),
             ]);
     }
     
@@ -1248,7 +1248,7 @@ class StockPurchaseReturnAdminAjax
         $userCreated = User::find($object->user_created);
         $object->user_created_name = (have_posts($userCreated)) ? $userCreated->firstname.' '.$userCreated->lastname : '';
 
-        $object->sub_total = Prd::price($object->sub_total);
+        $object->subtotal = Prd::price($object->subtotal);
 
         $object->total_payment = Prd::price($object->total_payment);
 
@@ -1259,7 +1259,7 @@ class StockPurchaseReturnAdminAjax
             'items' => $products->map(function ($item, $key) {
                 $item->stt = $key+1;
                 $item->cost = Prd::price($item->cost);
-                $item->sub_total = Prd::price($item->sub_total);
+                $item->subtotal = Prd::price($item->subtotal);
                 return $item->toObject();
             })
         ]);
@@ -1361,8 +1361,8 @@ class StockPurchaseReturnAdminAjax
             return number_format($item->total_quantity);
         });
 
-        $export->header('sub_total', 'Giá trị', function($item) {
-            return number_format($item->sub_total);
+        $export->header('subtotal', 'Giá trị', function($item) {
+            return number_format($item->subtotal);
         });
 
         $export->header('discount', 'Giảm giá', function($item) {
@@ -1370,7 +1370,7 @@ class StockPurchaseReturnAdminAjax
         });
 
         $export->header('total', 'NCC Cần Trả', function($item) {
-            return number_format($item->sub_total - $item->return_discount - $item->total_payment);
+            return number_format($item->subtotal - $item->return_discount - $item->total_payment);
         });
 
         $export->header('total_payment', 'NCC Đã Trả', function($item) {
@@ -1431,7 +1431,7 @@ class StockPurchaseReturnAdminAjax
         });
 
         $export->header('total', 'Thành tiền', function($item) {
-            return number_format($item->sub_total);
+            return number_format($item->subtotal);
         });
 
         $export->setTitle('DSChiTietTraHang_'.$object->code);

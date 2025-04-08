@@ -64,7 +64,7 @@
             </div>
             <div class="row mb-2">
                 <div class="col-md-6">Tổng tiền hàng:</div>
-                <div class="col-md-6">${sub_total}</div>
+                <div class="col-md-6">${subtotal}</div>
             </div>
             <div class="row mb-2">
                 <div class="col-md-6">Giảm giá:</div>

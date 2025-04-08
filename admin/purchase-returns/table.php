@@ -51,7 +51,7 @@ class PurchaseReturn extends SKDObjectTable
             'label'  => trans('NCC cần trả'),
             'column' => fn($item, $args) => ColumnText::make('return_total', $item, $args)
                 ->value(function ($item) {
-                    return $item->sub_total - $item->return_discount - $item->total_payment;
+                    return $item->subtotal - $item->return_discount - $item->total_payment;
                 })
                 ->number()
         ];
@@ -90,8 +90,8 @@ class PurchaseReturn extends SKDObjectTable
             'supplier_name' => $item->supplier_name,
             'status' => Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($item->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($item->status)->label()),
             'return_discount' => \Prd::price($item->return_discount),
-            'sub_total' => \Prd::price($item->sub_total),
-            'total' => \Prd::price($item->sub_total - $item->return_discount),
+            'subtotal' => \Prd::price($item->subtotal),
+            'total' => \Prd::price($item->subtotal - $item->return_discount),
             'total_payment' => \Prd::price($item->total_payment),
             'total_quantity' => $item->total_quantity,
         ];

@@ -119,7 +119,7 @@
         <tr>
             <td></td>
             <td>Tổng tiền hàng:</td>
-            <td style="text-align:right;">${sub_total}</td>
+            <td style="text-align:right;">${subtotal}</td>
         </tr>
         <tr>
             <td></td>

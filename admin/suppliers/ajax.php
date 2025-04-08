@@ -160,7 +160,7 @@ class SuppliersAdminAjax
                     'total_payment' => $purchase->total_payment + $purchaseOrderPayload['payment']
                 ];
 
-                if($purchaseUp['total_payment'] == ($purchase->sub_total - $purchase->discount))
+                if($purchaseUp['total_payment'] == ($purchase->subtotal - $purchase->discount))
                 {
                     $purchaseUp['is_payment'] = 1;
                 }
@@ -191,8 +191,8 @@ class SuppliersAdminAjax
                     'target_id' => $purchase->id,
                     'target_code' => $purchase->code,
                     'target_type' => \Stock\Prefix::purchaseOrder->value,
-                    'order_value' => $purchase->sub_total,
-                    'need_pay_value' => $purchase->sub_total - $purchase->discount,
+                    'order_value' => $purchase->subtotal,
+                    'need_pay_value' => $purchase->subtotal - $purchase->discount,
                     'paid_value' => $purchase->total_payment,
 
                     'time'          => time(),

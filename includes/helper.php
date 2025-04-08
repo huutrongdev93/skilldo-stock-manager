@@ -2,7 +2,6 @@
 namespace Stock;
 
 use Branch;
-use Ecommerce\Model\Variation;
 use Illuminate\Support\Collection;
 use SkillDo\DB;
 use Stock\Model\Inventory;
@@ -194,5 +193,279 @@ class CashFlowHelper
             ['key' => 'C', 'name' => 'Khách hàng'],
             ['key' => 'O', 'name' => 'Khác']
         ]);
+    }
+}
+
+
+class ReportColumns
+{
+    static function salesTime(): array
+    {
+        return [
+            'time' => [
+                'label' => 'Thời gian',
+            ],
+            'numOrder' => [
+                'label' => 'Đơn Hàng',
+            ],
+            'price' => [
+                'label' => 'Tiền hàng',
+                'calculator' => 'Tiền hàng = Số lượng đặt hàng * giá bán'
+            ],
+            'discount' => [
+                'label' => 'Giảm giá',
+            ],
+            'priceReturn' => [
+                'label' => 'Tiền trả lại',
+            ],
+            'revenue' => [
+                'label' => 'Doanh thu thuần',
+                'calculator' => 'Doanh thu thuần = Tiền hàng - Giảm giá - Tiền hàng trả lại'
+            ],
+            'shipping' => [
+                'label' => 'Phí giao hàng',
+            ],
+            'revenueTotal' => [
+                'label' => 'Tổng doanh thu',
+                'calculator' => 'Tổng doanh thu = Doanh thu thuần + phí giao hàng + tiền thuế'
+            ],
+            'grossProfit' => [
+                'label' => 'Lợi nhuận gộp',
+                'class' => 'fw-bold',
+                'calculator' => 'Lợi nhuận gộp = Doanh thu thuần có ghi nhận giá vốn - Tiền vốn'
+            ],
+        ];
+    }
+
+    static function salesProduct(): array
+    {
+        return [
+            'code' => [
+                'label' => 'Mã sản phẩm',
+            ],
+            'name' => [
+                'label' => 'Tên sản phẩm',
+            ],
+            'quantity' => [
+                'label' => 'Số lượng',
+            ],
+            'subtotal' => [
+                'label' => 'Tiền hàng',
+                'calculator' => 'Tiền hàng = Số lượng đặt hàng * giá bán'
+            ],
+            'discount' => [
+                'label' => 'Giảm giá',
+            ],
+            'priceReturn' => [
+                'label' => 'Tiền trả lại',
+            ],
+            'revenue' => [
+                'label' => 'Doanh thu thuần',
+                'calculator' => 'Doanh thu thuần = Tiền hàng - Giảm giá - Tiền hàng trả lại'
+            ],
+            'costTotal' => [
+                'label' => 'Tiên vốn',
+                'calculator' => 'Giá vốn * Số lượng thực'
+            ],
+            'grossProfit' => [
+                'label' => 'Lợi nhuận gộp',
+                'class' => 'fw-bold',
+                'calculator' => 'Lợi nhuận gộp = Doanh thu thuần có ghi nhận giá vốn - Tiền vốn'
+            ],
+        ];
+    }
+
+    static function salesBranch(): array
+    {
+        return [
+            'name' => [
+                'label' => 'Tên chi nhánh',
+            ],
+            'quantity' => [
+                'label' => 'SL đơn hàng',
+            ],
+            'subtotal' => [
+                'label' => 'Tiền hàng',
+                'calculator' => 'Tiền hàng = Số lượng đặt hàng * giá bán'
+            ],
+            'discount' => [
+                'label' => 'Giảm giá',
+            ],
+            'priceReturn' => [
+                'label' => 'Tiền trả lại',
+            ],
+            'revenue' => [
+                'label' => 'Doanh thu thuần',
+                'calculator' => 'Doanh thu thuần = Tiền hàng - Giảm giá - Tiền hàng trả lại'
+            ],
+            'shipping' => [
+                'label' => 'Phí giao hàng',
+            ],
+            'revenueTotal' => [
+                'label' => 'Tổng doanh thu',
+                'calculator' => 'Tổng doanh thu = Doanh thu thuần + phí giao hàng + tiền thuế'
+            ],
+            'grossProfit' => [
+                'label' => 'Lợi nhuận gộp',
+                'class' => 'fw-bold',
+                'calculator' => 'Lợi nhuận gộp = Doanh thu thuần có ghi nhận giá vốn - Tiền vốn'
+            ],
+        ];
+    }
+
+    static function salesCustomer(): array
+    {
+        return [
+            'name' => [
+                'label' => 'Tên khách hàng',
+            ],
+            'email' => [
+                'label' => 'Email',
+            ],
+            'phone' => [
+                'label' => 'Số điện thoại',
+            ],
+            'quantity' => [
+                'label' => 'Số lượng',
+            ],
+            'subtotal' => [
+                'label' => 'Tiền hàng',
+                'calculator' => 'Tiền hàng = Số lượng đặt hàng * giá bán'
+            ],
+            'discount' => [
+                'label' => 'Giảm giá',
+            ],
+            'priceReturn' => [
+                'label' => 'Tiền trả lại',
+            ],
+            'revenue' => [
+                'label' => 'Doanh thu thuần',
+                'calculator' => 'Doanh thu thuần = Tiền hàng - Giảm giá - Tiền hàng trả lại'
+            ],
+            'costTotal' => [
+                'label' => 'Tiên vốn',
+                'calculator' => 'Giá vốn * Số lượng thực'
+            ],
+            'grossProfit' => [
+                'label' => 'Lợi nhuận gộp',
+                'class' => 'fw-bold',
+                'calculator' => 'Lợi nhuận gộp = Doanh thu thuần có ghi nhận giá vốn - Tiền vốn'
+            ],
+        ];
+    }
+
+    static function financial(): array
+    {
+        return [
+            'subtotal' => [
+                'label' => 'Doanh thu bán hàng (1)',
+            ],
+            'deductionRevenue' => [
+                'label' => 'Giảm trừ Doanh thu (2 = 2.1+2.2)',
+                'child' => [
+                    'discount' => ['label' => 'Chiết khấu (Giảm giá) (2.1)'],
+                    'priceReturn' => ['label' => 'Giá trị hàng bị trả lại (2.2)']
+                ]
+            ],
+            'revenue' => [
+                'label' => 'Doanh thu thuần (3=1-2)',
+            ],
+            'cost' => [
+                'label' => 'Giá vốn bán hàng (4)',
+            ],
+            'expenses' => [
+                'label' => 'Chi phí (5=5.1+5.2)',
+                'child' => [
+                    'purchaseOrder' => ['label' => 'Chi phí nhập hàng (5.1)'],
+                    'damageItem' => ['label' => 'Chi phí xuất hủy hàng (5.2)']
+                ]
+            ],
+            'income' => [
+                'label' => 'Thu nhập khác (6=6.1+6.2)',
+                'child' => [
+                    'shipping' => ['label' => 'Phí vận chuyển (6.1)'],
+                    'surchargeReturn' => ['label' => 'Phí trả hàng (6.2)']
+                ]
+            ],
+            'profit' => [
+                'label' => 'Lợi nhuận (7=3-4-5+6)',
+                'valueClass' => 'fw-bold text-danger'
+            ],
+        ];
+    }
+
+    static function inventorySupplier(): array
+    {
+        return [
+            'code' => [
+                'label' => 'Mã nhà cung cấp',
+            ],
+            'name' => [
+                'label' => 'Tên nhà cung cấp',
+            ],
+            'quantity' => [
+                'label' => 'SL nhập hàng',
+            ],
+            'subtotal' => [
+                'label' => 'Giá trị nhập',
+            ],
+            'returnQuantity' => [
+                'label' => 'SL trả hàng',
+            ],
+            'returnSubtotal' => [
+                'label' => 'Giá trị trả',
+            ],
+            'netValue' => [
+                'label' => 'Giá trị thuần',
+            ],
+        ];
+    }
+
+    static function inventorySupplierChild(): array
+    {
+        return [
+            'code' => [
+                'label' => 'Mã phiếu',
+            ],
+            'date' => [
+                'label' => 'Thời gian',
+            ],
+            'type' => [
+                'label' => 'Loại phiếu',
+            ],
+            'quantity' => [
+                'label' => 'SL sản phẩm',
+            ],
+            'subtotal' => [
+                'label' => 'Giá trị',
+            ],
+        ];
+    }
+
+    static function inventoryProduct(): array
+    {
+        return [
+            'code' => [
+                'label' => 'Mã sản phẩm',
+            ],
+            'name' => [
+                'label' => 'Tên sản phẩm',
+            ],
+            'quantity' => [
+                'label' => 'SL nhập hàng',
+            ],
+            'subtotal' => [
+                'label' => 'Giá trị nhập',
+            ],
+            'returnQuantity' => [
+                'label' => 'SL trả hàng',
+            ],
+            'returnSubtotal' => [
+                'label' => 'Giá trị trả',
+            ],
+            'netValue' => [
+                'label' => 'Giá trị thuần',
+            ],
+        ];
     }
 }

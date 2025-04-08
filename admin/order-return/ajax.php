@@ -28,7 +28,7 @@ class OrderReturnAdminAjax
             'price',
             'price_sell',
             'cost',
-            'sub_total',
+            'subtotal',
         ];
 
         $query->select($selected);
@@ -200,6 +200,8 @@ class OrderReturnAdminAjax
 
         $orderReturnItemsAdd = [];
 
+        $orderItemsUp = [];
+
         $productsId = [];
 
         $totalQuantity = 0;
@@ -254,8 +256,14 @@ class OrderReturnAdminAjax
                 'price_sell'    => $item->price,
                 'price'         => $requestItem['price'],
                 'quantity'      => $requestItem['quantity'],
-                'sub_total'     => $requestItem['price']*$requestItem['quantity'],
+                'subtotal'     => $requestItem['price']*$requestItem['quantity'],
                 'status'        => \Stock\Status\OrderReturn::success->value
+            ];
+
+            $orderItemsUp[] = [
+                'id' => $item->id,
+                'return_quantity' => $item->return_quantity + $requestItem['quantity'],
+                'return_price' => $item->return_price + $requestItem['quantity']*$requestItem['price'],
             ];
 
             $productsId[] = $item->product_id;
@@ -333,9 +341,13 @@ class OrderReturnAdminAjax
             ];
         }
 
-        $order->total_return += $orderReturnAdd['total_quantity'];
+        $order->total_return_quantity += $orderReturnAdd['total_quantity'];
 
-        if($order->total_return > $totalQuantity)
+        $order->total_return_price += $orderReturnAdd['total_return'];
+
+        $order->total_return_payment += $orderReturnAdd['total_payment'];
+
+        if($order->total_return_quantity > $totalQuantity)
         {
             response()->error('Số lượng trả hàng lớn hơn số lượng đặt mua');
         }
@@ -370,6 +382,8 @@ class OrderReturnAdminAjax
             foreach ($orderReturnItemsAdd as &$detail)
             {
                 $detail['order_return_id'] = $id;
+
+                $order->total_return_cost = $detail['cost']*$detail['quantity'];
             }
 
             DB::table('orders_returns_details')->insert($orderReturnItemsAdd);
@@ -445,6 +459,8 @@ class OrderReturnAdminAjax
 
             $order->save();
 
+            \Ecommerce\Model\OrderItem::updateBatch($orderItemsUp, 'id');
+
             DB::commit();
 
             response()->success('Tạo phiếu trả hàng thành công');
@@ -484,6 +500,13 @@ class OrderReturnAdminAjax
             response()->error('Phiếu trả hàng này đã được hủy');
         }
 
+        $order = \Ecommerce\Model\Order::find($object->order_id);
+
+        if(empty($order))
+        {
+            response()->error('Đơn hàng của phiếu trả hàng không còn trên hệ thống');
+        }
+
         $items = \Stock\Model\OrderReturnDetail::where('order_return_id', $object->id)
             ->where('status', \Stock\Status\OrderReturn::success->value)
             ->get();
@@ -496,6 +519,14 @@ class OrderReturnAdminAjax
         $inventoriesUpdate = [];
 
         $inventoriesHistory = [];
+
+        $order->total_return_quantity -= $object->total_quantity;
+
+        $order->total_return_price -= $object->total_return;
+
+        $order->total_return_payment -= $object->total_payment;
+
+        $orderItemsUp = [];
 
         foreach ($items as $item)
         {
@@ -541,6 +572,18 @@ class OrderReturnAdminAjax
                 'target_name'   => 'Trả hàng',
                 'target_type'   => \Stock\Prefix::orderReturn,
             ];
+
+            foreach ($order->items as $orderItem)
+            {
+                if($orderItem->id == $item->detail_id)
+                {
+                    $orderItemsUp[] = [
+                        'id' => $item->id,
+                        'return_quantity' => $item->return_quantity - $item->quantity,
+                        'return_price' => $item->return_price - $item->quantity*$item->price,
+                    ];
+                }
+            }
         }
 
         try {
@@ -569,6 +612,10 @@ class OrderReturnAdminAjax
                 ->where('target_code', $object->code)
                 ->where('target_type', \Stock\Prefix::orderReturn->value)
                 ->delete();
+
+            $order->save();
+
+            \Ecommerce\Model\OrderItem::updateBatch($orderItemsUp, 'id');
 
             DB::commit();
 
@@ -628,7 +675,7 @@ class OrderReturnAdminAjax
                 $item->cost = Prd::price($item->cost);
                 $item->price_sell = Prd::price($item->price_sell);
                 $item->price = Prd::price($item->price);
-                $item->sub_total = Prd::price($item->sub_total);
+                $item->subtotal = Prd::price($item->subtotal);
                 return $item->toObject();
             })
         ]);
@@ -733,8 +780,8 @@ class OrderReturnAdminAjax
             return number_format($item->quantity);
         });
 
-        $export->header('sub_total', 'Giá trị trả', function($item) {
-            return number_format($item->sub_total);
+        $export->header('subtotal', 'Giá trị trả', function($item) {
+            return number_format($item->subtotal);
         });
 
         $export->header('discount', 'Giảm giá', function($item) {
@@ -807,7 +854,7 @@ class OrderReturnAdminAjax
         });
 
         $export->header('total', 'Thành tiền', function($item) {
-            return number_format($item->sub_total);
+            return number_format($item->subtotal);
         });
 
         $export->setTitle('DSChiTietTraHang_'.$object->code);

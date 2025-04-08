@@ -187,3 +187,88 @@
         transition: 0.2s linear all;
     }
 }
+
+
+.sd-empty {
+    --sd-primary: var(--theme-color);
+    --sd-empty-flex-direction: column;
+    --sd-empty-padding-x: 1.2rem;
+    --sd-empty-padding-y: 1.2rem;
+    --sd-empty-height: 100%;
+    --sd-empty-font-size: 1.4rem;
+    --sd-empty-line-height: 2rem;
+    --sd-empty-font-weight: var(--sd-font-weight-regular);
+    --sd-empty-border-radius: 0.8rem;
+    --sd-empty-title-font-size: 1.4rem;
+    --sd-empty-title-line-height: 2.2rem;
+    --sd-empty-title-font-weight: var(--sd-font-weight-semibold);
+    --sd-empty-text-font-size: 1rem;
+    --sd-empty-text-line-height: 2.2rem;
+    --sd-empty-color: var(--sd-body-color);
+    --sd-empty-icon-color: var(--sd-primary);
+    --sd-empty-icon-size: 11.3rem;
+    --sd-empty-icon-space: 2rem;
+    --sd-empty-icon-border-radius: var(--sd-radius-circle);
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: var(--sd-empty-flex-direction);
+    flex-direction: var(--sd-empty-flex-direction);
+    position: relative;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    height: var(--sd-empty-height);
+    padding: var(--sd-empty-padding-y) var(--sd-empty-padding-x);
+    margin-bottom: var(--sd-empty-margin-bottom);
+    font-size: var(--sd-empty-font-size);
+    line-height: var(--sd-empty-line-height);
+    font-weight: var(--sd-empty-font-weight);
+    color: var(--sd-empty-color);
+    text-align: center;
+    &-icon {
+        position: relative;
+        width: var(--sd-empty-icon-size);
+        height: var(--sd-empty-icon-size);
+        min-width: var(--sd-empty-icon-size);
+        margin-bottom: var(--sd-empty-icon-space);
+        border-radius: var(--sd-empty-icon-border-radius);
+        display: inline-block;
+        &::after, &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            border-radius: var(--sd-empty-icon-border-radius);
+        }
+        &::before {
+            -webkit-mask: url(https://cdn-app.kiotviet.vn/retailler/Content/img/empty/empty-product.svg) no-repeat 50% 50%;
+            mask: url(https://cdn-app.kiotviet.vn/retailler/Content/img/empty/empty-product.svg) no-repeat 50% 50%;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            background-color: var(--sd-empty-icon-color);
+            z-index: 10000;
+        }
+        &::after {
+            background-color: var(--sd-white);
+        }
+    }
+    &-content {
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -ms-flex-direction: var(--sd-empty-flex-direction);
+        flex-direction: var(--sd-empty-flex-direction);
+        text-align: center;
+    }
+    &-title {
+        font-size: var(--sd-empty-title-font-size);
+        line-height: var(--sd-empty-title-line-height);
+        font-weight: bold;
+        display: block;
+    }
+    &-text {
+        font-size: var(--sd-empty-text-font-size);
+        line-height: var(--sd-empty-text-line-height);
+    }
+}
+

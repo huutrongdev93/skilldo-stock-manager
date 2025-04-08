@@ -37,15 +37,15 @@ class PurchaseOrder extends SKDObjectTable
             'column' => fn($item, $args) => ColumnText::make('created', $item, $args)->datetime('d/m/Y h:s')
         ];
 
-        $this->_column_headers['sub_total'] = [
+        $this->_column_headers['subtotal'] = [
             'label'  => trans('Tổng giá trị'),
-            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)->number()
         ];
 
         $this->_column_headers['total_payment'] = [
             'label'  => trans('Cần trả NCC'),
             'column' => fn($item, $args) => ColumnText::make('total_payment', $item, $args)->value(function ($item) {
-                return $item->sub_total - $item->total_payment - $item->discount;
+                return $item->subtotal - $item->total_payment - $item->discount;
             })->number()
         ];
 
@@ -160,7 +160,7 @@ class PurchaseReturn extends SKDObjectTable
             'label'  => trans('NCC cần trả'),
             'column' => fn($item, $args) => ColumnText::make('return_total', $item, $args)
                 ->value(function ($item) {
-                    return $item->sub_total - $item->return_discount - $item->total_payment;
+                    return $item->subtotal - $item->return_discount - $item->total_payment;
                 })
                 ->number()
         ];

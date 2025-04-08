@@ -17,8 +17,8 @@ class StockPurchaseOrderAdminAjax
         $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
         $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
         $object->status         = Admin::badge(\Stock\Status\PurchaseOrder::tryFrom($object->status)->badge(), \Stock\Status\PurchaseOrder::tryFrom($object->status)->label());
-        $object->payment        = \Prd::price($object->sub_total - $object->total_payment - $object->discount);
-        $object->sub_total      = \Prd::price($object->sub_total);
+        $object->payment        = \Prd::price($object->subtotal - $object->total_payment - $object->discount);
+        $object->subtotal      = \Prd::price($object->subtotal);
         $object->discount       = \Prd::price($object->discount);
         $object->total_payment  = \Prd::price($object->total_payment);
 
@@ -419,7 +419,7 @@ class StockPurchaseOrderAdminAjax
 
         $productsPurchase = $request->input('products');
 
-        $purchaseOrder['sub_total'] = array_reduce($productsPurchase, function ($sum, $item) {
+        $purchaseOrder['subtotal'] = array_reduce($productsPurchase, function ($sum, $item) {
             return $sum + ($item['quantity'] * $item['price']);
         }, 0);
 
@@ -942,7 +942,7 @@ class StockPurchaseOrderAdminAjax
             $purchaseOrder['is_payment'] = 1;
         }
 
-        $purchaseOrder['sub_total'] = $total;
+        $purchaseOrder['subtotal'] = $total;
 
         $purchaseOrder['total_quantity'] = $quantity;
 
@@ -976,7 +976,7 @@ class StockPurchaseOrderAdminAjax
             {
                 $total = $product['stock']*$product['cost'];
 
-                $percent = ceil($total / $purchaseOrder['sub_total'] * 100);
+                $percent = ceil($total / $purchaseOrder['subtotal'] * 100);
 
                 $discount = $percent * $purchaseOrder['discount'] / 100;
             }
@@ -1101,8 +1101,8 @@ class StockPurchaseOrderAdminAjax
         //Tạo công nợ cho đơn nhập hàng
         \Stock\Model\Debt::create([
             'before'        => ($supplier->debt)*-1,
-            'amount'        => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])*-1,
-            'balance'       => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] + $supplier->debt)*-1,
+            'amount'        => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'])*-1,
+            'balance'       => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] + $supplier->debt)*-1,
             'partner_id'    => $supplier->id,
             'target_id'     => $purchaseOrderId,
             'target_code'   => $purchaseOrder['code'],
@@ -1149,7 +1149,7 @@ class StockPurchaseOrderAdminAjax
             \Stock\Model\Debt::create([
                 'before'        => ($supplier->debt)*-1,
                 'amount'        => $purchaseOrder['total_payment'],
-                'balance'       => ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'] + $supplier->debt)*-1,
+                'balance'       => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'] + $supplier->debt)*-1,
                 'partner_id'    => $supplier->id,
                 'target_id'     => $idCashFlow,
                 'target_code'   => $code,
@@ -1160,8 +1160,8 @@ class StockPurchaseOrderAdminAjax
 
         \Stock\Model\Suppliers::whereKey($supplier->id)
             ->update([
-                'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'])),
-                'debt' => DB::raw('debt + '. ($purchaseOrder['sub_total'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
+                'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'])),
+                'debt' => DB::raw('debt + '. ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
             ]);
     }
 
@@ -1231,9 +1231,9 @@ class StockPurchaseOrderAdminAjax
 
         $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
         $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
-        $object->payment = $object->sub_total - $object->discount - $object->total_payment;
+        $object->payment = $object->subtotal - $object->discount - $object->total_payment;
 
-        $object->sub_total = Prd::price($object->sub_total);
+        $object->subtotal = Prd::price($object->subtotal);
         $object->discount = Prd::price($object->discount);
         $object->total_payment = Prd::price($object->total_payment);
         $object->payment = Prd::price($object->payment);
@@ -1347,8 +1347,8 @@ class StockPurchaseOrderAdminAjax
             return number_format($item->total_quantity);
         });
 
-        $export->header('sub_total', 'Giá trị', function($item) {
-            return number_format($item->sub_total);
+        $export->header('subtotal', 'Giá trị', function($item) {
+            return number_format($item->subtotal);
         });
 
         $export->header('discount', 'Giảm giá', function($item) {
@@ -1356,7 +1356,7 @@ class StockPurchaseOrderAdminAjax
         });
 
         $export->header('total', 'Cần Trả NCC', function($item) {
-            return number_format($item->sub_total - $item->discount - $item->total_payment);
+            return number_format($item->subtotal - $item->discount - $item->total_payment);
         });
 
         $export->header('total_payment', 'Đã Trả NCC', function($item) {

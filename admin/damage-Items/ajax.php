@@ -337,7 +337,7 @@ class StockDamageItemsAdminAjax
 
         $productDamageItems = $request->input('products');
 
-        $damageItems['sub_total'] = array_reduce($productDamageItems, function ($sum, $item) {
+        $damageItems['subtotal'] = array_reduce($productDamageItems, function ($sum, $item) {
             return $sum + ($item['quantity'] * $item['price']);
         }, 0);
 
@@ -776,7 +776,7 @@ class StockDamageItemsAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $damageItems['sub_total'] = array_reduce($productDamageItems, function ($sum, $item) {
+        $damageItems['subtotal'] = array_reduce($productDamageItems, function ($sum, $item) {
             return $sum + ($item['quantity'] * $item['price']);
         }, 0);
 
@@ -1055,8 +1055,8 @@ class StockDamageItemsAdminAjax
             return number_format($item->total_quantity);
         });
 
-        $export->header('sub_total', 'Giá trị', function($item) {
-            return number_format($item->sub_total);
+        $export->header('subtotal', 'Giá trị', function($item) {
+            return number_format($item->subtotal);
         });
 
         $export->setTitle('DSPhieuXuatHuyHang_'.time());

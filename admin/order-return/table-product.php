@@ -12,7 +12,7 @@ class ProductAdd extends SKDObjectTable
             'product_name' => trans('Tên hàng'),
             'quantity' => trans('Số lượng trả'),
             'price' => trans('Giá nhập lại'),
-            'sub_total' => trans('Thành tiền'),
+            'subtotal' => trans('Thành tiền'),
         ];
 
 //        $this->_column_headers['code'] = [
@@ -35,9 +35,9 @@ class ProductAdd extends SKDObjectTable
 //            'column' => fn($item, $args) => ColumnText::make('price', $item, $args)
 //        ];
 //
-//        $this->_column_headers['sub_total'] = [
+//        $this->_column_headers['subtotal'] = [
 //            'label'  => trans('Thành tiền'),
-//            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)
+//            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)
 //        ];
 
         return $this->_column_headers;
@@ -75,9 +75,9 @@ class ProductDetail extends SKDObjectTable
             'column' => fn($item, $args) => ColumnText::make('price', $item, $args)->number()
         ];
 
-        $this->_column_headers['sub_total'] = [
+        $this->_column_headers['subtotal'] = [
             'label'  => trans('Thành tiền'),
-            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)->number()
         ];
 
         return $this->_column_headers;

@@ -47,9 +47,9 @@ class DamageItem extends SKDObjectTable
             'column' => fn($item, $args) => ColumnText::make('note', $item, $args)
         ];
 
-        $this->_column_headers['sub_total'] = [
+        $this->_column_headers['subtotal'] = [
             'label'  => trans('Tổng giá trị'),
-            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)->number()
         ];
 
         $this->_column_headers['status'] = [
@@ -79,7 +79,7 @@ class DamageItem extends SKDObjectTable
             'user_created_name' => $item->user_created_name,
             'damage_name' => $item->damage_name,
             'status' => Admin::badge(\Stock\Status\DamageItem::tryFrom($item->status)->badge(), \Stock\Status\DamageItem::tryFrom($item->status)->label()),
-            'sub_total' => \Prd::price($item->sub_total),
+            'subtotal' => \Prd::price($item->subtotal),
         ];
 
         $buttons[] = Admin::button('blue', [

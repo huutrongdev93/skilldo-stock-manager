@@ -29,9 +29,9 @@ class ProductAdd extends SKDObjectTable
             'column' => fn($item, $args) => ColumnText::make('price', $item, $args)
         ];
 
-        $this->_column_headers['sub_total'] = [
+        $this->_column_headers['subtotal'] = [
             'label'  => trans('Giá trị'),
-            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)
+            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)
         ];
 
         $this->_column_headers['action']   = trans('table.action');

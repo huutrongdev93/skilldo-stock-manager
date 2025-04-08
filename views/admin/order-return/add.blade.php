@@ -53,7 +53,7 @@
             <input type="text" min="0" name="products[${id}][price]" value="${price}" class="form-control js_input_price" data-input-type="currency" />
         </td>
         <td class="column-sub-total">
-            <span class="js_input_sub_total">${sub_total}</span>
+            <span class="js_input_subtotal">${subtotal}</span>
         </td>
     </tr>
 </script>

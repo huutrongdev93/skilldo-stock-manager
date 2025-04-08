@@ -42,15 +42,15 @@ class PurchaseOrder extends SKDObjectTable
             'column' => fn($item, $args) => ColumnText::make('supplier_name', $item, $args)
         ];
 
-        $this->_column_headers['sub_total'] = [
+        $this->_column_headers['subtotal'] = [
             'label'  => trans('Tổng giá trị'),
-            'column' => fn($item, $args) => ColumnText::make('sub_total', $item, $args)->number()
+            'column' => fn($item, $args) => ColumnText::make('subtotal', $item, $args)->number()
         ];
 
         $this->_column_headers['total_payment'] = [
             'label'  => trans('Cần trả NCC'),
             'column' => fn($item, $args) => ColumnText::make('total_payment', $item, $args)->value(function ($item) {
-                return $item->sub_total - $item->total_payment - $item->discount;
+                return $item->subtotal - $item->total_payment - $item->discount;
             })->number()
         ];
 
@@ -83,10 +83,10 @@ class PurchaseOrder extends SKDObjectTable
             'supplier_name' => $item->supplier_name,
             'status' => Admin::badge(\Stock\Status\PurchaseOrder::tryFrom($item->status)->badge(), \Stock\Status\PurchaseOrder::tryFrom($item->status)->label()),
             'total_quantity' => $item->total_quantity,
-            'sub_total' => \Prd::price($item->sub_total),
+            'subtotal' => \Prd::price($item->subtotal),
             'discount' => \Prd::price($item->discount),
             'total_payment' => \Prd::price($item->total_payment),
-            'payment' => \Prd::price($item->sub_total - $item->total_payment - $item->discount),
+            'payment' => \Prd::price($item->subtotal - $item->total_payment - $item->discount),
         ];
 
         $buttons[] = Admin::button('blue', [

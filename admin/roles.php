@@ -17,5 +17,5 @@ Class Stock_Manager_Role {
         return $label;
     }
 }
-add_filter( 'user_role_editor_group', 'Stock_Manager_Role::group');
-add_filter( 'user_role_editor_label', 'Stock_Manager_Role::label');
+//add_filter( 'user_role_editor_group', 'Stock_Manager_Role::group');
+//add_filter( 'user_role_editor_label', 'Stock_Manager_Role::label');

@@ -87,7 +87,7 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
             item.price = item.price_cost;
         }
 
-        item.sub_total = SkilldoUtil.formatNumber(item.price * item.quantity);
+        item.subtotal = SkilldoUtil.formatNumber(item.price * item.quantity);
 
         return item
     }
@@ -176,11 +176,11 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
             {
                 item.quantity = quantity;
 
-                item.sub_total = quantity * item.price;
+                item.subtotal = quantity * item.price;
 
                 this.products.update(item)
 
-                element.closest('.js_column').find('.js_input_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
+                element.closest('.js_column').find('.js_input_subtotal').html(SkilldoUtil.formatNumber(item.subtotal))
 
                 this.calculate()
             }
@@ -210,11 +210,11 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
             {
                 item.price = price;
 
-                item.sub_total = price * item.quantity;
+                item.subtotal = price * item.quantity;
 
                 this.products.update(item)
 
-                element.closest('.js_column').find('.js_input_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
+                element.closest('.js_column').find('.js_input_subtotal').html(SkilldoUtil.formatNumber(item.subtotal))
 
                 this.calculate()
             }

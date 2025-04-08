@@ -167,9 +167,9 @@ class SuppliersPayment
 
                 for (const [key, item] of Object.entries(response.data.purchaseOrders))
                 {
-                    item.sub_total = item.sub_total - item.discount;
+                    item.subtotal = item.subtotal - item.discount;
 
-                    item.payment = item.sub_total - item.total_payment;
+                    item.payment = item.subtotal - item.total_payment;
 
                     item.paid = 0;
 
@@ -177,7 +177,7 @@ class SuppliersPayment
 
                     let itemN = {...item}
 
-                    itemN.sub_total = SkilldoUtil.formatNumber(itemN.sub_total);
+                    itemN.subtotal = SkilldoUtil.formatNumber(itemN.subtotal);
 
                     itemN.total_payment = SkilldoUtil.formatNumber(itemN.total_payment);
 

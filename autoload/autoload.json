@@ -1,0 +1,23 @@
+{
+    "folders" : [
+        "admin",
+        "includes",
+        "client"
+    ],
+    "files" : [
+        "update/update.php"
+    ],
+    "only-admin" : {
+        "folders" : [
+            "admin"
+        ],
+        "files" : [
+        ]
+    },
+    "only-client" : {
+        "folders" : [
+            "client"
+        ],
+        "files"   : []
+    }
+}

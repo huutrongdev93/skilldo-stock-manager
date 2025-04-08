@@ -46,4 +46,10 @@ Route::middleware([AdminAuthMiddleware::class, AdminPermissionMiddleware::class]
     Route::get('/cash-flow-group/payment/edit/{num:id}', 'CashFlowGroupController@paymentEdit', ['namespace' => $controller])->name('admin.cashFlow.group.payment.edit');
     //thu - chi
     Route::get('/cash-flow', 'CashFlowController@index', ['namespace' => $controller])->name('admin.cashFlow');
+
+    //Báo cáo
+    Route::get('/report', 'ReportController@index', ['namespace' => $controller])->name('admin.report');
+    Route::get('/report/sales/{any:id}', 'ReportController@sales', ['namespace' => $controller])->name('admin.report.sales');
+    Route::get('/report/inventory/{any:id}', 'ReportController@inventory', ['namespace' => $controller])->name('admin.report.inventory');
+    Route::get('/report/financial', 'ReportController@financial', ['namespace' => $controller])->name('admin.report.financial');
 });

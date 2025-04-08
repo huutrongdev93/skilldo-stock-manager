@@ -6,6 +6,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Export
 {
+    protected array $sheets = [];
+
     protected array $header = [];
 
     protected mixed $data = [];
@@ -21,8 +23,6 @@ class Export
     protected array $styleHeader = [];
 
     protected array $styleColumn = [];
-
-    protected string $sheetTitle = '';
 
     public function __construct()
     {
@@ -60,40 +60,57 @@ class Export
                 ],
             ],
         ];
+
+        $this->sheets['default'] = new ExportSheet('default', 'Default');
     }
 
-    public function setTitle(string $title): static
+    public function addSheet($key, string $title): ExportSheet
     {
-        $this->sheetTitle = $title;
+        if(isset($this->sheets['default']))
+        {
+            unset($this->sheets['default']);
+        }
+
+        $this->sheets[$key] = new ExportSheet($key, $title);
+
+        return $this->sheets[$key];
+    }
+
+    public function getSheet($key): ExportSheet
+    {
+        return $this->sheets[$key];
+    }
+
+    public function setTitle(string $title, $key = 'default'): static
+    {
+        $this->getSheet($key)->setTitle($title);
 
         return $this;
     }
 
-    public function data($data): static
+    public function data($data, $key = 'default'): static
     {
-        $this->data = $data;
-        return $this;
-    }
-
-    public function header($key, $label, $value): static
-    {
-        $this->header[$key] = [
-            'label' => $label,
-            'value' => $value
-        ];
+        $this->getSheet($key)->setData($data);
 
         return $this;
     }
 
-    protected function createRows(): array
+    public function header($key, $label, $value, $sheetKey = 'default'): static
+    {
+        $this->getSheet($sheetKey)->setHeader($key, $label, $value);
+
+        return $this;
+    }
+
+    protected function createRows(ExportSheet $sheet): array
     {
         $rows = [];
 
-        foreach ($this->data as $key => $item) {
+        foreach ($sheet->getData() as $key => $item) {
 
             $i = 0;
 
-            foreach ($this->header as $header)
+            foreach ($sheet->getHeader() as $header)
             {
                 $rows[] = [
                     'cell'  => $this->characters[$i] .($key+2),
@@ -110,56 +127,56 @@ class Export
 
     public function export($path, $filename): string
     {
-        $sheet = $this->spreadsheet->setActiveSheetIndex(0);
+        // Xóa sheet mặc định
+        $this->spreadsheet->removeSheetByIndex(0);
 
-        $sheet->setTitle($this->sheetTitle);
+        // Tạo các sheet mới
+        foreach ($this->sheets as $index => $sheet) {
 
-        $sheet->getDefaultRowDimension()->setRowHeight(20);
+            // Tạo sheet mới
+            $worksheet = $this->spreadsheet->createSheet();
 
-        $sheet->getDefaultRowDimension()->setRowHeight(20);
+            $worksheet->setTitle($sheet->getTitle());
 
-        $key = 0;
+            // Thiết lập chiều cao mặc định cho row
+            $worksheet->getDefaultRowDimension()->setRowHeight(20);
 
-        foreach ($this->header as $keyHeader => $item)
-        {
-            $item['cell'] =  $this->characters[$key].'1';
+            // Thiết lập header
+            $key = 0;
 
-            if(!empty($item['width']))
+            foreach ($sheet->getHeader() as $item)
             {
-                $sheet->getColumnDimension($this->characters[$key])->setWidth($item['width']);
+                $item['cell'] =  $this->characters[$key].'1';
+
+                if(!empty($item['width']))
+                {
+                    $worksheet->getColumnDimension($this->characters[$key])->setWidth($item['width']);
+                }
+                else
+                {
+                    $worksheet->getColumnDimension($this->characters[$key])->setAutoSize(true);
+                }
+
+                $worksheet->setCellValue($item['cell'], $item['label']);
+
+                $style = $this->styleHeader;
+
+                $worksheet->getStyle($item['cell'])->applyFromArray($style);
+
+                $key++;
             }
-            else
-            {
-                $sheet->getColumnDimension($this->characters[$key])->setAutoSize(true);
+
+            // Tạo và điền dữ liệu cho các row
+            $rows = $this->createRows($sheet);
+
+            foreach ($rows as $row) {
+                $worksheet->setCellValue($row['cell'], $row['value']);
+                $worksheet->getPageMargins()->setTop(2);
+                $worksheet->getPageMargins()->setRight(2);
+                $worksheet->getPageMargins()->setLeft(2);
+                $worksheet->getPageMargins()->setBottom(2);
+                $worksheet->getStyle($row['cell'])->applyFromArray($row['style']);
             }
-
-            $this->header[$keyHeader] = $item;
-
-            $key++;
-        }
-
-        foreach ($this->header as $keyHeader => $item)
-        {
-            $sheet->setCellValue($item['cell'], $item['label']);
-
-            $style = (isset($item['style'])) ? $item['style'] : $this->styleHeader;
-
-            if(!empty($style))
-            {
-                $sheet->getStyle($item['cell'])->applyFromArray($style);
-            }
-        }
-
-        $rows = $this->createRows();
-
-        foreach ($rows as $row)
-        {
-            $sheet->setCellValue($row['cell'], $row['value']);
-            $sheet->getPageMargins()->setTop(2);
-            $sheet->getPageMargins()->setRight(2);
-            $sheet->getPageMargins()->setLeft(2);
-            $sheet->getPageMargins()->setBottom(2);
-            $sheet->getStyle($row['cell'])->applyFromArray($row['style']);
         }
 
         $this->spreadsheet->setActiveSheetIndex(0);
@@ -172,5 +189,74 @@ class Export
 
         return \Url::base().$filePathData.$filename;
     }
+}
 
+class ExportSheet
+{
+    protected string $id;
+
+    protected string $title;
+
+    protected array $data;
+
+    protected array $header;
+
+    public function __construct(string $id, string $title)
+    {
+        $this->id = $id;
+
+        $this->title = $title;
+
+        $this->data = [];
+
+        $this->header = [];
+    }
+
+    public function setId(string $id): self
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function setTitle(string $title): self
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function setData(array $data): self
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    public function setHeader($key, $label, $value): self
+    {
+        $this->header[$key] = [
+            'label' => $label,
+            'value' => $value,
+        ];
+
+        return $this;
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getData(): array
+    {
+        return $this->data;
+    }
+
+    public function getHeader(): array
+    {
+        return $this->header;
+    }
 }

@@ -69,7 +69,7 @@ class DamageItemsNewHandle extends WarehouseNewHandle
             item.cost = SkilldoUtil.formatNumber(item.price_cost);
         }
 
-        item.sub_total = item.price*item.quantity;
+        item.subtotal = item.price*item.quantity;
 
         return item
     }
@@ -126,11 +126,11 @@ class DamageItemsNewHandle extends WarehouseNewHandle
             {
                 item.quantity = quantity;
 
-                item.sub_total = quantity*item.price;
+                item.subtotal = quantity*item.price;
 
                 this.products.update(item)
 
-                element.closest('.js_column').find('.js_sub_total').html(SkilldoUtil.formatNumber(item.sub_total))
+                element.closest('.js_column').find('.js_subtotal').html(SkilldoUtil.formatNumber(item.subtotal))
 
                 this.calculate()
             }

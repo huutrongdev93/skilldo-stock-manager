@@ -45,6 +45,11 @@ class StockManagerAdmin {
         AdminMenu::addSub('cashFlow', 'cash-flow-group-payment', 'Loại phiếu chi', 'cash-flow-group/payment');
         AdminMenu::addSub('cashFlow', 'cash-flow-group-receipt', 'Loại phiếu thu', 'cash-flow-group/receipt');
         AdminMenu::addSub('cashFlow', 'cash-flow', 'Phiếu thu chi', 'cash-flow');
+
+        AdminMenu::add('report', 'Báo cáo', 'report', [
+            'position' => 'cashFlow',
+            'icon' => '<i class="fa-duotone fa-solid fa-chart-simple"></i>'
+        ]);
     }
 
     static function breadcrumb($breadcrumb, $pageIndex, \SkillDo\Http\Request $request): array
@@ -251,6 +256,30 @@ class StockManagerAdmin {
                     'active' => true,
                     'label'  => 'Chi tiết Nhà cung cấp'
                 ];
+            }
+        }
+
+        //Báo cáo
+        if(Str::startsWith($pageIndex, 'ReportController_'))
+        {
+            $breadcrumb['report'] = [
+                'active' => false,
+                'url'    => Url::route('admin.report'),
+                'label'  => 'Báo cáo'
+            ];
+
+            if($pageIndex == 'ReportController_sales')
+            {
+
+                $type = request()->segment(4);
+
+                if($type == 'time')
+                {
+                    $breadcrumb['report_sales'] = [
+                        'active' => true,
+                        'label'  => 'Doanh thu theo thời gian'
+                    ];
+                }
             }
         }
 
