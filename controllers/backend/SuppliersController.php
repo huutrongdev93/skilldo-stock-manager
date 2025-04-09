@@ -18,7 +18,7 @@ class SuppliersController extends MY_Controller {
 
         Cms::setData('table', $table);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/suppliers/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/suppliers/index', 'plugin');
 
         $this->template->render();
     }
@@ -27,30 +27,30 @@ class SuppliersController extends MY_Controller {
     {
         Admin::creatForm('suppliers');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/suppliers/save', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/suppliers/save', 'plugin');
 
         $this->template->render();
     }
 
     public function edit(Request $request, $id): void
     {
-        $object = \Stock\Model\Suppliers::find($id);
+        $object = \Skdepot\Model\Suppliers::find($id);
 
         Cms::setData('object', $object);
 
-        $tablePurchaseOrder = new \Stock\Table\Suppliers\PurchaseOrder();
+        $tablePurchaseOrder = new \Skdepot\Table\Suppliers\PurchaseOrder();
 
         $tablePurchaseOrder->supplierId = $object->id;
 
         Cms::setData('tablePurchaseOrder', $tablePurchaseOrder);
 
-        $tablePurchaseReturn = new \Stock\Table\Suppliers\PurchaseReturn();
+        $tablePurchaseReturn = new \Skdepot\Table\Suppliers\PurchaseReturn();
 
         $tablePurchaseReturn->supplierId = $object->id;
 
         Cms::setData('tablePurchaseReturn', $tablePurchaseReturn);
 
-        $tableDebt = new \Stock\Table\Suppliers\Debt();
+        $tableDebt = new \Skdepot\Table\Suppliers\Debt();
 
         $tableDebt->supplierId = $object->id;
 
@@ -64,7 +64,7 @@ class SuppliersController extends MY_Controller {
             'debt' => $object->debt,
         ])));
 
-        $this->template->setView(STOCK_NAME.'/views/admin/suppliers/detail', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/suppliers/detail', 'plugin');
 
         $this->template->render();
     }

@@ -1,4 +1,4 @@
-class StockTakeIndexHandle extends WarehouseIndexHandle
+class StockTakeIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({
@@ -29,7 +29,7 @@ class StockTakeIndexHandle extends WarehouseIndexHandle
     }
 }
 
-class StockTakeNewHandle extends WarehouseNewHandle
+class StockTakeNewHandle extends SkdepotNewHandle
 {
     constructor()
     {

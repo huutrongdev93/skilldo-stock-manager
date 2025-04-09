@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table\Suppliers;
+namespace Skdepot\Table\Suppliers;
 
 use Admin;
 use Branch;
@@ -17,7 +17,7 @@ class PurchaseOrder extends SKDObjectTable
 
     protected string $module = 'suppliers_purchase_orders';
 
-    protected mixed $model = \Stock\Model\PurchaseOrder::class;
+    protected mixed $model = \Skdepot\Model\PurchaseOrder::class;
 
     function getColumns() {
 
@@ -53,10 +53,10 @@ class PurchaseOrder extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\PurchaseOrder::tryFrom($status)->badge();
+                    return \Skdepot\Status\PurchaseOrder::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\PurchaseOrder::tryFrom($status)->label();
+                    return \Skdepot\Status\PurchaseOrder::tryFrom($status)->label();
                 })
         ];
 
@@ -131,7 +131,7 @@ class PurchaseReturn extends SKDObjectTable
 
     protected string $module = 'suppliers_purchase_returns';
 
-    protected mixed $model = \Stock\Model\PurchaseReturn::class;
+    protected mixed $model = \Skdepot\Model\PurchaseReturn::class;
 
     function getColumns() {
 
@@ -174,10 +174,10 @@ class PurchaseReturn extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\PurchaseReturn::tryFrom($status)->badge();
+                    return \Skdepot\Status\PurchaseReturn::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\PurchaseReturn::tryFrom($status)->label();
+                    return \Skdepot\Status\PurchaseReturn::tryFrom($status)->label();
                 })
         ];
 
@@ -252,7 +252,7 @@ class Debt extends SKDObjectTable
 
     protected string $module = 'suppliers_debt';
 
-    protected mixed $model = \Stock\Model\Debt::class;
+    protected mixed $model = \Skdepot\Model\Debt::class;
 
     function getColumns() {
 
@@ -265,11 +265,11 @@ class Debt extends SKDObjectTable
             'column' => fn($item, $args) => ColumnView::make('target_code', $item, $args)->html(function ($column){
                 if(!empty($column->item->target_id))
                 {
-                    if($column->item->target_type == \Stock\Prefix::adjustment->value)
+                    if($column->item->target_type == \Skdepot\Prefix::adjustment->value)
                     {
                         echo '<a href="#" class="js_btn_target" data-target="adjustment" data-target-id="'.$column->item->target_id.'">'.$column->item->target_code.'</a>';
                     }
-                    else if($column->item->target_type == \Stock\Prefix::purchaseOrder->value)
+                    else if($column->item->target_type == \Skdepot\Prefix::purchaseOrder->value)
                     {
                         echo '<a href="#" class="js_btn_target" data-target="purchase-order" data-target-id="'.$column->item->target_id.'" data-target-cash-flow="0">'.$column->item->target_code.'</a>';
                     }
@@ -350,22 +350,22 @@ class Debt extends SKDObjectTable
         {
             $object->target_type_name = '';
 
-            if($object->target_type === \Stock\Prefix::purchaseOrder->value)
+            if($object->target_type === \Skdepot\Prefix::purchaseOrder->value)
             {
                 $object->target_type_name = 'Nhập hàng';
             }
 
-            if($object->target_type === \Stock\Prefix::purchaseReturn->value)
+            if($object->target_type === \Skdepot\Prefix::purchaseReturn->value)
             {
                 $object->target_type_name = 'Trả hàng nhà cung cấp';
             }
 
-            if($object->target_type === 'TT'.\Stock\Prefix::purchaseOrder->value)
+            if($object->target_type === 'TT'.\Skdepot\Prefix::purchaseOrder->value)
             {
                 $object->target_type_name = 'Thanh toán';
             }
 
-            if($object->target_type === 'PT'.\Stock\Prefix::purchaseReturn->value)
+            if($object->target_type === 'PT'.\Skdepot\Prefix::purchaseReturn->value)
             {
                 $object->target_type_name = 'Thanh toán';
             }
@@ -375,7 +375,7 @@ class Debt extends SKDObjectTable
                 $object->target_type_name = 'Thanh toán';
             }
 
-            if($object->target_type === \Stock\Prefix::adjustment->value)
+            if($object->target_type === \Skdepot\Prefix::adjustment->value)
             {
                 $object->target_type_name = 'Điều chỉnh';
             }

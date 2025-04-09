@@ -35,7 +35,7 @@ class StockCustomerAdminAjax
         $amount = $balance - $object->debt;
 
         //Tạo phiếu điều chỉnh
-        $id = \Stock\Model\DebtAdjustment::create([
+        $id = \Skdepot\Model\DebtAdjustment::create([
             'balance'       => $balance,
             'partner_id'    => $object->id,
             'partner_type'  => 'user',
@@ -53,14 +53,14 @@ class StockCustomerAdminAjax
         }
 
         //Khởi tạo lịch sử thay đổi công nợ
-        \Stock\Model\UserDebt::create([
+        \Skdepot\Model\UserDebt::create([
             'before'            => $object->debt,
             'amount'            => $amount,
             'balance'           => $balance,
             'partner_id'        => $object->id,
             'target_id'         => $id,
-            'target_code'       => \Stock\Helper::code(\Stock\Prefix::adjustment->value, $id),
-            'target_type'       => \Stock\Prefix::adjustment->value,
+            'target_code'       => \Skdepot\Helper::code(\Skdepot\Prefix::adjustment->value, $id),
+            'target_type'       => \Skdepot\Prefix::adjustment->value,
             'target_type_name'  => 'Điều chỉnh',
             'time'              => time()
         ]);

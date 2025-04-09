@@ -11,7 +11,7 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
 
     protected string $module = 'suppliers';
 
-    protected mixed $model = \Stock\Model\Suppliers::class;
+    protected mixed $model = \Skdepot\Model\Suppliers::class;
 
     function getColumns()
     {
@@ -45,8 +45,8 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
                 'label' => trans('user.status'),
                 'column' => fn($item, $args) =>
                 \SkillDo\Table\Columns\ColumnBadge::make('status', $item, $args)
-                    ->color(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->badge())
-                    ->label(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->label())
+                    ->color(fn (string $state): string => \Skdepot\Status\Supplier::tryFrom($state)->badge())
+                    ->label(fn (string $state): string => \Skdepot\Status\Supplier::tryFrom($state)->label())
                     ->attributes(fn ($item): array => [
                         'data-id' => $item->id,
                         'data-status' => $item->status,
@@ -75,6 +75,15 @@ class AdminSuppliers extends \SkillDo\Table\SKDObjectTable {
          * @since 7.0.0
          */
         return apply_filters('admin_suppliers_table_columns_action', $listButton);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('add', ['href' => Url::route('admin.suppliers.new')]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(\Qr $query, Request $request): \Qr

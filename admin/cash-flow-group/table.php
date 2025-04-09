@@ -1,12 +1,8 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
-use Branch;
-use Qr;
-use SkillDo\Form\Form;
 use SkillDo\Http\Request;
-use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
 use Url;
@@ -15,7 +11,7 @@ class CashFlowGroup extends SKDObjectTable
 {
     protected string $module = 'cash_flow_group';
 
-    protected mixed $model = \Stock\Model\CashFlowGroup::class;
+    protected mixed $model = \Skdepot\Model\CashFlowGroup::class;
 
     function getColumns() {
 
@@ -54,11 +50,20 @@ class CashFlowGroupReceipt extends CashFlowGroup
 
         $buttons[] = Admin::btnDelete([
             'id' => $item->id,
-            'model' => \Stock\Model\CashFlowGroup::class,
+            'model' => \Skdepot\Model\CashFlowGroup::class,
             'description' => trans('message.page.confirmDelete', ['title' => html_escape($item->name)])
         ]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('add', ['href' => Url::route('admin.cashFlow.group.receipt.new')]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(\Qr $query, Request $request): \Qr
@@ -91,11 +96,20 @@ class CashFlowGroupPayment extends CashFlowGroup
 
         $buttons[] = Admin::btnDelete([
             'id' => $item->id,
-            'model' => \Stock\Model\CashFlowGroup::class,
+            'model' => \Skdepot\Model\CashFlowGroup::class,
             'description' => trans('message.page.confirmDelete', ['title' => html_escape($item->name)])
         ]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('add', ['href' => Url::route('admin.cashFlow.group.payment.new')]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(\Qr $query, Request $request): \Qr

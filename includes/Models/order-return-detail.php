@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 Class OrderReturnDetail extends \SkillDo\Model\Model
 {

@@ -21,7 +21,7 @@ class CashFlowPartnerPopover extends PopoverHandle
             $args->where('name', 'like', '%' . $this->keyword . '%');
         }
 
-        $objects = \Stock\Model\CashFlowPartner::gets($args);
+        $objects = \Skdepot\Model\CashFlowPartner::gets($args);
 
         if(have_posts($objects)) {
             foreach ($objects as $value) {
@@ -42,7 +42,7 @@ class CashFlowPartnerPopover extends PopoverHandle
 
         if(have_posts($listId)) {
 
-            $objects = \Stock\Model\CashFlowPartner::whereKey($listId)->select('id', 'name', 'phone')->get();
+            $objects = \Skdepot\Model\CashFlowPartner::whereKey($listId)->select('id', 'name', 'phone')->get();
 
             foreach ($objects as $value) {
 
@@ -59,11 +59,11 @@ class CashFlowPartnerPopover extends PopoverHandle
 
     public function templateValueNoImg(): string
     {
-        return Plugin::partial(STOCK_NAME, 'admin/cash-flow/popover/cash-flow-partner');
+        return Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/popover/cash-flow-partner');
     }
 
     public function templateSearchNoImg(): string
     {
-        return Plugin::partial(STOCK_NAME, 'admin/cash-flow/popover/cash-flow-partner');
+        return Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/popover/cash-flow-partner');
     }
 }

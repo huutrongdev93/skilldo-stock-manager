@@ -14,7 +14,7 @@ class StockBranchCustom
                 $columnsNew['isWebsite'] = [
                     'label' => 'Website',
                     'column' => fn($item, $args) => ColumnView::make('isWebsite', $item, $args)->html(function ($column) {
-                        echo '<div class="form-check"><input type="radio" class="js_branch_btn_website form-check-input" data-id="'.$column->item->id.'" '.($column->item->id == \Stock\Config::get('website') ? 'checked' : '').'></div>';
+                        echo '<div class="form-check"><input type="radio" class="js_branch_btn_website form-check-input" data-id="'.$column->item->id.'" '.($column->item->id == \Skdepot\Config::get('website') ? 'checked' : '').'></div>';
                     }),
                 ];
             }
@@ -25,7 +25,7 @@ class StockBranchCustom
 
     static function tableScript(): void
     {
-        Plugin::view(STOCK_NAME, 'admin/branch/index');
+        Plugin::view(SKDEPOT_NAME, 'admin/branch/index');
     }
 }
 

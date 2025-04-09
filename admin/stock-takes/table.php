@@ -1,20 +1,20 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
-use Branch;
 use Qr;
 use SkillDo\Form\Form;
 use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class StockTake extends SKDObjectTable
 {
     protected string $module = 'stock_takes';
 
-    protected mixed $model = \Stock\Model\StockTake::class;
+    protected mixed $model = \Skdepot\Model\StockTake::class;
 
     function getColumns() {
 
@@ -61,10 +61,10 @@ class StockTake extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\StockTake::tryFrom($status)->badge();
+                    return \Skdepot\Status\StockTake::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\StockTake::tryFrom($status)->label();
+                    return \Skdepot\Status\StockTake::tryFrom($status)->label();
                 })
         ];
 
@@ -82,7 +82,7 @@ class StockTake extends SKDObjectTable
             'branch_name' => $item->branch_name,
             'user_name' => $item->user_name,
             'balance_date' => $item->balance_date,
-            'status' => Admin::badge(\Stock\Status\StockTake::tryFrom($item->status)->badge(), \Stock\Status\StockTake::tryFrom($item->status)->label()),
+            'status' => Admin::badge(\Skdepot\Status\StockTake::tryFrom($item->status)->badge(), \Skdepot\Status\StockTake::tryFrom($item->status)->label()),
             'total_actual_quantity' => $item->total_actual_quantity,
             'total_actual_price' => \Prd::price($item->total_actual_price),
             'total_increase_quantity' => $item->total_increase_quantity,
@@ -101,11 +101,11 @@ class StockTake extends SKDObjectTable
             'class' => 'js_stock_take_btn_detail'
         ]);
 
-        if($item->status === \Stock\Status\StockTake::draft->value)
+        if($item->status === \Skdepot\Status\StockTake::draft->value)
         {
             $buttons[] = Admin::button('blue', [
                 'icon' => Admin::icon('edit'),
-                'href' => \Url::route('admin.stock.stockTakes.edit', ['id' => $item->id]),
+                'href' => \Url::route('admin.stock.takes.edit', ['id' => $item->id]),
                 'tooltip' => 'Cập nhật',
             ]);
 
@@ -113,7 +113,7 @@ class StockTake extends SKDObjectTable
                 'icon'      => Admin::icon('close'),
                 'tooltip'   => 'Đồng ý',
                 'id'        => $item->id,
-                'model'     =>  \Stock\Model\StockTake::class,
+                'model'     =>  \Skdepot\Model\StockTake::class,
                 'ajax'      => 'StockTakeAdminAjax::cancel',
                 'heading'   => 'Đồng ý',
                 'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu kiểm hàng hàng này?',
@@ -123,7 +123,7 @@ class StockTake extends SKDObjectTable
             ]);
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/stock-take/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/stock-take/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -144,12 +144,31 @@ class StockTake extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\StockTake::options()
+        $form->select2('status', \Skdepot\Status\StockTake::options()
             ->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], $request->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.stock.takes.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -187,7 +206,7 @@ class StockTake extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

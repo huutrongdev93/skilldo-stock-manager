@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table\Transfer;
+namespace Skdepot\Table\Transfer;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
 

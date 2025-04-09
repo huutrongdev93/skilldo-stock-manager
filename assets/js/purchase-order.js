@@ -1,12 +1,12 @@
-class PurchaseOrderIndexHandle extends WarehouseIndexHandle
+class PurchaseOrderIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({
             module: 'purchase_order',
             ajax: {
-                loadProducts: 'StockPurchaseOrderAdminAjax::loadProductsDetail',
-                print: 'StockPurchaseOrderAdminAjax::print',
-                cashFlow: 'StockPurchaseOrderAdminAjax::loadCashFlowDetail'
+                loadProducts: 'PurchaseOrderAdminAjax::loadProductsDetail',
+                print: 'PurchaseOrderAdminAjax::print',
+                cashFlow: 'PurchaseOrderAdminAjax::loadCashFlowDetail'
             }
         });
     }
@@ -23,7 +23,7 @@ class PurchaseOrderIndexHandle extends WarehouseIndexHandle
     }
 }
 
-class PurchaseOrderNewHandle extends WarehouseNewHandle
+class PurchaseOrderNewHandle extends SkdepotNewHandle
 {
     constructor()
     {
@@ -32,12 +32,12 @@ class PurchaseOrderNewHandle extends WarehouseNewHandle
         super({
             module: module,
             ajax: {
-                loadProducts: 'StockPurchaseOrderAdminAjax::loadProductsEdit',
-                addDraft: 'StockPurchaseOrderAdminAjax::addDraft',
-                saveDraft: 'StockPurchaseOrderAdminAjax::saveDraft',
-                add: 'StockPurchaseOrderAdminAjax::add',
-                save: 'StockPurchaseOrderAdminAjax::save',
-                import: 'StockPurchaseOrderAdminAjax::import',
+                loadProducts: 'PurchaseOrderAdminAjax::loadProductsEdit',
+                addDraft: 'PurchaseOrderAdminAjax::addDraft',
+                saveDraft: 'PurchaseOrderAdminAjax::saveDraft',
+                add: 'PurchaseOrderAdminAjax::add',
+                save: 'PurchaseOrderAdminAjax::save',
+                import: 'PurchaseOrderAdminAjax::import',
             }
         });
 

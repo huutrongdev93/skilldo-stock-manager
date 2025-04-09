@@ -16,22 +16,22 @@ class TransfersController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\TransferTable();
+        $table = new \Skdepot\Table\TransferTable();
 
-        $tableProduct = new \Stock\Table\Transfer\ProductDetail();
+        $tableProduct = new \Skdepot\Table\Transfer\ProductDetail();
 
         Cms::setData('table', $table);
 
         Cms::setData('tableProduct', $tableProduct);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/transfer/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/transfer/index', 'plugin');
 
         $this->template->render();
     }
 
     public function add(Request $request): void
     {
-        $table = new \Stock\Table\Transfer\ProductSendAdd();
+        $table = new \Skdepot\Table\Transfer\ProductSendAdd();
 
         Cms::setData('table', $table);
 
@@ -39,7 +39,7 @@ class TransfersController extends MY_Controller {
 
         Cms::setData('action', 'add');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/transfer/add-send', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/transfer/add-send', 'plugin');
 
         $this->template->render();
     }
@@ -50,13 +50,13 @@ class TransfersController extends MY_Controller {
 
         $type = $request->input('type');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $object = \Stock\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
+        $object = \Skdepot\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
             $qr->where('from_branch_id', $branch->id);
             $qr->orWhere(function ($q) use ($branch) {
                 $q->where('to_branch_id', $branch->id);
-                $q->where('status', \Stock\Status\Transfer::process->value);
+                $q->where('status', \Skdepot\Status\Transfer::process->value);
             });
         })->first();
 
@@ -73,21 +73,21 @@ class TransfersController extends MY_Controller {
 
         Cms::setData('object', $object);
 
-        if($type == 'clone' || $object->status === \Stock\Status\Transfer::draft->value)
+        if($type == 'clone' || $object->status === \Skdepot\Status\Transfer::draft->value)
         {
-            Cms::setData('table', (new \Stock\Table\Transfer\ProductSendAdd()));
+            Cms::setData('table', (new \Skdepot\Table\Transfer\ProductSendAdd()));
 
             Cms::setData('form', $this->formSend($object));
 
-            $this->template->setView(STOCK_NAME.'/views/admin/transfer/add-send', 'plugin');
+            $this->template->setView(SKDEPOT_NAME.'/views/admin/transfer/add-send', 'plugin');
         }
         else
         {
-            Cms::setData('table', (new \Stock\Table\Transfer\ProductReceiveAdd()));
+            Cms::setData('table', (new \Skdepot\Table\Transfer\ProductReceiveAdd()));
 
             Cms::setData('form', $this->formReceive($object));
 
-            $this->template->setView(STOCK_NAME.'/views/admin/transfer/add-receive', 'plugin');
+            $this->template->setView(SKDEPOT_NAME.'/views/admin/transfer/add-receive', 'plugin');
         }
 
         $this->template->render();
@@ -95,9 +95,9 @@ class TransfersController extends MY_Controller {
 
     public function formSend($object = []): \SkillDo\Form\Form
     {
-        $branchCurrent = \Stock\Helper::getBranchCurrent();
+        $branchCurrent = \Skdepot\Helper::getBranchCurrent();
 
-        $branchs = \Stock\Helper::getBranchAll();
+        $branchs = \Skdepot\Helper::getBranchAll();
 
         $branchs = $branchs->filter(function ($branch) use ($branchCurrent) {
             return ($branch->id !== $branchCurrent->id);
@@ -125,7 +125,7 @@ class TransfersController extends MY_Controller {
             ->select2('to_branch_id', $branchs, [
                 'label' => 'Chuyển tới',
             ], $object->to_branch_id ?? '')
-            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseOrder::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Skdepot\Status\PurchaseOrder::draft->label().'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Tổng số lượng</b>  <b class="js_transfer_total_quantity">0</b></p>')
             ->textarea('note', [
                 'placeholder' => 'Ghi chú',
@@ -152,7 +152,7 @@ class TransfersController extends MY_Controller {
                 'label' => 'Ngày nhận hàng',
             ], date('d/m/Y H:i', $object->receive_date))
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Mã chuyển hàng</span>  <b>'.$object->code.'</b></p>')
-            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Trạng thái</span>  <b>'.Admin::badge(\Stock\Status\Transfer::tryFrom($object->status)->badge(), \Stock\Status\Transfer::tryFrom($object->status)->label()).'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Trạng thái</span>  <b>'.Admin::badge(\Skdepot\Status\Transfer::tryFrom($object->status)->badge(), \Skdepot\Status\Transfer::tryFrom($object->status)->label()).'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Chi nhánh gửi</span>  <b>'.$object->from_branch_name.'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Ngày chuyển</span>  <b>'.date('d/m/Y H:i', $object->send_date).'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><span>Ghi chú</span>  <b>'.$object->note.'</b></p>')

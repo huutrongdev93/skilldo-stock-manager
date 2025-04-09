@@ -2,7 +2,7 @@
 
 use SkillDo\Validate\Rule;
 
-class StockBranchAjax
+class SkdepotBranchAjax
 {
     static function website(\SkillDo\Http\Request $request): void
     {
@@ -23,17 +23,17 @@ class StockBranchAjax
             response()->error('Chi nhánh không tồn tại hoặc đã dừng hoạt động');
         }
 
-        $website = \Stock\Config::get('website');
+        $website = \Skdepot\Config::get('website');
 
         if($object->id == $website)
         {
             response()->error('Chi nhánh này đang là chi nhánh mặc định của website');
         }
 
-        \Stock\Config::update('website', $object->id);
+        \Skdepot\Config::update('website', $object->id);
 
         response()->success(trans('ajax.update.success'));
     }
 }
 
-Ajax::admin('StockBranchAjax::website');
+Ajax::admin('SkdepotBranchAjax::website');

@@ -4,22 +4,22 @@
     </a>
     <ul class="dropdown-menu">
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.index') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.inventory.index') !!}">
                 <span>Tồn kho</span>
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.transfers') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.transfers') !!}">
                 <span>Chuyển hàng</span>
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.stockTakes') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.stock.takes') !!}">
                 <span>Kiểm kho</span>
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.damageItems') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.damage.items') !!}">
                 <span>Xuất hủy</span>
             </a>
         </li>
@@ -37,12 +37,12 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.purchaseOrders') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.purchase.orders') !!}">
                 <span>Nhập hàng</span>
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.purchaseReturns') !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.purchase.returns') !!}">
                 <span>Trả hàng nhập</span>
             </a>
         </li>
@@ -73,7 +73,7 @@
             let loading = SkilldoUtil.buttonLoading($(this))
 
             let data = {
-                action: 'Stock_Manager_Ajax::changeUserBrand',
+                action: 'SkdepotAjax::changeUserBrand',
                 id: id
             }
 

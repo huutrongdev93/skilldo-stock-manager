@@ -2,7 +2,7 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-class StockDamageItemsAdminAjax
+class DamageItemsAdminAjax
 {
     static function loadProductsDetail(\SkillDo\Http\Request $request): void
     {
@@ -16,7 +16,7 @@ class StockDamageItemsAdminAjax
 
         $id  = $request->input('id');
 
-        $query = Qr::where('inventories_damage_item_details.damage_item_id', $id);
+        $query = Qr::where('skdepot_damage_item_details.damage_item_id', $id);
 
         $selected = [
             'product_id',
@@ -30,14 +30,14 @@ class StockDamageItemsAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\DamageItemDetail::count(clone $query);
+        $total = \Skdepot\Model\DamageItemDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\DamageItemDetail::gets($query);
+        $objects = \Skdepot\Model\DamageItemDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -45,7 +45,7 @@ class StockDamageItemsAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\DamageItems\ProductDetail([
+        $table = new \Skdepot\Table\DamageItems\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -85,7 +85,7 @@ class StockDamageItemsAdminAjax
 
         $query = Qr::select($selected);
 
-        $query->leftJoin('inventories_damage_item_details as po', function ($join) use ($id) {
+        $query->leftJoin('skdepot_damage_item_details as po', function ($join) use ($id) {
             $join->on('po.product_id', '=', 'products.id');
         });
 
@@ -133,7 +133,7 @@ class StockDamageItemsAdminAjax
         {
             DB::beginTransaction();
 
-            $damageItemsId = \Stock\Model\DamageItem::create($damageItems);
+            $damageItemsId = \Skdepot\Model\DamageItem::create($damageItems);
 
             if(empty($damageItemsId) || is_skd_error($damageItemsId))
             {
@@ -145,7 +145,7 @@ class StockDamageItemsAdminAjax
                 $damageItemsDetails[$key]['damage_item_id'] = $damageItemsId;
             }
 
-            DB::table('inventories_damage_item_details')->insert($damageItemsDetails);
+            \Skdepot\Model\DamageItemDetail::inserts($damageItemsDetails);
 
             DB::commit();
 
@@ -169,19 +169,19 @@ class StockDamageItemsAdminAjax
 
         $id = $request->input('damage_item_id');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu xuất hủy đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\DamageItem::success->value)
+        if($object->status === \Skdepot\Status\DamageItem::success->value)
         {
             response()->error('phiếu xuất hủy này đã hoàn thành');
         }
 
-        if($object->status === \Stock\Status\DamageItem::cancel->value)
+        if($object->status === \Skdepot\Status\DamageItem::cancel->value)
         {
             response()->error('phiếu xuất hủy này đã bị hủy');
         }
@@ -194,7 +194,7 @@ class StockDamageItemsAdminAjax
             $productsDetail
         ] = static::dataDraft($request, $object);
 
-        \Stock\Model\DamageItem::whereKey($id)->update($damageItems);
+        \Skdepot\Model\DamageItem::whereKey($id)->update($damageItems);
 
         //Lấy danh sách chi tiết phiếu nhập sẽ cập nhật
         $damageItemsDetailsUp = [];
@@ -221,19 +221,19 @@ class StockDamageItemsAdminAjax
             //Thêm mới
             if(!empty($damageItemsDetails))
             {
-                DB::table('inventories_damage_item_details')->insert($damageItemsDetails);
+                \Skdepot\Model\DamageItemDetail::inserts($damageItemsDetails);
             }
 
             //Cập nhật
             if(!empty($damageItemsDetailsUp))
             {
-                \Stock\Model\DamageItemDetail::updateBatch($damageItemsDetailsUp, 'damage_item_detail_id');
+                \Skdepot\Model\DamageItemDetail::updateBatch($damageItemsDetailsUp, 'damage_item_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\DamageItemDetail::whereKey($productsDetail->pluck('damage_item_detail_id')->toArray())->delete();
+                \Skdepot\Model\DamageItemDetail::whereKey($productsDetail->pluck('damage_item_detail_id')->toArray())->delete();
             }
 
             DB::commit();
@@ -273,7 +273,7 @@ class StockDamageItemsAdminAjax
         }
 
         $damageItems = [
-            'status' => \Stock\Status\DamageItem::draft->value,
+            'status' => \Skdepot\Status\DamageItem::draft->value,
             'damage_date' => $time,
         ];
 
@@ -310,7 +310,7 @@ class StockDamageItemsAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\DamageItem::where('code', $code)->count();
+                    $count = \Skdepot\Model\DamageItem::where('code', $code)->count();
                 }
                 else
                 {
@@ -319,7 +319,7 @@ class StockDamageItemsAdminAjax
             }
             else
             {
-                $count = \Stock\Model\DamageItem::where('code', $code)->count();
+                $count = \Skdepot\Model\DamageItem::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -355,7 +355,7 @@ class StockDamageItemsAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\DamageItemDetail::where('damage_item_id', $object->id)
+            $productsDetail = \Skdepot\Model\DamageItemDetail::where('damage_item_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -369,7 +369,7 @@ class StockDamageItemsAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\DamageItem::success->value)
+                if ($productDetail->status === \Skdepot\Status\DamageItem::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -452,7 +452,7 @@ class StockDamageItemsAdminAjax
             $inventoriesUpdate[] = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value,
             ];
 
             $inventoriesHistories[] = [
@@ -477,7 +477,7 @@ class StockDamageItemsAdminAjax
 
             DB::beginTransaction();
 
-            $damageItemsId = \Stock\Model\DamageItem::create($damageItems);
+            $damageItemsId = \Skdepot\Model\DamageItem::create($damageItems);
 
             if(empty($damageItemsId) || is_skd_error($damageItemsId))
             {
@@ -486,7 +486,7 @@ class StockDamageItemsAdminAjax
 
             if(empty($purchaseOrder['code']))
             {
-                $damageItems['code'] = \Stock\Helper::code(\Stock\Prefix::damageItem->value, $damageItemsId);
+                $damageItems['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::damageItem->value, $damageItemsId);
             }
 
             foreach ($inventoriesHistories as $key => $history)
@@ -494,7 +494,7 @@ class StockDamageItemsAdminAjax
                 $history['target_id']   = $damageItemsId;
                 $history['target_code'] = $damageItems['code'];
                 $history['target_name'] = 'Xuất Hủy Hàng';
-                $history['target_type'] = \Stock\Prefix::damageItem->value;
+                $history['target_type'] = \Skdepot\Prefix::damageItem->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -504,13 +504,13 @@ class StockDamageItemsAdminAjax
                 unset($detail['damage_item_detail_id']);
             }
 
-            DB::table('inventories_damage_item_details')->insert($damageItemsDetails);
+            \Skdepot\Model\DamageItemDetail::inserts($damageItemsDetails);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -534,19 +534,19 @@ class StockDamageItemsAdminAjax
 
         $id = $request->input('damage_item_id');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu xuất hủy đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\DamageItem::success->value)
+        if($object->status === \Skdepot\Status\DamageItem::success->value)
         {
             response()->error('phiếu xuất hủy này đã hoàn thành');
         }
 
-        if($object->status === \Stock\Status\DamageItem::cancel->value)
+        if($object->status === \Skdepot\Status\DamageItem::cancel->value)
         {
             response()->error('phiếu xuất hủy này đã bị hủy');
         }
@@ -595,7 +595,7 @@ class StockDamageItemsAdminAjax
             $inventoriesUpdate[] = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value,
             ];
 
             $inventoriesHistories[] = [
@@ -610,7 +610,7 @@ class StockDamageItemsAdminAjax
                 //Đối tượng
                 'target_id'   => $object->id ?? 0,
                 'target_code' => $object->code ?? '',
-                'target_type' => \Stock\Prefix::damageItem->value,
+                'target_type' => \Skdepot\Prefix::damageItem->value,
                 'target_name' => 'Xuất hủy hàng',
                 //Thông tin
                 'cost'          => $detail['price'],
@@ -641,31 +641,31 @@ class StockDamageItemsAdminAjax
         {
             DB::beginTransaction();
 
-            \Stock\Model\DamageItem::whereKey($id)->update($damageItems);
+            \Skdepot\Model\DamageItem::whereKey($id)->update($damageItems);
 
             //Thêm mới
             if(!empty($damageItemsDetails))
             {
-                DB::table('inventories_damage_item_details')->insert($damageItemsDetails);
+                \Skdepot\Model\DamageItemDetail::inserts($damageItemsDetails);
             }
 
             //Cập nhật
             if(!empty($damageItemsDetailsUp))
             {
-                \Stock\Model\DamageItemDetail::updateBatch($damageItemsDetailsUp, 'damage_item_detail_id');
+                \Skdepot\Model\DamageItemDetail::updateBatch($damageItemsDetailsUp, 'damage_item_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\DamageItemDetail::whereKey($productsDetail->pluck('damage_item_detail_id')->toArray())->delete();
+                \Skdepot\Model\DamageItemDetail::whereKey($productsDetail->pluck('damage_item_detail_id')->toArray())->delete();
             }
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -704,12 +704,12 @@ class StockDamageItemsAdminAjax
         }
 
         $damageItems = [
-            'status' => \Stock\Status\DamageItem::success->value,
+            'status' => \Skdepot\Status\DamageItem::success->value,
             'damage_date' => $time,
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -743,7 +743,7 @@ class StockDamageItemsAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\DamageItem::where('code', $code)->count();
+                    $count = \Skdepot\Model\DamageItem::where('code', $code)->count();
                 }
                 else
                 {
@@ -752,7 +752,7 @@ class StockDamageItemsAdminAjax
             }
             else
             {
-                $count = \Stock\Model\DamageItem::where('code', $code)->count();
+                $count = \Skdepot\Model\DamageItem::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -792,7 +792,7 @@ class StockDamageItemsAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\DamageItemDetail::where('damage_item_id', $object->id)
+            $productsDetail = \Skdepot\Model\DamageItemDetail::where('damage_item_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -804,7 +804,7 @@ class StockDamageItemsAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\DamageItem::success->value)
+                if ($productDetail->status === \Skdepot\Status\DamageItem::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -819,7 +819,7 @@ class StockDamageItemsAdminAjax
                     'product_attribute'         => $product['attribute_label'] ?? '',
                     'quantity'                  => $product['quantity'],
                     'price'                     => $product['price'],
-                    'status'                    => \Stock\Status\DamageItem::success->value,
+                    'status'                    => \Skdepot\Status\DamageItem::success->value,
                 ];
 
                 unset($productsDetail[$product['id']]);
@@ -835,11 +835,11 @@ class StockDamageItemsAdminAjax
                 'product_attribute'  => $product['attribute_label'] ?? '',
                 'quantity'           => $product['quantity'],
                 'price'              => $product['price'],
-                'status'             => \Stock\Status\PurchaseOrder::success->value,
+                'status'             => \Skdepot\Status\PurchaseOrder::success->value,
             ];
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
@@ -892,34 +892,34 @@ class StockDamageItemsAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu xuất hủy đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\DamageItem::cancel->value)
+        if($object->status === \Skdepot\Status\DamageItem::cancel->value)
         {
             response()->error('phiếu xuất hủy này đã được hủy');
         }
-        if($object->status === \Stock\Status\DamageItem::success->value)
+        if($object->status === \Skdepot\Status\DamageItem::success->value)
         {
             response()->error('phiếu xuất hủy này đã hoàn thành không thể hủy');
         }
 
-        \Stock\Model\DamageItemDetail::where('damage_item_id', $object->id)
-            ->where('status', \Stock\Status\DamageItem::draft->value)
+        \Skdepot\Model\DamageItemDetail::where('damage_item_id', $object->id)
+            ->where('status', \Skdepot\Status\DamageItem::draft->value)
             ->update([
-                'status' => \Stock\Status\DamageItem::cancel->value,
+                'status' => \Skdepot\Status\DamageItem::cancel->value,
             ]);
 
-        \Stock\Model\DamageItem::whereKey($object->id)->update([
-            'status' => \Stock\Status\DamageItem::cancel->value,
+        \Skdepot\Model\DamageItem::whereKey($object->id)->update([
+            'status' => \Skdepot\Status\DamageItem::cancel->value,
         ]);
 
         response()->success('Hủy phiếu xuất hủy hàng thành công', [
-            'status' => Admin::badge(\Stock\Status\DamageItem::cancel->badge(), 'Đã hủy')
+            'status' => Admin::badge(\Skdepot\Status\DamageItem::cancel->badge(), 'Đã hủy')
         ]);
     }
 
@@ -936,7 +936,7 @@ class StockDamageItemsAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if(empty($object))
         {
@@ -949,7 +949,7 @@ class StockDamageItemsAdminAjax
         $userCreated = User::find($object->user_created);
         $object->user_created_name = (have_posts($userCreated)) ? $userCreated->firstname.' '.$userCreated->lastname : '';
 
-        $products = \Stock\Model\DamageItemDetail::where('damage_item_id', $object->id)->get();
+        $products = \Skdepot\Model\DamageItemDetail::where('damage_item_id', $object->id)->get();
 
         $object->count = $products->count();
 
@@ -1024,7 +1024,7 @@ class StockDamageItemsAdminAjax
             }
         }
 
-        $objects = \Stock\Model\DamageItem::gets($query);
+        $objects = \Skdepot\Model\DamageItem::gets($query);
 
         if(empty($objects))
         {
@@ -1037,7 +1037,7 @@ class StockDamageItemsAdminAjax
             $object->damage_date = date('d/m/Y H:s', $object->damage_date);
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã xuất hủy hàng', function($item) {
             return $item->code ?? '';
@@ -1081,16 +1081,16 @@ class StockDamageItemsAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu xuất hủy đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\DamageItemDetail::where('damage_item_id', $object->id)->get();
+        $products = \Skdepot\Model\DamageItemDetail::where('damage_item_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';
@@ -1136,7 +1136,7 @@ class StockDamageItemsAdminAjax
                 response()->error($validate->errors());
             }
 
-            $myPath = STOCK_NAME.'/assets/imports/damage-items';
+            $myPath = SKDEPOT_NAME.'/assets/imports/damage-items';
 
             $path = $request->file('file')->store($myPath, ['disk' => 'plugin']);
 
@@ -1209,7 +1209,7 @@ class StockDamageItemsAdminAjax
                 $rowDatas[] = $rowData;
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1284,14 +1284,14 @@ class StockDamageItemsAdminAjax
     }
 }
 
-Ajax::admin('StockDamageItemsAdminAjax::loadProductsDetail');
-Ajax::admin('StockDamageItemsAdminAjax::loadProductsEdit');
-Ajax::admin('StockDamageItemsAdminAjax::addDraft');
-Ajax::admin('StockDamageItemsAdminAjax::saveDraft');
-Ajax::admin('StockDamageItemsAdminAjax::add');
-Ajax::admin('StockDamageItemsAdminAjax::save');
-Ajax::admin('StockDamageItemsAdminAjax::cancel');
-Ajax::admin('StockDamageItemsAdminAjax::print');
-Ajax::admin('StockDamageItemsAdminAjax::export');
-Ajax::admin('StockDamageItemsAdminAjax::exportDetail');
-Ajax::admin('StockDamageItemsAdminAjax::import');
+Ajax::admin('DamageItemsAdminAjax::loadProductsDetail');
+Ajax::admin('DamageItemsAdminAjax::loadProductsEdit');
+Ajax::admin('DamageItemsAdminAjax::addDraft');
+Ajax::admin('DamageItemsAdminAjax::saveDraft');
+Ajax::admin('DamageItemsAdminAjax::add');
+Ajax::admin('DamageItemsAdminAjax::save');
+Ajax::admin('DamageItemsAdminAjax::cancel');
+Ajax::admin('DamageItemsAdminAjax::print');
+Ajax::admin('DamageItemsAdminAjax::export');
+Ajax::admin('DamageItemsAdminAjax::exportDetail');
+Ajax::admin('DamageItemsAdminAjax::import');

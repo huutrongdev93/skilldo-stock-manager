@@ -1,20 +1,20 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
-use Branch;
 use Qr;
 use SkillDo\Form\Form;
 use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class PurchaseOrder extends SKDObjectTable
 {
-    protected string $module = 'inventories_purchase_orders';
+    protected string $module = 'purchase_orders';
 
-    protected mixed $model = \Stock\Model\PurchaseOrder::class;
+    protected mixed $model = \Skdepot\Model\PurchaseOrder::class;
 
     function getColumns() {
 
@@ -58,10 +58,10 @@ class PurchaseOrder extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\PurchaseOrder::tryFrom($status)->badge();
+                    return \Skdepot\Status\PurchaseOrder::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\PurchaseOrder::tryFrom($status)->label();
+                    return \Skdepot\Status\PurchaseOrder::tryFrom($status)->label();
                 })
         ];
 
@@ -81,7 +81,7 @@ class PurchaseOrder extends SKDObjectTable
             'user_created_name' => $item->user_created_name,
             'purchase_name' => $item->purchase_name,
             'supplier_name' => $item->supplier_name,
-            'status' => Admin::badge(\Stock\Status\PurchaseOrder::tryFrom($item->status)->badge(), \Stock\Status\PurchaseOrder::tryFrom($item->status)->label()),
+            'status' => Admin::badge(\Skdepot\Status\PurchaseOrder::tryFrom($item->status)->badge(), \Skdepot\Status\PurchaseOrder::tryFrom($item->status)->label()),
             'total_quantity' => $item->total_quantity,
             'subtotal' => \Prd::price($item->subtotal),
             'discount' => \Prd::price($item->discount),
@@ -98,11 +98,11 @@ class PurchaseOrder extends SKDObjectTable
             'class' => 'js_btn_target'
         ]);
 
-        if($item->status === \Stock\Status\PurchaseOrder::draft->value)
+        if($item->status === \Skdepot\Status\PurchaseOrder::draft->value)
         {
             $buttons[] = Admin::button('blue', [
                 'icon' => Admin::icon('edit'),
-                'href' => \Url::route('admin.stock.purchaseOrders.edit', ['id' => $item->id]),
+                'href' => \Url::route('admin.purchase.orders.edit', ['id' => $item->id]),
                 'tooltip' => 'Cập nhật',
             ]);
 
@@ -110,8 +110,8 @@ class PurchaseOrder extends SKDObjectTable
                 'icon'      => Admin::icon('close'),
                 'tooltip'   => 'Đồng ý',
                 'id'        => $item->id,
-                'model'     =>  \Stock\Model\PurchaseOrder::class,
-                'ajax'      => 'StockPurchaseOrderAdminAjax::cancel',
+                'model'     =>  \Skdepot\Model\PurchaseOrder::class,
+                'ajax'      => 'PurchaseOrderAdminAjax::cancel',
                 'heading'   => 'Đồng ý',
                 'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu nhập hàng này?',
                 'attr' => [
@@ -120,17 +120,17 @@ class PurchaseOrder extends SKDObjectTable
             ]);
         }
 
-        if($item->status === \Stock\Status\PurchaseOrder::success->value)
+        if($item->status === \Skdepot\Status\PurchaseOrder::success->value)
         {
             $buttons[] = Admin::button('green', [
                 'icon' => '<i class="fa fa-reply-all"></i>',
-                'href' => \Url::route('admin.stock.purchaseReturns.edit', ['id' => $item->id]).'?type=purchase-orders',
+                'href' => \Url::route('admin.purchase.returns.edit', ['id' => $item->id]).'?type=purchase-orders',
                 'tooltip' => 'Trả hàng nhập hàng',
                 'target' => '_blank'
             ]);
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/purchase-order/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/purchase-order/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -151,12 +151,31 @@ class PurchaseOrder extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\PurchaseOrder::options()
+        $form->select2('status', \Skdepot\Status\PurchaseOrder::options()
             ->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], $request->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.purchase.orders.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -194,7 +213,7 @@ class PurchaseOrder extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

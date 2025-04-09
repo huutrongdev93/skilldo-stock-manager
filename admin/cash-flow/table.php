@@ -1,8 +1,7 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
-use Branch;
 use Qr;
 use SkillDo\Form\Form;
 use SkillDo\Http\Request;
@@ -14,7 +13,7 @@ class CashFlow extends SKDObjectTable
 {
     protected string $module = 'cash_flow';
 
-    protected mixed $model = \Stock\Model\CashFlow::class;
+    protected mixed $model = \Skdepot\Model\CashFlow::class;
 
     function getColumns() {
 
@@ -62,10 +61,10 @@ class CashFlow extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\CashFlow::tryFrom($status)->badge();
+                    return \Skdepot\Status\CashFlow::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\CashFlow::tryFrom($status)->label();
+                    return \Skdepot\Status\CashFlow::tryFrom($status)->label();
                 })
         ];
 
@@ -100,7 +99,7 @@ class CashFlow extends SKDObjectTable
             'icon'      => Admin::icon('close'),
             'tooltip'   => 'Đồng ý',
             'id'        => $item->id,
-            'model'     =>  \Stock\Model\CashFlow::class,
+            'model'     =>  \Skdepot\Model\CashFlow::class,
             'ajax'      => 'CashFlowAdminAjax::cancel',
             'heading'   => 'Đồng ý',
             'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu thu/chi này?',
@@ -135,6 +134,33 @@ class CashFlow extends SKDObjectTable
         ], [], $request->input('type'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu thu',
+            'data-type' => 'receipt',
+            'class' => 'js_cash_flow_btn_add'
+        ]);
+
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu chi',
+            'data-type' => 'payment',
+            'class' => 'js_cash_flow_btn_add'
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -175,7 +201,7 @@ class CashFlow extends SKDObjectTable
             $query->where('amount', '<', 0);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

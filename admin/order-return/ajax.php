@@ -34,14 +34,14 @@ class OrderReturnAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\OrderReturnDetail::count(clone $query);
+        $total = \Skdepot\Model\OrderReturnDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\OrderReturnDetail::gets($query);
+        $objects = \Skdepot\Model\OrderReturnDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -49,7 +49,7 @@ class OrderReturnAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\OrderReturn\ProductDetail([
+        $table = new \Skdepot\Table\OrderReturn\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -79,10 +79,10 @@ class OrderReturnAdminAjax
     {
         $id = (int)$request->input('id');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $histories = \Stock\Model\CashFlow::where('target_id', $id)
-            ->where('target_type', \Stock\Prefix::orderReturn)
+        $histories = \Skdepot\Model\CashFlow::where('target_id', $id)
+            ->where('target_type', \Skdepot\Prefix::orderReturn)
             ->where('branch_id', $branch->id)
             ->orderByDesc('created')
             ->get();
@@ -114,7 +114,7 @@ class OrderReturnAdminAjax
 
                 $history->amount = Prd::price($history->amount);
 
-                $history->status = Admin::badge(\Stock\Status\CashFlow::tryFrom($history->status)->badge(), \Stock\Status\CashFlow::tryFrom($history->status)->label());
+                $history->status = Admin::badge(\Skdepot\Status\CashFlow::tryFrom($history->status)->badge(), \Skdepot\Status\CashFlow::tryFrom($history->status)->label());
 
                 $histories[$key] = $history;
             }
@@ -187,15 +187,15 @@ class OrderReturnAdminAjax
             'total_quantity' => 0,
             'total_return'   => 0,
             'total_paid'     => (int)$request->input('totalPaid'),
-            'status'         => \Stock\Status\OrderReturn::success->value,
+            'status'         => \Skdepot\Status\OrderReturn::success->value,
         ];
 
         $requestItems = $request->input('products');
 
         $requestItems = \Illuminate\Support\Collection::make($requestItems)->keyBy('id');
 
-        $orderReturnItems = \Stock\Model\OrderReturnDetail::where('order_id', $order->id)
-            ->where('status', \Stock\Status\OrderReturn::success->value)
+        $orderReturnItems = \Skdepot\Model\OrderReturnDetail::where('order_id', $order->id)
+            ->where('status', \Skdepot\Status\OrderReturn::success->value)
             ->get();
 
         $orderReturnItemsAdd = [];
@@ -257,7 +257,7 @@ class OrderReturnAdminAjax
                 'price'         => $requestItem['price'],
                 'quantity'      => $requestItem['quantity'],
                 'subtotal'     => $requestItem['price']*$requestItem['quantity'],
-                'status'        => \Stock\Status\OrderReturn::success->value
+                'status'        => \Skdepot\Status\OrderReturn::success->value
             ];
 
             $orderItemsUp[] = [
@@ -288,7 +288,7 @@ class OrderReturnAdminAjax
 
         $orderReturnAdd['total_payment'] = $orderReturnAdd['surcharge'] + $orderReturnAdd['total_return'] - $orderReturnAdd['discount'];
 
-        $inventories = \Stock\Model\Inventory::whereIn('product_id', $productsId)
+        $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get()
             ->keyBy('product_id');
@@ -316,7 +316,7 @@ class OrderReturnAdminAjax
                 'id'         => $inventory->id,
                 'stock'      => $newStock,
                 'price_cost' => $priceCost,
-                'status'     => \Stock\Status\Inventory::in->value,
+                'status'     => \Skdepot\Status\Inventory::in->value,
             ];
 
             $inventoriesHistory[] = [
@@ -337,7 +337,7 @@ class OrderReturnAdminAjax
                 //'target_id'     => $order->id,
                 //'target_code'   => $order->code,
                 'target_name'   => 'Trả hàng',
-                'target_type'   => \Stock\Prefix::orderReturn,
+                'target_type'   => \Skdepot\Prefix::orderReturn,
             ];
         }
 
@@ -357,7 +357,7 @@ class OrderReturnAdminAjax
             DB::beginTransaction();
 
             //Tạo phiếu nhập hàng
-            $id = \Stock\Model\OrderReturn::create($orderReturnAdd);
+            $id = \Skdepot\Model\OrderReturn::create($orderReturnAdd);
 
             if(empty($id) || is_skd_error($id))
             {
@@ -366,7 +366,7 @@ class OrderReturnAdminAjax
 
             if(empty($orderReturnAdd['code']))
             {
-                $orderReturnAdd['code'] = \Stock\Helper::code(\Stock\Prefix::orderReturn->value, $id);
+                $orderReturnAdd['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::orderReturn->value, $id);
             }
 
             // Cập nhật mã phiếu vào lịch sử kho
@@ -375,7 +375,7 @@ class OrderReturnAdminAjax
                 $history['target_id'] = $id;
                 $history['target_code'] = $orderReturnAdd['code'];
                 $history['target_name'] = 'Trả hàng';
-                $history['target_type'] = \Stock\Prefix::orderReturn->value;
+                $history['target_type'] = \Skdepot\Prefix::orderReturn->value;
             }
 
             // Cập nhật purchase_order_id
@@ -386,21 +386,21 @@ class OrderReturnAdminAjax
                 $order->total_return_cost = $detail['cost']*$detail['quantity'];
             }
 
-            DB::table('orders_returns_details')->insert($orderReturnItemsAdd);
+            \Skdepot\Model\OrderReturnDetail::inserts($orderReturnItemsAdd);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistory);
+            \Skdepot\Model\History::inserts($inventoriesHistory);
 
             //Tạo phiếu chi
             if(!empty($orderReturnAdd['total_paid']))
             {
                 //Tạo phiếu chi
-                $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrderReturn->value, $id);
+                $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowOrderReturn->value, $id);
 
-                $idCashFlow = \Stock\Model\CashFlow::create([
+                $idCashFlow = \Skdepot\Model\CashFlow::create([
                     'code'          => $code,
                     'branch_id'     => $orderReturnAdd['branch_id'],
                     'branch_name'   => $orderReturnAdd['branch_name'],
@@ -416,17 +416,17 @@ class OrderReturnAdminAjax
                     'partner_type' => 'C',
 
                     //Loại
-                    'group_id'   => \Stock\CashFlowGroup\Transaction::orderReturn->id(),
-                    'group_name' => \Stock\CashFlowGroup\Transaction::orderReturn->label(),
+                    'group_id'   => \Skdepot\CashFlowGroup\Transaction::orderReturn->id(),
+                    'group_name' => \Skdepot\CashFlowGroup\Transaction::orderReturn->label(),
                     'origin' => 'purchase',
                     'method' => 'cash',
                     'amount' => $orderReturnAdd['total_paid']*-1,
 
                     'target_id'     => $id,
                     'target_code'   => $orderReturnAdd['code'],
-                    'target_type'   => \Stock\Prefix::orderReturn->value,
+                    'target_type'   => \Skdepot\Prefix::orderReturn->value,
                     'time'          => time(),
-                    'status'        => \Stock\Status\CashFlow::success->value,
+                    'status'        => \Skdepot\Status\CashFlow::success->value,
                     'user_created'  => Auth::id()
                 ]);
 
@@ -440,14 +440,14 @@ class OrderReturnAdminAjax
             {
                 $debt = $orderReturnAdd['total_payment'] - $orderReturnAdd['total_paid'];
 
-                \Stock\Model\UserDebt::create([
+                \Skdepot\Model\UserDebt::create([
                     'before'            => $customer->debt,
                     'amount'            => $debt,
                     'balance'           => $customer->debt + $debt,
                     'partner_id'        => $customer->id,
                     'target_id'         => $id,
                     'target_code'       => $orderReturnAdd['code'],
-                    'target_type'       => \Stock\Prefix::orderReturn,
+                    'target_type'       => \Skdepot\Prefix::orderReturn,
                     'target_type_name'  => 'Trả hàng',
                     'time'              => time()
                 ]);
@@ -488,14 +488,14 @@ class OrderReturnAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\OrderReturn::find($id);
+        $object = \Skdepot\Model\OrderReturn::find($id);
 
         if(empty($object))
         {
             response()->error('Phiếu trả hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseOrder::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseOrder::cancel->value)
         {
             response()->error('Phiếu trả hàng này đã được hủy');
         }
@@ -507,11 +507,11 @@ class OrderReturnAdminAjax
             response()->error('Đơn hàng của phiếu trả hàng không còn trên hệ thống');
         }
 
-        $items = \Stock\Model\OrderReturnDetail::where('order_return_id', $object->id)
-            ->where('status', \Stock\Status\OrderReturn::success->value)
+        $items = \Skdepot\Model\OrderReturnDetail::where('order_return_id', $object->id)
+            ->where('status', \Skdepot\Status\OrderReturn::success->value)
             ->get();
 
-        $inventories = Stock\Model\Inventory::whereIn('product_id', $items->pluck('product_id')->toArray())
+        $inventories = Skdepot\Model\Inventory::whereIn('product_id', $items->pluck('product_id')->toArray())
             ->where('branch_id', $object->branch_id)
             ->get()
             ->keyBy('product_id');
@@ -550,7 +550,7 @@ class OrderReturnAdminAjax
                 'id'         => $inventory->id,
                 'stock'      => $newStock,
                 'price_cost' => $priceCost,
-                'status'     => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
+                'status'     => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value,
             ];
 
             $inventoriesHistory[] = [
@@ -570,7 +570,7 @@ class OrderReturnAdminAjax
                 'target_id'     => $object->id,
                 'target_code'   => $object->code,
                 'target_name'   => 'Trả hàng',
-                'target_type'   => \Stock\Prefix::orderReturn,
+                'target_type'   => \Skdepot\Prefix::orderReturn,
             ];
 
             foreach ($order->items as $orderItem)
@@ -590,27 +590,27 @@ class OrderReturnAdminAjax
 
             DB::beginTransaction();
 
-            \Stock\Model\OrderReturnDetail::where('order_return_id', $object->id)
-                ->where('status', \Stock\Status\OrderReturn::success->value)
+            \Skdepot\Model\OrderReturnDetail::where('order_return_id', $object->id)
+                ->where('status', \Skdepot\Status\OrderReturn::success->value)
                 ->update([
-                    'status' => \Stock\Status\OrderReturn::cancel->value,
+                    'status' => \Skdepot\Status\OrderReturn::cancel->value,
                 ]);
 
-            \Stock\Model\OrderReturn::whereKey($object->id)->update([
-                'status' => \Stock\Status\OrderReturn::cancel->value,
+            \Skdepot\Model\OrderReturn::whereKey($object->id)->update([
+                'status' => \Skdepot\Status\OrderReturn::cancel->value,
             ]);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistory);
+            \Skdepot\Model\History::inserts($inventoriesHistory);
 
             //Xóa phiếu chi
-            \Stock\Model\CashFlow::widthChildren()
+            \Skdepot\Model\CashFlow::widthChildren()
                 ->where('target_id', $object->id)
                 ->where('target_code', $object->code)
-                ->where('target_type', \Stock\Prefix::orderReturn->value)
+                ->where('target_type', \Skdepot\Prefix::orderReturn->value)
                 ->delete();
 
             $order->save();
@@ -620,7 +620,7 @@ class OrderReturnAdminAjax
             DB::commit();
 
             response()->success('Hủy phiếu trả hàng thành công', [
-                'status' => Admin::badge(\Stock\Status\OrderReturn::cancel->badge(), 'Đã hủy')
+                'status' => Admin::badge(\Skdepot\Status\OrderReturn::cancel->badge(), 'Đã hủy')
             ]);
         }
         catch (\Exception $e)
@@ -647,7 +647,7 @@ class OrderReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\OrderReturn::find($id);
+        $object = \Skdepot\Model\OrderReturn::find($id);
 
         if(empty($object))
         {
@@ -666,7 +666,7 @@ class OrderReturnAdminAjax
 
         $object->total_paid = Prd::price($object->total_paid);
 
-        $products = \Stock\Model\OrderReturnDetail::where('order_return_id', $object->id)->get();
+        $products = \Skdepot\Model\OrderReturnDetail::where('order_return_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
@@ -742,7 +742,7 @@ class OrderReturnAdminAjax
             }
         }
 
-        $objects = \Stock\Model\OrderReturn::gets($query);
+        $objects = \Skdepot\Model\OrderReturn::gets($query);
 
         if(empty($objects))
         {
@@ -754,7 +754,7 @@ class OrderReturnAdminAjax
             $object->created = date('d/m/Y H:i', strtotime($object->created));
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã trả hàng', function($item) {
             return $item->code ?? '';
@@ -822,16 +822,16 @@ class OrderReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\OrderReturn::find($id);
+        $object = \Skdepot\Model\OrderReturn::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu trả hàng không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\OrderReturnDetail::where('order_return_id', $object->id)->get();
+        $products = \Skdepot\Model\OrderReturnDetail::where('order_return_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';

@@ -2,10 +2,10 @@
     <div class="stock-page-form-content">
         <div class="stock-page-header mb-3 gap-4">
             <div class="stock-page-header-title">
-                <a href="{!! Url::route('admin.stock.purchaseReturns') !!}" class="fs-4 fw-bold pe-3"><i class="fa-light fa-arrow-left-long"></i></a>
+                <a href="{!! Url::route('admin.purchase.returns') !!}" class="fs-4 fw-bold pe-3"><i class="fa-light fa-arrow-left-long"></i></a>
                 <span class="fs-3 fw-bold">Kiểm Kho</span>
             </div>
-            {!! Plugin::partial(STOCK_NAME, 'admin/search') !!}
+            {!! Plugin::partial(SKDEPOT_NAME, 'admin/search') !!}
             <div class="stock-page-header-action"></div>
         </div>
         <div class="stock-page-products box" id="js_stock_take_products">
@@ -24,7 +24,7 @@
                 <div class="stock-page-table js_stock_take_table" style="display: none">
                     {!! $table->display() !!}
                 </div>
-                {!! Plugin::partial(STOCK_NAME, 'admin/import', [
+                {!! Plugin::partial(SKDEPOT_NAME, 'admin/import', [
                     'module' => 'stock_take',
                     'examples' => 'MauFileKiemKho'
                 ]) !!}

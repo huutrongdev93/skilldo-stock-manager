@@ -2,14 +2,14 @@
     'name'      => 'Phiếu xuất hủy',
     'table'     => $table,
 ]) !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/damage-items/detail-info', compact('tableProduct')); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/damage-items/print'); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/export', [
-    'action' => 'StockDamageItemsAdminAjax::exportDetail',
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/damage-items/detail-info', compact('tableProduct')); !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/damage-items/print'); !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/export', [
+    'action' => 'DamageItemsAdminAjax::exportDetail',
     'title'  => 'Xuất chi tiết phiếu xuất hủy hàng'
 ]); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/export-list', [
-    'action'    => 'StockDamageItemsAdminAjax::export',
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/export-list', [
+    'action'    => 'DamageItemsAdminAjax::export',
     'title' => 'Xuất phiếu danh sách phiếu xuất hủy hàng'
 ]); !!}
 <script defer>

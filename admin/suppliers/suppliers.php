@@ -45,7 +45,7 @@ Class SuppliersAdmin
                 response()->error('Bạn chưa điền Mã nhà cung cấp');
             }
 
-            $count = \Stock\Model\Suppliers::where('code', $insertData['code'])
+            $count = \Skdepot\Model\Suppliers::where('code', $insertData['code'])
                 ->where('id', '<>', $id)
                 ->count();
         }
@@ -55,7 +55,7 @@ Class SuppliersAdmin
 
             if(!empty($insertData['code']))
             {
-                $count = \Stock\Model\Suppliers::where('code', $insertData['code'])->count();
+                $count = \Skdepot\Model\Suppliers::where('code', $insertData['code'])->count();
             }
         }
 
@@ -64,7 +64,7 @@ Class SuppliersAdmin
             response()->error('Mã nhà cung cấp đã được sử dụng');
         }
 
-        return \Stock\Model\Suppliers::insert($insertData);
+        return \Skdepot\Model\Suppliers::insert($insertData);
     }
 }
 add_filter('manage_suppliers_input', 'SuppliersAdmin::form');

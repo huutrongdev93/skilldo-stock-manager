@@ -2,13 +2,13 @@
     'name'      => 'Trả hàng',
     'table'     => $table,
 ]) !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/order-return/detail-info', compact('tableProduct')); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/order-return/print'); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/export', [
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/order-return/detail-info', compact('tableProduct')); !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/order-return/print'); !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/export', [
     'action' => 'OrderReturnAdminAjax::exportDetail',
     'title'  => 'Xuất chi tiết phiếu trả hàng'
 ]); !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/export-list', [
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/export-list', [
     'action'    => 'TransferAdminAjax::export',
     'title' => 'Xuất phiếu trả hàng'
 ]); !!}

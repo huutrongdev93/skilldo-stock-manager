@@ -16,15 +16,15 @@ class OrderReturnController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\OrderReturn();
+        $table = new \Skdepot\Table\OrderReturn();
 
-        $tableProduct = new \Stock\Table\OrderReturn\ProductDetail();
+        $tableProduct = new \Skdepot\Table\OrderReturn\ProductDetail();
 
         Cms::setData('table', $table);
 
         Cms::setData('tableProduct', $tableProduct);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/order-return/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/order-return/index', 'plugin');
 
         $this->template->render();
     }
@@ -42,20 +42,20 @@ class OrderReturnController extends MY_Controller {
 
         if(empty($order))
         {
-            Cms::setData('table', new \Stock\Table\OrderReturn\Order());
+            Cms::setData('table', new \Skdepot\Table\OrderReturn\Order());
 
-            $this->template->setView(STOCK_NAME.'/views/admin/order-return/search-order', 'plugin');
+            $this->template->setView(SKDEPOT_NAME.'/views/admin/order-return/search-order', 'plugin');
 
             $this->template->render();
         }
         else
         {
-            $table = new \Stock\Table\OrderReturn\ProductAdd();
+            $table = new \Skdepot\Table\OrderReturn\ProductAdd();
 
             Cms::setData('table', $table);
 
-            $orderReturnItems = \Stock\Model\OrderReturnDetail::where('order_id', $order->id)
-                ->where('status', \Stock\Status\OrderReturn::success->value)
+            $orderReturnItems = \Skdepot\Model\OrderReturnDetail::where('order_id', $order->id)
+                ->where('status', \Skdepot\Status\OrderReturn::success->value)
                 ->get();
 
             $discount = '500000';//$order->discount ?? 0;
@@ -114,7 +114,7 @@ class OrderReturnController extends MY_Controller {
 
             Cms::setData('action', 'add');
 
-            $this->template->setView(STOCK_NAME.'/views/admin/order-return/add', 'plugin');
+            $this->template->setView(SKDEPOT_NAME.'/views/admin/order-return/add', 'plugin');
 
             $this->template->render();
         }

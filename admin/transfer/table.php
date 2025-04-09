@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
 use Branch;
@@ -9,12 +9,13 @@ use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class TransferTable extends SKDObjectTable
 {
     protected string $module = 'transfer';
 
-    protected mixed $model = \Stock\Model\Transfer::class;
+    protected mixed $model = \Skdepot\Model\Transfer::class;
 
     function getColumns() {
 
@@ -56,10 +57,10 @@ class TransferTable extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\Transfer::tryFrom($status)->badge();
+                    return \Skdepot\Status\Transfer::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\Transfer::tryFrom($status)->label();
+                    return \Skdepot\Status\Transfer::tryFrom($status)->label();
                 })
         ];
 
@@ -70,7 +71,7 @@ class TransferTable extends SKDObjectTable
 
     function actionButton($item, $module, $table): array
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $buttons = [];
 
@@ -78,7 +79,7 @@ class TransferTable extends SKDObjectTable
             ...$item->toArray(),
         ];
 
-        $data['status'] = Admin::badge(\Stock\Status\Transfer::tryFrom($item->status)->badge(), \Stock\Status\Transfer::tryFrom($item->status)->label());
+        $data['status'] = Admin::badge(\Skdepot\Status\Transfer::tryFrom($item->status)->badge(), \Skdepot\Status\Transfer::tryFrom($item->status)->label());
 
         $data['total_send_price'] = \Prd::price($item->total_send_price);
 
@@ -90,24 +91,24 @@ class TransferTable extends SKDObjectTable
             'class' => 'js_transfer_btn_detail'
         ]);
 
-        if($item->status !== \Stock\Status\Transfer::cancel->value)
+        if($item->status !== \Skdepot\Status\Transfer::cancel->value)
         {
-            if($item->status === \Stock\Status\Transfer::draft->value || ($item->status !== \Stock\Status\Transfer::success->value && $item->to_branch_id == $branch->id))
+            if($item->status === \Skdepot\Status\Transfer::draft->value || ($item->status !== \Skdepot\Status\Transfer::success->value && $item->to_branch_id == $branch->id))
             {
                 $buttons[] = Admin::button('blue', [
                     'icon' => Admin::icon('edit'),
-                    'href' => \Url::route('admin.stock.transfers.edit', ['id' => $item->id]),
+                    'href' => \Url::route('admin.transfers.edit', ['id' => $item->id]),
                     'tooltip' => 'Cập nhật',
                 ]);
             }
 
-            if($item->status !== \Stock\Status\Transfer::success->value)
+            if($item->status !== \Skdepot\Status\Transfer::success->value)
             {
                 $buttons['cancel'] = Admin::btnConfirm('red', [
                     'icon'      => Admin::icon('close'),
                     'tooltip'   => 'Đồng ý',
                     'id'        => $item->id,
-                    'model'     =>  \Stock\Model\Transfer::class,
+                    'model'     =>  \Skdepot\Model\Transfer::class,
                     'ajax'      => 'TransferAdminAjax::cancel',
                     'heading'   => 'Đồng ý',
                     'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu chuyển hàng này?',
@@ -118,7 +119,7 @@ class TransferTable extends SKDObjectTable
             }
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/transfer/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/transfer/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -139,12 +140,31 @@ class TransferTable extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\Transfer::options()
+        $form->select2('status', \Skdepot\Status\Transfer::options()
             ->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], $request->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.transfers.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -181,7 +201,7 @@ class TransferTable extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -189,7 +209,7 @@ class TransferTable extends SKDObjectTable
                 $qr->where('from_branch_id', $branch->id);
                 $qr->orWhere(function ($q) use ($branch) {
                     $q->where('to_branch_id', $branch->id);
-                    $q->where('status', '<>', \Stock\Status\Transfer::draft->value);
+                    $q->where('status', '<>', \Skdepot\Status\Transfer::draft->value);
                 });
             });
         }

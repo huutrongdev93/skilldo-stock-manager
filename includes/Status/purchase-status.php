@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Status;
+namespace Skdepot\Status;
 
 use Illuminate\Support\Collection;
 

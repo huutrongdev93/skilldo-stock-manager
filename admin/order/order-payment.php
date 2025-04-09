@@ -37,7 +37,7 @@ class CashFlowOrder
             if(empty($idUserDebt))
             {
                 //Cộng công nợ khi đơn hàng thanh toán
-                $idUserDebt = \Stock\Model\UserDebt::create([
+                $idUserDebt = \Skdepot\Model\UserDebt::create([
                     'before'            => $customer->debt,
                     'amount'            => $order->total,
                     'balance'           => $customer->debt + $order->total,
@@ -62,8 +62,8 @@ class CashFlowOrder
             $cashFlow = [
                 'branch_id'     => $order->branch_id,
                 'branch_name'   => $order->branch_name,
-                'group_id'      => \Stock\CashFlowGroup\Transaction::orderSuccess->id(),
-                'group_name'    => \Stock\CashFlowGroup\Transaction::orderSuccess->label(),
+                'group_id'      => \Skdepot\CashFlowGroup\Transaction::orderSuccess->id(),
+                'group_name'    => \Skdepot\CashFlowGroup\Transaction::orderSuccess->label(),
                 'user_id'       => Auth::user()->id,
                 'user_name'     => Auth::user()->firstname.' '.Auth::user()->lastname,
                 'partner_id'    => $customer->id,
@@ -80,22 +80,22 @@ class CashFlowOrder
                 'target_type'   => 'Order',
                 'time'          => $time,
                 'note'          => 'Phiếu thu được tạo tự động khi đơn hàng '.$order->code.' hoàn thành thanh toán',
-                'status'        =>  \Stock\Status\CashFlow::success->value,
+                'status'        =>  \Skdepot\Status\CashFlow::success->value,
             ];
 
-            $idCashFlow = \Stock\Model\CashFlow::create($cashFlow);
+            $idCashFlow = \Skdepot\Model\CashFlow::create($cashFlow);
 
             if(!empty($idCashFlow) && !is_skd_error($idCashFlow))
             {
                 //Trừ công nợ khi đơn hàng được thanh toán
-                \Stock\Model\UserDebt::create([
+                \Skdepot\Model\UserDebt::create([
                     'before'            => $customer->debt,
                     'amount'            => $order->total*-1,
                     'balance'           => $customer->debt - $order->total,
                     'partner_id'        => $customer->id,
                     'target_id'         => $idCashFlow,
-                    'target_code'       => \Stock\Helper::code(\Stock\Prefix::cashFlowOrder->value, $idCashFlow),
-                    'target_type'       => \Stock\Prefix::cashFlow->value,
+                    'target_code'       => \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowOrder->value, $idCashFlow),
+                    'target_type'       => \Skdepot\Prefix::cashFlow->value,
                     'target_type_name'  => 'Thanh toán đơn hàng',
                     'time'              => $time+10
                 ]);
@@ -122,8 +122,8 @@ class CashFlowOrder
                 $cashFlow = [
                     'branch_id'     => $order->branch_id,
                     'branch_name'   => $order->branch_name,
-                    'group_id'      => \Stock\CashFlowGroup\Transaction::orderReturn->id(),
-                    'group_name'    => \Stock\CashFlowGroup\Transaction::orderReturn->label(),
+                    'group_id'      => \Skdepot\CashFlowGroup\Transaction::orderReturn->id(),
+                    'group_name'    => \Skdepot\CashFlowGroup\Transaction::orderReturn->label(),
                     'user_id'       => Auth::user()->id,
                     'user_name'     => Auth::user()->firstname.' '.Auth::user()->lastname,
                     'partner_id'    => $customer->id,
@@ -140,22 +140,22 @@ class CashFlowOrder
                     'target_type'   => 'Order',
                     'time'          => time(),
                     'note'          => 'Phiếu chi được tạo tự động khi đơn hàng '.$order->code.' hủy thanh toán',
-                    'status'        =>  \Stock\Status\CashFlow::success->value,
+                    'status'        =>  \Skdepot\Status\CashFlow::success->value,
                 ];
 
-                $idCashFlow = \Stock\Model\CashFlow::create($cashFlow);
+                $idCashFlow = \Skdepot\Model\CashFlow::create($cashFlow);
 
                 if(!empty($idCashFlow) && !is_skd_error($idCashFlow))
                 {
                     //Cộng công nợ khi đơn hàng hủy thanh toán
-                    \Stock\Model\UserDebt::create([
+                    \Skdepot\Model\UserDebt::create([
                         'before'            => $customer->debt,
                         'amount'            => $order->total,
                         'balance'           => $customer->debt + $order->total,
                         'partner_id'        => $customer->id,
                         'target_id'         => $idCashFlow,
-                        'target_code'       => \Stock\Helper::code(\Stock\Prefix::cashFlowOrder->value, $idCashFlow),
-                        'target_type'       => \Stock\Prefix::cashFlow->value,
+                        'target_code'       => \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowOrder->value, $idCashFlow),
+                        'target_type'       => \Skdepot\Prefix::cashFlow->value,
                         'target_type_name'  => 'Hủy thanh toán',
                         'time'              => time()
                     ]);

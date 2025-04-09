@@ -1,6 +1,5 @@
 <?php
-namespace Stock\Model;
-use Qr;
+namespace Skdepot\Model;
 use SkillDo\DB;
 use SkillDo\Model\Model;
 
@@ -17,7 +16,7 @@ Class DebtAdjustment extends Model {
             {
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
-                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::adjustment->value, $object->id)]);
+                    ->update(['code' => \Skdepot\Helper::code(\Skdepot\Prefix::adjustment->value, $object->id)]);
             }
         });
     }

@@ -9,15 +9,15 @@ class SuppliersAdminAjax
     {
         $id = $request->input('id');
 
-        $object = \Stock\Model\Suppliers::find($id);
+        $object = \Skdepot\Model\Suppliers::find($id);
 
         if(empty($object))
         {
             response()->error('Nhà cung cấp không có trên hệ thống');
         }
 
-        $purchaseOrders = \Stock\Model\PurchaseOrder::where('supplier_id', $id)
-            ->where('status', \Stock\Status\PurchaseOrder::success->value)
+        $purchaseOrders = \Skdepot\Model\PurchaseOrder::where('supplier_id', $id)
+            ->where('status', \Skdepot\Status\PurchaseOrder::success->value)
             ->where('is_payment', 0)
             ->orderBy('created')
             ->get();
@@ -42,7 +42,7 @@ class SuppliersAdminAjax
 
         $id = $request->input('id');
 
-        $supplier = \Stock\Model\Suppliers::find($id);
+        $supplier = \Skdepot\Model\Suppliers::find($id);
 
         if(empty($supplier))
         {
@@ -84,7 +84,7 @@ class SuppliersAdminAjax
         }
 
         //Khởi tạo phiếu chi
-        $idCashFlow = \Stock\Model\CashFlow::create([
+        $idCashFlow = \Skdepot\Model\CashFlow::create([
             'branch_id' => $branch->id,
             'branch_name' => $branch->name,
             //Người thu
@@ -98,14 +98,14 @@ class SuppliersAdminAjax
             'phone'         => $supplier->phone,
             'partner_type'  => 'S',
             //Loại
-            'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
-            'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
+            'group_id'   => \Skdepot\CashFlowGroup\Transaction::supplierPayment->id(),
+            'group_name' => \Skdepot\CashFlowGroup\Transaction::supplierPayment->label(),
             'origin' => 'purchase',
             'method' => 'cash',
             'amount' => $payment*-1,
-            'target_type' => \Stock\Prefix::purchaseOrder->value,
+            'target_type' => \Skdepot\Prefix::purchaseOrder->value,
             'time'          => time(),
-            'status'        => \Stock\Status\CashFlow::success->value,
+            'status'        => \Skdepot\Status\CashFlow::success->value,
             'user_created'  => Auth::id()
         ]);
 
@@ -114,12 +114,12 @@ class SuppliersAdminAjax
             response()->error($idCashFlow);
         }
 
-        $code = \Stock\Helper::code('PC', $idCashFlow);
+        $code = \Skdepot\Helper::code('PC', $idCashFlow);
 
         $balance = $supplier->debt - $payment;
 
         //Tạo công nợ cho phiêu chi
-        \Stock\Model\Debt::create([
+        \Skdepot\Model\Debt::create([
             'before'        => ($supplier->debt)*-1,
             'amount'        => $payment,
             'balance'       => $balance*-1,
@@ -140,7 +140,7 @@ class SuppliersAdminAjax
 
             $purchaseOrdersUp = [];
 
-            $purchaseOrders = \Stock\Model\PurchaseOrder::where('supplier_id', $id)
+            $purchaseOrders = \Skdepot\Model\PurchaseOrder::where('supplier_id', $id)
                 ->whereIn('id', $paymentPurchaseOrdersId)
                 ->where('is_payment', 0)
                 ->orderByDesc('created')
@@ -182,21 +182,21 @@ class SuppliersAdminAjax
                     'phone'         => $supplier->phone,
                     'partner_type'  => 'S',
                     //Loại
-                    'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
-                    'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
+                    'group_id'   => \Skdepot\CashFlowGroup\Transaction::supplierPayment->id(),
+                    'group_name' => \Skdepot\CashFlowGroup\Transaction::supplierPayment->label(),
                     'origin'     => 'purchase',
                     'method'     => 'cash',
                     'amount'     => $purchaseOrderPayload['payment']*-1,
                     //Target
                     'target_id' => $purchase->id,
                     'target_code' => $purchase->code,
-                    'target_type' => \Stock\Prefix::purchaseOrder->value,
+                    'target_type' => \Skdepot\Prefix::purchaseOrder->value,
                     'order_value' => $purchase->subtotal,
                     'need_pay_value' => $purchase->subtotal - $purchase->discount,
                     'paid_value' => $purchase->total_payment,
 
                     'time'          => time(),
-                    'status'        => \Stock\Status\CashFlow::success->value,
+                    'status'        => \Skdepot\Status\CashFlow::success->value,
                     'user_created'  => Auth::id()
                 ];
 
@@ -205,12 +205,12 @@ class SuppliersAdminAjax
 
             if(have_posts($cashFlows))
             {
-                DB::table('cash_flow')->insert($cashFlows);
+                \Skdepot\Model\CashFlow::inserts($cashFlows);
             }
 
             if(have_posts($purchaseOrdersUp))
             {
-                \Stock\Model\PurchaseOrder::updateBatch($purchaseOrdersUp, 'id');
+                \Skdepot\Model\PurchaseOrder::updateBatch($purchaseOrdersUp, 'id');
             }
         }
 
@@ -221,7 +221,7 @@ class SuppliersAdminAjax
     {
         $validate = $request->validate([
             'id' => Rule::make('Id nhà sản xuất')->notEmpty()->integer()->min(1),
-            'status' => Rule::make('Trạng thái')->notEmpty()->in(array_column(\Stock\Status\Supplier::cases(), 'value')),
+            'status' => Rule::make('Trạng thái')->notEmpty()->in(array_column(\Skdepot\Status\Supplier::cases(), 'value')),
         ]);
 
         if ($validate->fails()) {
@@ -230,7 +230,7 @@ class SuppliersAdminAjax
 
         $id = (int)$request->input('id');
 
-        $object = \Stock\Model\Suppliers::widthStop()->whereKey($id)->first();
+        $object = \Skdepot\Model\Suppliers::widthStop()->whereKey($id)->first();
 
         if(!have_posts($object)) {
             response()->error('Nhà sản xuất không tồn tại');
@@ -248,8 +248,8 @@ class SuppliersAdminAjax
 
         response()->success(trans('ajax.update.success'), \SkillDo\Table\Columns\ColumnBadge::make('status', [], [])
             ->value($object->status)
-            ->color(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->badge())
-            ->label(fn (string $state): string => \Stock\Status\Supplier::tryFrom($state)->label())
+            ->color(fn (string $state): string => \Skdepot\Status\Supplier::tryFrom($state)->badge())
+            ->label(fn (string $state): string => \Skdepot\Status\Supplier::tryFrom($state)->label())
             ->attributes(fn ($item): array => [
                 'data-id' => $object->id,
                 'data-status' => $object->status,
@@ -270,7 +270,7 @@ class SuppliersAdminAjax
 
         $id = (int)$request->input('id');
 
-        $object = \Stock\Model\Suppliers::widthStop()->whereKey($id)->first();
+        $object = \Skdepot\Model\Suppliers::widthStop()->whereKey($id)->first();
 
         if(!have_posts($object))
         {
@@ -287,7 +287,7 @@ class SuppliersAdminAjax
         $amount = $balance - $object->debt;
 
         //Tạo phiếu điều chỉnh
-        $id = \Stock\Model\DebtAdjustment::create([
+        $id = \Skdepot\Model\DebtAdjustment::create([
             'balance'       => $balance,
             'partner_id'    => $object->id,
             'partner_type'  => 'supplier',
@@ -305,14 +305,14 @@ class SuppliersAdminAjax
         }
 
         //Khởi tạo lịch sử thay đổi công nợ
-        \Stock\Model\Debt::create([
+        \Skdepot\Model\Debt::create([
             'before'        => ($object->debt)*-1,
             'amount'        => $amount*-1,
             'balance'       => $balance*-1,
             'partner_id'    => $object->id,
             'target_id'     => $id,
-            'target_code'   => \Stock\Helper::code(\Stock\Prefix::adjustment->value, $id),
-            'target_type'   => \Stock\Prefix::adjustment->value,
+            'target_code'   => \Skdepot\Helper::code(\Skdepot\Prefix::adjustment->value, $id),
+            'target_type'   => \Skdepot\Prefix::adjustment->value,
             'time'          => time()
         ]);
 

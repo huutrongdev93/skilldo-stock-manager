@@ -5,9 +5,9 @@ class StockOrderAdminAjax
     {
         $id = (int)$request->input('id');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $histories = \Stock\Model\CashFlow::where('target_id', $id)
+        $histories = \Skdepot\Model\CashFlow::where('target_id', $id)
             ->where('target_type', 'Order')
             ->where('branch_id', $branch->id)
             ->orderByDesc('created')
@@ -40,7 +40,7 @@ class StockOrderAdminAjax
 
                 $history->amount = Prd::price($history->amount);
 
-                $history->status = Admin::badge(\Stock\Status\CashFlow::tryFrom($history->status)->badge(), \Stock\Status\CashFlow::tryFrom($history->status)->label());
+                $history->status = Admin::badge(\Skdepot\Status\CashFlow::tryFrom($history->status)->badge(), \Skdepot\Status\CashFlow::tryFrom($history->status)->label());
 
                 $histories[$key] = $history;
             }
@@ -54,9 +54,9 @@ class StockOrderAdminAjax
     {
         $id = (int)$request->input('id');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $histories = \Stock\Model\OrderReturn::where('order_id', $id)
+        $histories = \Skdepot\Model\OrderReturn::where('order_id', $id)
             ->where('branch_id', $branch->id)
             ->orderByDesc('created')
             ->get();
@@ -85,7 +85,7 @@ class StockOrderAdminAjax
 
                 $history->total_payment = Prd::price($history->total_payment);
 
-                $history->status = Admin::badge(\Stock\Status\OrderReturn::tryFrom($history->status)->badge(), \Stock\Status\OrderReturn::tryFrom($history->status)->label());
+                $history->status = Admin::badge(\Skdepot\Status\OrderReturn::tryFrom($history->status)->badge(), \Skdepot\Status\OrderReturn::tryFrom($history->status)->label());
 
                 $histories[$key] = $history;
             }

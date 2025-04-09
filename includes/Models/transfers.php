@@ -1,13 +1,13 @@
 <?php
 
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 use Qr;
 use SkillDo\DB;
 
 class Transfer extends \Skilldo\Model\Model
 {
-    protected string $table = 'transfers';
+    protected string $table = 'skdepot_transfers';
 
     protected string $primaryKey = 'id';
 
@@ -19,7 +19,7 @@ class Transfer extends \Skilldo\Model\Model
         {
             if($action == 'add' && empty($object->code))
             {
-                $code = \Stock\Helper::code(\Stock\Prefix::transfer->value, $object->id);
+                $code = \Skdepot\Helper::code(\Skdepot\Prefix::transfer->value, $object->id);
 
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)

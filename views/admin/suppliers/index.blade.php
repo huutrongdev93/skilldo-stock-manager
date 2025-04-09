@@ -15,7 +15,7 @@ Admin::partial('components/page-default/page-index', [
                 </button>
             </div>
             <div class="modal-body">
-                {!! form()->select2('supplierStatus', \Stock\Status\Supplier::options()->pluck('label', 'value')->toArray(), [
+                {!! form()->select2('supplierStatus', \Skdepot\Status\Supplier::options()->pluck('label', 'value')->toArray(), [
                     'label' => 'Trạng thái'
                 ])->html() !!}
             </div>

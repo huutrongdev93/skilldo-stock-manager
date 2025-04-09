@@ -1,6 +1,6 @@
 <p class="product-detail-code product-detail-inventory-status" style="margin-top: 10px;">
-    <span class="stock_inventory_status badge text-bg-{{ \Stock\Status\Inventory::tryFrom($object->stock_status)->badge() }} {!! $object->stock_status !!}">
-        {!! \Stock\Status\Inventory::tryFrom($object->stock_status)->label() !!}
+    <span class="stock_inventory_status badge text-bg-{{ \Skdepot\Status\Inventory::tryFrom($object->stock_status)->badge() }} {!! $object->stock_status !!}">
+        {!! \Skdepot\Status\Inventory::tryFrom($object->stock_status)->label() !!}
     </span>
 </p>
 <style>

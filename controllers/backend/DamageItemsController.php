@@ -14,28 +14,28 @@ class DamageItemsController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\DamageItem();
+        $table = new \Skdepot\Table\DamageItem();
 
-        $tableProduct = new \Stock\Table\DamageItems\ProductDetail();
+        $tableProduct = new \Skdepot\Table\DamageItems\ProductDetail();
 
         Cms::setData('table', $table);
 
         Cms::setData('tableProduct', $tableProduct);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/damage-items/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/damage-items/index', 'plugin');
 
         $this->template->render();
     }
 
     public function add(Request $request): void
     {
-        Cms::setData('table', (new \Stock\Table\DamageItems\ProductAdd()));
+        Cms::setData('table', (new \Skdepot\Table\DamageItems\ProductAdd()));
 
         Cms::setData('form', $this->form());
 
         Cms::setData('action', 'add');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/damage-items/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/damage-items/add', 'plugin');
 
         $this->template->render();
     }
@@ -44,7 +44,7 @@ class DamageItemsController extends MY_Controller {
     {
         $type = $request->input('type');
 
-        $object = \Stock\Model\DamageItem::find($id);
+        $object = \Skdepot\Model\DamageItem::find($id);
 
         if($type === 'clone')
         {
@@ -57,11 +57,11 @@ class DamageItemsController extends MY_Controller {
 
         Cms::setData('action', (!empty($type)) ? $type : 'edit');
 
-        Cms::setData('table', (new \Stock\Table\DamageItems\ProductAdd()));
+        Cms::setData('table', (new \Skdepot\Table\DamageItems\ProductAdd()));
 
         Cms::setData('form', $this->form($object));
 
-        $this->template->setView(STOCK_NAME.'/views/admin/damage-items/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/damage-items/add', 'plugin');
 
         $this->template->render();
     }
@@ -93,7 +93,7 @@ class DamageItemsController extends MY_Controller {
                 'multiple' => false,
                 'noImage' => true,
             ], $object->purchase_id ?? Auth::id())
-            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\DamageItem::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Skdepot\Status\DamageItem::draft->label().'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Tổng giá trị hủy</b>  <b class="js_damage_items_cost_total">0</b></p>')
             ->textarea('note', [
                 'label' => 'Ghi chú'

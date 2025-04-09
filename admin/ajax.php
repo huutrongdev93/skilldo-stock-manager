@@ -2,7 +2,7 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-Class Stock_Manager_Ajax
+Class SkdepotAjax
 {
     static function changeUserBrand(\SkillDo\Http\Request $request): void
     {
@@ -35,7 +35,7 @@ Class Stock_Manager_Ajax
 
     static function searchProducts(\SkillDo\Http\Request $request): void
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $selected = [
             'products.id',
@@ -75,7 +75,7 @@ Class Stock_Manager_Ajax
 
         if(have_posts($products))
         {
-            $inventories = \Stock\Model\Inventory::whereIn('product_id', $products
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $products
                 ->pluck('id')
                 ->toArray())
                 ->select('id', 'product_id', 'stock', 'reserved')
@@ -149,13 +149,13 @@ Class Stock_Manager_Ajax
 
         if(have_posts($products))
         {
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $productsId = $products
                 ->pluck('id')
                 ->toArray();
 
-            $inventories = \Stock\Model\Inventory::whereIn('product_id', $productsId)
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                 ->where('branch_id', $branch->id)
                 ->select('id', 'product_id', 'stock', 'reserved', 'price_cost')
                 ->get()
@@ -213,13 +213,13 @@ Class Stock_Manager_Ajax
                 response()->error(trans('Không xác định được sản phẩm cần điều chỉnh số lượng kho hàng'));
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $inventories = [];
 
             if($product->hasVariation == 0)
             {
-                $inventories = Inventory::where('product_id', $product->id)->where('branch_id', $branch->id)->get();
+                $inventories = \Skdepot\Model\Inventory::where('product_id', $product->id)->where('branch_id', $branch->id)->get();
 
                 foreach ($inventories as $inventory)
                 {
@@ -230,7 +230,7 @@ Class Stock_Manager_Ajax
             {
                 $variations = \Ecommerce\Model\Variation::where('parent_id', $productId)->select('id', 'title', 'attribute_label')->get();
 
-                $inventories = Inventory::where('parent_id', $product->id)->where('branch_id', $branch->id)->get();
+                $inventories = \Skdepot\Model\Inventory::where('parent_id', $product->id)->where('branch_id', $branch->id)->get();
 
                 foreach ($inventories as $inventory)
                 {
@@ -279,7 +279,7 @@ Class Stock_Manager_Ajax
                     }
                 }
 
-                $inventories = Inventory::whereIn('id', $inventoriesId)->fetch();
+                $inventories = \Skdepot\Model\Inventory::whereIn('id', $inventoriesId)->fetch();
 
                 if(count($inventories) != count($inventoriesId)) {
                     response()->error('Không lấy được dữ liệu kho hàng của một trong các id đã truyền lên');
@@ -324,7 +324,7 @@ Class Stock_Manager_Ajax
                                 $inventoriesUp = [
                                     'id'        => $inventoryId,
                                     'stock'     => $stock,
-                                    'status'    => ($stock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                                    'status'    => ($stock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value
                                 ];
 
                                 if($stock == 0) {
@@ -334,7 +334,7 @@ Class Stock_Manager_Ajax
                                     $productUpInStock[] = $inventory->product_id;
                                 }
 
-                                $result = Inventory::insert($inventoriesUp, $inventory);
+                                $result = \Skdepot\Model\Inventory::insert($inventoriesUp, $inventory);
 
                                 if(!is_skd_error($result)) {
 
@@ -344,7 +344,7 @@ Class Stock_Manager_Ajax
                                         'inventory_id'  => $inventoryId,
                                         'product_id'    => $inventory->product_id,
                                         'branch_id'     => $inventory->branch_id,
-                                        'message'       => \Stock\Model\History::message('product_update_quick', [
+                                        'message'       => \Skdepot\Model\History::message('product_update_quick', [
                                             'stockBefore'   => $inventory->stock,
                                             'stockAfter'    => $stock,
                                         ]),
@@ -368,24 +368,24 @@ Class Stock_Manager_Ajax
 
                 if(have_posts($inventoriesHistory))
                 {
-                    DB::table('inventories_history')->insert($inventoriesHistory);
+                    \Skdepot\Model\History::inserts($inventoriesHistory);
                 }
 
                 if(have_posts($productUpInStock))
                 {
                     DB::table('products')
                         ->whereIn('id', $productUpInStock)
-                        ->update(['stock_status' => \Stock\Status\Inventory::in->value]);
+                        ->update(['stock_status' => \Skdepot\Status\Inventory::in->value]);
                 }
 
                 if(have_posts($productUpOutStock))
                 {
                     DB::table('products')
                         ->whereIn('id', $productUpOutStock)
-                        ->update(['stock_status' => \Stock\Status\Inventory::out->value]);
+                        ->update(['stock_status' => \Skdepot\Status\Inventory::out->value]);
                 }
 
-                $status = ($stockTotal > 0) ? \Stock\Status\Inventory::in->value : \Stock\Status\Inventory::out->value;
+                $status = ($stockTotal > 0) ? \Skdepot\Status\Inventory::in->value : \Skdepot\Status\Inventory::out->value;
 
                 DB::table('products')
                     ->where('id', $productId)
@@ -394,8 +394,8 @@ Class Stock_Manager_Ajax
                 response()->success(trans('ajax.update.success'), [
                     'productId' => $productId,
                     'status'    => $status,
-                    'color'     => 'text-bg-'.\Stock\Status\Inventory::tryFrom($status)->badge(),
-                    'label'     => \Stock\Status\Inventory::tryFrom($status)->label(). ' <i class="fa-thin fa-pen"></i>',
+                    'color'     => 'text-bg-'.\Skdepot\Status\Inventory::tryFrom($status)->badge(),
+                    'label'     => \Skdepot\Status\Inventory::tryFrom($status)->label(). ' <i class="fa-thin fa-pen"></i>',
                 ]);
             }
         }
@@ -403,8 +403,8 @@ Class Stock_Manager_Ajax
         response()->error(trans('ajax.update.error'));
     }
 }
-Ajax::admin('Stock_Manager_Ajax::changeUserBrand');
-Ajax::admin('Stock_Manager_Ajax::searchProducts');
-Ajax::admin('Stock_Manager_Ajax::searchProductsByCategory');
-Ajax::admin('Stock_Manager_Ajax::quickEditLoad');
-Ajax::admin('Stock_Manager_Ajax::quickEditSave');
+Ajax::admin('SkdepotAjax::changeUserBrand');
+Ajax::admin('SkdepotAjax::searchProducts');
+Ajax::admin('SkdepotAjax::searchProductsByCategory');
+Ajax::admin('SkdepotAjax::quickEditLoad');
+Ajax::admin('SkdepotAjax::quickEditSave');

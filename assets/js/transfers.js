@@ -1,4 +1,4 @@
-class TransferIndexHandle extends WarehouseIndexHandle
+class TransferIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({
@@ -46,7 +46,7 @@ class TransferIndexHandle extends WarehouseIndexHandle
     }
 }
 
-class TransferSendNewHandle extends WarehouseNewHandle
+class TransferSendNewHandle extends SkdepotNewHandle
 {
     constructor()
     {
@@ -223,7 +223,7 @@ class TransferSendNewHandle extends WarehouseNewHandle
     }
 }
 
-class TransferReceiveNewHandle extends WarehouseNewHandle
+class TransferReceiveNewHandle extends SkdepotNewHandle
 {
     constructor()
     {

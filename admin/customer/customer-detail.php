@@ -19,11 +19,11 @@ class StockAdminCustomerDetail
     {
         if(have_posts($user)) {
 
-            $tableDebt = new \Stock\Table\Customer\Debt();
+            $tableDebt = new \Skdepot\Table\Customer\Debt();
 
             $tableDebt->userId = $user->id;
 
-            Plugin::view(STOCK_NAME, 'admin/customer/detail/tab-debt', [
+            Plugin::view(SKDEPOT_NAME, 'admin/customer/detail/tab-debt', [
                 'user'      => $user,
                 'table'    => $tableDebt,
             ]);

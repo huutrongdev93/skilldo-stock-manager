@@ -14,7 +14,7 @@ class CashFlowController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        Cms::setData('table', (new \Stock\Table\CashFlow()));
+        Cms::setData('table', (new \Skdepot\Table\CashFlow()));
 
         Cms::setData('title', 'Sổ quỹ');
 
@@ -24,7 +24,7 @@ class CashFlowController extends MY_Controller {
 
         Cms::setData('formPartner', $this->formPartner('payment'));
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow/index', 'plugin');
 
         $this->template->render();
     }
@@ -46,18 +46,18 @@ class CashFlowController extends MY_Controller {
             ]
         ];
 
-        $branches = \Stock\Helper::getBranchAll()->pluck('name', 'id')->toArray();
+        $branches = \Skdepot\Helper::getBranchAll()->pluck('name', 'id')->toArray();
 
-        $groups = \Stock\Model\CashFlowGroup::where('type', $type)
+        $groups = \Skdepot\Model\CashFlowGroup::where('type', $type)
             ->get()
             ->pluck('name', 'id')
             ->toArray();
 
-        $partnerType = \Stock\CashFlowHelper::partnerType()
+        $partnerType = \Skdepot\CashFlowHelper::partnerType()
             ->pluck('name', 'key')
             ->toArray();
 
-        $suppliers = \Stock\Model\Suppliers::all()->pluck('name', 'id')->toArray();
+        $suppliers = \Skdepot\Model\Suppliers::all()->pluck('name', 'id')->toArray();
 
         $form = form()
             ->startDefault('<div class="stock-form-group form-group">')
@@ -89,7 +89,7 @@ class CashFlowController extends MY_Controller {
 
         $form->select('partner_type', $partnerType, ['label' => $labels[$type]['partner_type']], 'O');
 
-        $form->none(Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/partner-value', [
+        $form->none(Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/add/partner-value', [
             'type' => $type,
             'label' => $labels[$type]['partner_value'],
             'suppliers' => $suppliers

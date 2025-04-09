@@ -14,11 +14,11 @@ class InventoriesController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\Inventories();
+        $table = new \Skdepot\Table\Inventories();
 
         Cms::setData('table', $table);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/inventories/inventory', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/inventories/inventory', 'plugin');
 
         $this->template->render();
     }

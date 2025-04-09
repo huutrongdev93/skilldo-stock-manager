@@ -1,6 +1,6 @@
 <?php
 
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 class CashFlowGroup extends \Skilldo\Model\Model
 {

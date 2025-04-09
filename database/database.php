@@ -27,53 +27,6 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasColumn('users', 'branch_id'))
-        {
-            schema()->table('users', function (Blueprint $table) {
-                $table->integer('branch_id')->default(0);
-                $table->integer('debt')->default(0)->comment('Công nợ khách hàng');
-            });
-
-            $branch = Branch::where('default', 1)->first();
-
-            if(!have_posts($branch))
-            {
-                $branch = Branch::get();
-
-                if(!have_posts($branch))
-                {
-                    response()->error('Không tìm thấy chi nhánh');
-                }
-
-                $branch->default = 1;
-
-                $branch->save();
-            }
-
-            \SkillDo\Model\User::where('branch_id', 0)->update(['branch_id' => $branch->id]);
-        }
-
-        if(!schema()->hasTable('users_debt')) {
-            schema()->create('users_debt', function (Blueprint $table) {
-                $table->increments('id');
-
-                $table->integer('before')->default(0); //giá trị công nợ trước điều chỉnh
-                $table->integer('amount')->default(0); //Số tiền thanh toán
-                $table->integer('balance')->default(0); // Công nợ sau khi điều chỉnh
-                $table->integer('partner_id')->default(0); //id user
-
-                //Target
-                $table->integer('target_id')->default(0);
-                $table->string('target_code', 100)->nullable();
-                $table->string('target_type', 10)->nullable();
-                $table->string('target_type_name', 50)->nullable();
-
-                $table->integer('time')->default(0); //thời gian
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-            });
-        }
-
         if(!schema()->hasTable('inventories_history')) {
             schema()->create('inventories_history', function (Blueprint $table) {
                 $table->increments('id');
@@ -117,8 +70,65 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('inventories_purchase_orders')) {
-            schema()->create('inventories_purchase_orders', function (Blueprint $table) {
+        if(!schema()->hasColumn('users', 'branch_id'))
+        {
+            schema()->table('users', function (Blueprint $table) {
+                $table->integer('branch_id')->default(0);
+                $table->integer('debt')->default(0)->comment('Công nợ khách hàng');
+            });
+
+            $branch = Branch::where('isDefault', 1)->first();
+
+            if(!have_posts($branch))
+            {
+                $branch = Branch::get();
+
+                if(!have_posts($branch))
+                {
+                    response()->error('Không tìm thấy chi nhánh');
+                }
+
+                $branch->isDefault = 1;
+
+                $branch->save();
+            }
+
+            \SkillDo\Model\User::where('branch_id', 0)->update(['branch_id' => $branch->id]);
+        }
+
+        if(!schema()->hasColumn('users', 'isMember'))
+        {
+            schema()->table('users', function (Blueprint $table) {
+                $table->integer('isMember')->default(0);
+            });
+
+            User::where('role', 'administration')->update(['isMember' => 1]);
+        }
+
+        if(!schema()->hasTable('users_debt')) {
+            schema()->create('users_debt', function (Blueprint $table) {
+                $table->increments('id');
+
+                $table->integer('before')->default(0)->comment('Công nợ trước điều chỉnh');
+                $table->integer('amount')->default(0)->comment('Số tiền thanh toán');
+                $table->integer('balance')->default(0)->comment('Công nợ sau khi điều chỉnh');
+                $table->integer('partner_id')->default(0)->comment('id user');
+
+                //Target
+                $table->integer('target_id')->default(0);
+                $table->string('target_code', 100)->nullable();
+                $table->string('target_type', 10)->nullable();
+                $table->string('target_type_name', 50)->nullable();
+
+                $table->integer('time')->default(0); //thời gian
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        //Nhập hàng
+        if(!schema()->hasTable('skdepot_purchase_orders')) {
+            schema()->create('skdepot_purchase_orders', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('code', 50)->nullable();
                 $table->integer('branch_id')->default(0);
@@ -141,8 +151,8 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('inventories_purchase_orders_details')) {
-            schema()->create('inventories_purchase_orders_details', function (Blueprint $table) {
+        if(!schema()->hasTable('skdepot_purchase_orders_details')) {
+            schema()->create('skdepot_purchase_orders_details', function (Blueprint $table) {
                 $table->increments('purchase_order_detail_id');
                 $table->integer('purchase_order_id')->default(0);
                 $table->integer('product_id')->default(0);
@@ -157,40 +167,9 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('inventories_damage_items')) {
-            schema()->create('inventories_damage_items', function (Blueprint $table) {
-                $table->increments('id');
-                $table->string('code', 50)->nullable();
-                $table->integer('branch_id')->default(0);
-                $table->string('branch_name', 100)->nullable();
-                $table->integer('damage_id')->default(0); //người nhập hàng
-                $table->string('damage_name', 100)->nullable(); //người nhập hàng
-                $table->integer('damage_date')->default(0); //ngày nhập hàng
-                $table->integer('subtotal')->default(0); //tổng giá trị hàng hóa
-                $table->string('status', 20)->default('draft');
-                $table->text('note')->nullable();
-                $table->integer('user_created')->default(0);
-                $table->dateTime('created')->default(\SkillDo\DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-            });
-        }
-
-        if(!schema()->hasTable('inventories_damage_item_details')) {
-            schema()->create('inventories_damage_item_details', function (Blueprint $table) {
-                $table->increments('damage_item_detail_id');
-                $table->integer('damage_item_id')->default(0);
-                $table->integer('product_id')->default(0);
-                $table->string('product_name', 200)->nullable();
-                $table->string('product_attribute', 200)->nullable();
-                $table->string('product_code', 100)->nullable();
-                $table->integer('quantity')->default(0); //số lượng nhập
-                $table->integer('price')->default(0); //giá nhập hàng hóa
-                $table->string('status', 20)->default('draft');
-            });
-        }
-
-        if(!schema()->hasTable('inventories_purchase_returns')) {
-            schema()->create('inventories_purchase_returns', function (Blueprint $table) {
+        //Trả hàng nhập
+        if(!schema()->hasTable('skdepot_purchase_returns')) {
+            schema()->create('skdepot_purchase_returns', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('code', 50)->nullable();
                 $table->integer('purchase_order_id')->default(0);
@@ -213,8 +192,8 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('inventories_purchase_returns_details')) {
-            schema()->create('inventories_purchase_returns_details', function (Blueprint $table) {
+        if(!schema()->hasTable('skdepot_purchase_returns_details')) {
+            schema()->create('skdepot_purchase_returns_details', function (Blueprint $table) {
                 $table->increments('purchase_return_detail_id');
                 $table->integer('purchase_return_id')->default(0);
                 $table->integer('product_id')->default(0);
@@ -230,86 +209,57 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('suppliers')) {
-            schema()->create('suppliers', function (Blueprint $table) {
-                $table->increments('id');
-                $table->string('code', 200)->collation('utf8mb4_unicode_ci'); //mã nhà cung cấp
-                $table->string('name', 200)->collation('utf8mb4_unicode_ci'); //Tên nhà cung cấp
-                $table->string('firstname', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('lastname', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('email', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('phone', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('company', 255)->nullable();
-                $table->string('tax', 50)->nullable();
-                $table->string('image', 100)->nullable();
-                $table->string('status', 20)->default('use');
-                $table->integer('total_invoiced')->default(0); //Tổng mua
-                $table->integer('debt')->default(0); //Tổng cần trả cho nhà cung cấp
-                $table->integer('order')->default(0);
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-                $table->integer('user_created')->default(0);
-                $table->integer('user_updated')->default(0);
-                $table->index('code');
-            });
-        }
-
-        if(!schema()->hasTable('debt_adjustment')) {
-            schema()->create('debt_adjustment', function (Blueprint $table) {
-                $table->increments('id');
-
-                $table->string('code', 200)
-                    ->collation('utf8mb4_unicode_ci')
-                    ->comment('Mã code phiếu điều chỉnh');
-
-                $table->integer('partner_id')
-                    ->default(0)
-                    ->comment('Id đối tượng điều chỉnh');
-
-                $table->string('partner_type', 50)
-                    ->comment('Loại đối tượng điều chỉnh');
-
-                $table->integer('debt_before')
-                    ->default(0)
-                    ->comment('Công nợ trước điều chỉnh');
-
-                $table->integer('balance')
-                    ->default(0)
-                    ->comment('Công nợ sau khi được điều chỉnh');
-
-                $table->integer('time')
-                    ->default(0)
-                    ->comment('Thời gian điều chỉnh');
-
-                $table->integer('user_id')->default(0)->comment('id người điều chỉnh');
-                $table->string('user_code', 100)->collation('utf8mb4_unicode_ci')->nullable();
-                $table->string('user_name', 100)->collation('utf8mb4_unicode_ci')->nullable();
-
-                $table->text('note')->collation('utf8mb4_unicode_ci')->nullable();
-                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
-                $table->dateTime('updated')->nullable();
-                $table->index('code');
-            });
-        }
-
-        if(!schema()->hasTable('stock_takes')) {
-            schema()->create('stock_takes', function (Blueprint $table) {
+        //Xuất hủy hàng
+        if(!schema()->hasTable('skdepot_damage_items')) {
+            schema()->create('skdepot_damage_items', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('code', 50)->nullable();
                 $table->integer('branch_id')->default(0);
                 $table->string('branch_name', 100)->nullable();
-                $table->integer('user_id')->default(0); //người cân bằng
-                $table->string('user_name', 100)->nullable(); //tên người cân bằng
-                $table->integer('balance_date')->default(0); //ngày cân bằng
-                $table->integer('total_actual_quantity')->default(0); // Tổng số lượng hàng thực tế
-                $table->integer('total_actual_price')->default(0); // Tổng giá trị hàng thực tế
-                $table->integer('total_increase_quantity')->default(0); // Tổng số lượng hàng tăng
-                $table->integer('total_increase_price')->default(0); // Tổng giá trị hàng tăng
-                $table->integer('total_reduced_quantity')->default(0); // Tổng số lượng hàng giảm
-                $table->integer('total_reduced_price')->default(0); // Tổng giá trị hàng giảm
-                $table->integer('total_adjustment_quantity')->default(0); //Tổng lệch
-                $table->integer('total_adjustment_price')->default(0); //Tổng giá trị lệch
+                $table->integer('damage_id')->default(0); //người nhập hàng
+                $table->string('damage_name', 100)->nullable(); //người nhập hàng
+                $table->integer('damage_date')->default(0); //ngày nhập hàng
+                $table->integer('subtotal')->default(0); //tổng giá trị hàng hóa
+                $table->string('status', 20)->default('draft');
+                $table->text('note')->nullable();
+                $table->integer('user_created')->default(0);
+                $table->dateTime('created')->default(\SkillDo\DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+            });
+        }
+
+        if(!schema()->hasTable('skdepot_damage_item_details')) {
+            schema()->create('skdepot_damage_item_details', function (Blueprint $table) {
+                $table->increments('damage_item_detail_id');
+                $table->integer('damage_item_id')->default(0);
+                $table->integer('product_id')->default(0);
+                $table->string('product_name', 200)->nullable();
+                $table->string('product_attribute', 200)->nullable();
+                $table->string('product_code', 100)->nullable();
+                $table->integer('quantity')->default(0); //số lượng nhập
+                $table->integer('price')->default(0); //giá nhập hàng hóa
+                $table->string('status', 20)->default('draft');
+            });
+        }
+
+        //Kiểm hàng
+        if(!schema()->hasTable('skdepot_stock_takes')) {
+            schema()->create('skdepot_stock_takes', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('code', 50)->nullable();
+                $table->integer('branch_id')->default(0);
+                $table->string('branch_name', 100)->nullable();
+                $table->integer('user_id')->default(0)->comment('id người cân bằng');
+                $table->string('user_name', 100)->nullable()->comment('tên người cân bằng');
+                $table->integer('balance_date')->default(0)->comment('ngày cân bằng');
+                $table->integer('total_actual_quantity')->default(0)->comment('Tổng số lượng hàng thực tế');
+                $table->integer('total_actual_price')->default(0)->comment('Tổng giá trị hàng thực tế');
+                $table->integer('total_increase_quantity')->default(0)->comment('Tổng số lượng hàng tăng');
+                $table->integer('total_increase_price')->default(0)->comment('Tổng giá trị hàng tăng');
+                $table->integer('total_reduced_quantity')->default(0)->comment('Tổng số lượng hàng giảm');
+                $table->integer('total_reduced_price')->default(0)->comment('Tổng giá trị hàng giảm');
+                $table->integer('total_adjustment_quantity')->default(0)->comment('Tổng lệch');
+                $table->integer('total_adjustment_price')->default(0)->comment('Tổng giá trị lệch');
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
@@ -318,19 +268,19 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('stock_take_details')) {
-            schema()->create('stock_take_details', function (Blueprint $table) {
+        if(!schema()->hasTable('skdepot_stock_take_details')) {
+            schema()->create('skdepot_stock_take_details', function (Blueprint $table) {
                 $table->increments('stock_take_detail_id');
                 $table->integer('stock_take_id')->default(0);
                 $table->integer('product_id')->default(0);
                 $table->string('product_name', 200)->nullable();
                 $table->string('product_attribute', 200)->nullable();
                 $table->string('product_code', 100)->nullable();
-                $table->integer('stock')->default(0); //tồn kho trước điều chỉnh
-                $table->integer('price')->default(0); //tiền hàng
-                $table->integer('actual_quantity')->default(0); // Tồn kho thực tế
-                $table->integer('adjustment_quantity')->default(0); // Số lượng lệch
-                $table->integer('adjustment_price')->default(0); // Giá trị lệch
+                $table->integer('stock')->default(0)->comment('tồn kho trước điều chỉnh');
+                $table->integer('price')->default(0)->comment('tiền hàng');
+                $table->integer('actual_quantity')->default(0)->comment('Tồn kho thực tế');
+                $table->integer('adjustment_quantity')->default(0)->comment('Số lượng lệch');
+                $table->integer('adjustment_price')->default(0)->comment('Giá trị lệch');
                 $table->string('status', 20)->default('draft');
                 $table->text('note')->nullable();
                 $table->integer('user_created')->default(0);
@@ -339,6 +289,7 @@ return new class () extends Migration {
             });
         }
 
+        //Phiếu thu chi
         if(!schema()->hasTable('cash_flow')) {
             schema()->create('cash_flow', function (Blueprint $table) {
                 $table->increments('id');
@@ -432,14 +383,41 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('debt')) {
-            schema()->create('debt', function (Blueprint $table) {
+        //NCC
+        if(!schema()->hasTable('suppliers')) {
+            schema()->create('suppliers', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('code', 200)->collation('utf8mb4_unicode_ci'); //mã nhà cung cấp
+                $table->string('name', 200)->collation('utf8mb4_unicode_ci'); //Tên nhà cung cấp
+                $table->string('firstname', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('lastname', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('email', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('phone', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('address', 200)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('company', 255)->nullable();
+                $table->string('tax', 50)->nullable();
+                $table->string('image', 100)->nullable();
+                $table->string('status', 20)->default('use');
+                $table->integer('total_invoiced')->default(0); //Tổng mua
+                $table->integer('debt')->default(0); //Tổng cần trả cho nhà cung cấp
+                $table->integer('order')->default(0);
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+                $table->integer('user_created')->default(0);
+                $table->integer('user_updated')->default(0);
+                $table->index('code');
+            });
+        }
+
+        //Lịch sử công nợ NCC
+        if(!schema()->hasTable('suppliers_debt')) {
+            schema()->create('suppliers_debt', function (Blueprint $table) {
                 $table->increments('id');
 
-                $table->integer('before')->default(0); //giá trị công nợ trước điều chỉnh
-                $table->integer('amount')->default(0); //Số tiền thanh toán
-                $table->integer('balance')->default(0); // Công nợ sau khi điều chỉnh
-                $table->integer('partner_id')->default(0); //id nhà cung cấp
+                $table->integer('before')->default(0)->comment('Công nợ trước điều chỉnh');
+                $table->integer('amount')->default(0)->comment('Số tiền thanh toán');
+                $table->integer('balance')->default(0)->comment('Công nợ sau khi điều chỉnh');
+                $table->integer('partner_id')->default(0)->comment('id NCC');
 
                 //Target
                 $table->integer('target_id')->default(0);
@@ -457,8 +435,48 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('transfers')) {
-            schema()->create('transfers', function (Blueprint $table) {
+        //Phiếu điều chỉnh công nợ
+        if(!schema()->hasTable('debt_adjustment')) {
+            schema()->create('debt_adjustment', function (Blueprint $table) {
+                $table->increments('id');
+
+                $table->string('code', 200)
+                    ->collation('utf8mb4_unicode_ci')
+                    ->comment('Mã code phiếu điều chỉnh');
+
+                $table->integer('partner_id')
+                    ->default(0)
+                    ->comment('Id đối tượng điều chỉnh');
+
+                $table->string('partner_type', 50)
+                    ->comment('Loại đối tượng điều chỉnh');
+
+                $table->integer('debt_before')
+                    ->default(0)
+                    ->comment('Công nợ trước điều chỉnh');
+
+                $table->integer('balance')
+                    ->default(0)
+                    ->comment('Công nợ sau khi được điều chỉnh');
+
+                $table->integer('time')
+                    ->default(0)
+                    ->comment('Thời gian điều chỉnh');
+
+                $table->integer('user_id')->default(0)->comment('id người điều chỉnh');
+                $table->string('user_code', 100)->collation('utf8mb4_unicode_ci')->nullable();
+                $table->string('user_name', 100)->collation('utf8mb4_unicode_ci')->nullable();
+
+                $table->text('note')->collation('utf8mb4_unicode_ci')->nullable();
+                $table->dateTime('created')->default(DB::raw('CURRENT_TIMESTAMP'));
+                $table->dateTime('updated')->nullable();
+                $table->index('code');
+            });
+        }
+
+        //Chuyển hàng giữa các chi nhánh
+        if(!schema()->hasTable('skdepot_transfers')) {
+            schema()->create('skdepot_transfers', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('code', 50)->nullable();
                 $table->integer('from_branch_id')->default(0)->comment('Id chi nhánh chuyển hàng');
@@ -489,8 +507,8 @@ return new class () extends Migration {
             });
         }
 
-        if(!schema()->hasTable('transfers_details')) {
-            schema()->create('transfers_details', function (Blueprint $table) {
+        if(!schema()->hasTable('skdepot_transfers_details')) {
+            schema()->create('skdepot_transfers_details', function (Blueprint $table) {
                 $table->increments('transfer_detail_id');
                 $table->integer('transfer_id')->default(0);
                 $table->integer('product_id')->default(0);
@@ -510,6 +528,7 @@ return new class () extends Migration {
             });
         }
 
+        //Trả hàng
         if(!schema()->hasTable('orders_returns')) {
             schema()->create('orders_returns', function (Blueprint $table) {
                 $table->increments('id');

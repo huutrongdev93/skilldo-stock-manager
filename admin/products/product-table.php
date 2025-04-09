@@ -6,24 +6,24 @@ class AdminStockProductTable {
 
     static function customDataDisplay($objects)
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $productsId = $objects->pluck('id')->toArray();
 
-        $inventories = \Stock\Model\Inventory::whereIn('product_id', $productsId)
+        $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->select('product_id', 'status')
             ->get();
 
         foreach ($objects as $object)
         {
-            $object->stock_status = \Stock\Status\Inventory::out->value;
+            $object->stock_status = \Skdepot\Status\Inventory::out->value;
 
             foreach ($inventories as $inventory)
             {
-                if(($inventory->product_id == $object->id || $inventory->parent_id == $object->id) && $inventory->status == \Stock\Status\Inventory::in->value)
+                if(($inventory->product_id == $object->id || $inventory->parent_id == $object->id) && $inventory->status == \Skdepot\Status\Inventory::in->value)
                 {
-                    $object->stock_status = \Stock\Status\Inventory::in->value;
+                    $object->stock_status = \Skdepot\Status\Inventory::in->value;
                     break;
                 }
             }
@@ -43,10 +43,10 @@ class AdminStockProductTable {
                     'label' => 'Tồn kho',
                     'column' => fn($item, $args) => \SkillDo\Table\Columns\ColumnBadge::make('stock_status', $item, $args)
                         ->color(function (string $status) {
-                            return \Stock\Status\Inventory::tryFrom($status)->badge();
+                            return \Skdepot\Status\Inventory::tryFrom($status)->badge();
                         })
                         ->label(function (string $status) {
-                            return \Stock\Status\Inventory::tryFrom($status)->label().' <i class="fa-thin fa-pen"></i>';
+                            return \Skdepot\Status\Inventory::tryFrom($status)->label().' <i class="fa-thin fa-pen"></i>';
                         })
                         ->attributes(fn ($item): array => [
                             'data-id' => $item->id,
@@ -62,5 +62,5 @@ class AdminStockProductTable {
     }
 }
 
-add_filter('admin_product_controllers_index_object', 'AdminStockProductTable::customDataDisplay');
-add_filter('manage_product_columns', 'AdminStockProductTable::productTableHeader');
+//add_filter('admin_product_controllers_index_object', 'AdminStockProductTable::customDataDisplay');
+//add_filter('manage_product_columns', 'AdminStockProductTable::productTableHeader');

@@ -16,7 +16,7 @@ class TransferAdminAjax
 
         $id  = $request->input('id');
 
-        $query = Qr::where('transfers_details.transfer_id', $id);
+        $query = Qr::where('skdepot_transfers_details.transfer_id', $id);
 
         $selected = [
             'product_id',
@@ -33,14 +33,14 @@ class TransferAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\TransferDetail::count(clone $query);
+        $total = \Skdepot\Model\TransferDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\TransferDetail::gets($query);
+        $objects = \Skdepot\Model\TransferDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -48,7 +48,7 @@ class TransferAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\Transfer\ProductDetail([
+        $table = new \Skdepot\Table\Transfer\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -89,7 +89,7 @@ class TransferAdminAjax
 
         $query = Qr::select($selected);
 
-        $query->leftJoin('transfers_details as po', function ($join) use ($id) {
+        $query->leftJoin('skdepot_transfers_details as po', function ($join) use ($id) {
             $join->on('po.product_id', '=', 'products.id');
         });
 
@@ -102,11 +102,11 @@ class TransferAdminAjax
 
         $products = \Ecommerce\Model\Product::widthVariation($query)->get();
 
-        $transfer = \Stock\Model\Transfer::find($id);
+        $transfer = \Skdepot\Model\Transfer::find($id);
 
         if(have_posts($products) && have_posts($transfer))
         {
-            $inventories = \Stock\Model\Inventory::whereIn('product_id', $products
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $products
                 ->pluck('id')
                 ->toArray())
                 ->where('branch_id', $transfer->to_branch_id)
@@ -158,7 +158,7 @@ class TransferAdminAjax
         {
             DB::beginTransaction();
 
-            $transferId = \Stock\Model\Transfer::create($transfer);
+            $transferId = \Skdepot\Model\Transfer::create($transfer);
 
             if(empty($transferId) || is_skd_error($transferId))
             {
@@ -170,7 +170,7 @@ class TransferAdminAjax
                 $detail['transfer_id'] = $transferId;
             }
 
-            DB::table('transfers_details')->insert($transferDetails);
+            \Skdepot\Model\TransferDetail::inserts($transferDetails);
 
             DB::commit();
 
@@ -194,14 +194,14 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\Transfer::find($id);
+        $object = \Skdepot\Model\Transfer::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\Transfer::success->value || $object->status === \Stock\Status\Transfer::cancel->value)
+        if($object->status === \Skdepot\Status\Transfer::success->value || $object->status === \Skdepot\Status\Transfer::cancel->value)
         {
             response()->error('Trạng thái phiếu chuyển hàng không cho phép chỉnh sữa');
         }
@@ -212,7 +212,7 @@ class TransferAdminAjax
             $productsDetail
         ] = static::dataDraft($request, $object);
 
-        \Stock\Model\Transfer::whereKey($id)->update($transfer);
+        \Skdepot\Model\Transfer::whereKey($id)->update($transfer);
 
         //Lấy danh sách chi tiết phiếu chuyển hàng sẽ cập nhật
         $transferDetailsUp = [];
@@ -239,19 +239,19 @@ class TransferAdminAjax
             //Thêm mới
             if(!empty($transferDetails))
             {
-                DB::table('transfers_details')->insert($transferDetails);
+                \Skdepot\Model\TransferDetail::inserts($transferDetails);
             }
 
             //Cập nhật
             if(!empty($transferDetailsUp))
             {
-                \Stock\Model\TransferDetail::updateBatch($transferDetailsUp, 'transfer_detail_id');
+                \Skdepot\Model\TransferDetail::updateBatch($transferDetailsUp, 'transfer_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\TransferDetail::whereKey($productsDetail->pluck('transfer_detail_id')->toArray())->delete();
+                \Skdepot\Model\TransferDetail::whereKey($productsDetail->pluck('transfer_detail_id')->toArray())->delete();
             }
 
             DB::commit();
@@ -291,14 +291,14 @@ class TransferAdminAjax
         }
 
         $transfer = [
-            'status' => \Stock\Status\Transfer::draft->value,
+            'status' => \Skdepot\Status\Transfer::draft->value,
             'send_date' => $time,
             'total_send_quantity' => 0,
             'total_send_price' => 0,
         ];
 
         //Từ Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -337,7 +337,7 @@ class TransferAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\Transfer::where('code', $code)->count();
+                    $count = \Skdepot\Model\Transfer::where('code', $code)->count();
                 }
                 else
                 {
@@ -346,7 +346,7 @@ class TransferAdminAjax
             }
             else
             {
-                $count = \Stock\Model\Transfer::where('code', $code)->count();
+                $count = \Skdepot\Model\Transfer::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -372,7 +372,7 @@ class TransferAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\TransferDetail::where('transfer_id', $object->id)
+            $productsDetail = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -399,7 +399,7 @@ class TransferAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\Transfer::success->value)
+                if ($productDetail->status === \Skdepot\Status\Transfer::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -450,7 +450,7 @@ class TransferAdminAjax
             $inventoriesUpdate[] = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value
             ];
 
             $inventoriesHistories[] = [
@@ -471,7 +471,7 @@ class TransferAdminAjax
             DB::beginTransaction();
 
             //Tạo phiếu chuyển hàng hàng
-            $transferId = \Stock\Model\Transfer::create($transfer);
+            $transferId = \Skdepot\Model\Transfer::create($transfer);
 
             if(empty($transferId) || is_skd_error($transferId))
             {
@@ -480,7 +480,7 @@ class TransferAdminAjax
 
             if(empty($transfer['code']))
             {
-                $transfer['code'] = \Stock\Helper::code(\Stock\Prefix::transfer->value, $transferId);
+                $transfer['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::transfer->value, $transferId);
             }
 
             // Cập nhật mã phiếu vào lịch sử kho
@@ -489,7 +489,7 @@ class TransferAdminAjax
                 $history['target_id'] = $transferId;
                 $history['target_code'] = $transfer['code'];
                 $history['target_name'] = 'Chuyển hàng';
-                $history['target_type'] = \Stock\Prefix::transfer->value;
+                $history['target_type'] = \Skdepot\Prefix::transfer->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -500,13 +500,13 @@ class TransferAdminAjax
                 unset($detail['transfer_detail_id']);
             }
 
-            DB::table('transfers_details')->insert($transferDetails);
+            \Skdepot\Model\TransferDetail::inserts($transferDetails);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -530,14 +530,14 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\Transfer::find($id);
+        $object = \Skdepot\Model\Transfer::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        if($object->status !== \Stock\Status\Transfer::draft->value)
+        if($object->status !== \Skdepot\Status\Transfer::draft->value)
         {
             response()->error('Trạng thái phiếu chuyển hàng này không thể cập nhật');
         }
@@ -572,7 +572,7 @@ class TransferAdminAjax
             $inventoriesUpdate[] = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value
             ];
 
             $inventoriesHistories[] = [
@@ -582,7 +582,7 @@ class TransferAdminAjax
                 //Đối tượng
                 'target_id'   => $object->id ?? 0,
                 'target_code' => $object->code ?? '',
-                'target_type' => \Stock\Prefix::transfer->value,
+                'target_type' => \Skdepot\Prefix::transfer->value,
                 'target_name' => 'Chuyển hàng',
                 //Thông tin
                 'cost'          => $detail['price'],
@@ -615,31 +615,31 @@ class TransferAdminAjax
             DB::beginTransaction();
 
             //Cập nhật phiếu kiểm kho hàng
-            \Stock\Model\Transfer::whereKey($id)->update($transfer);
+            \Skdepot\Model\Transfer::whereKey($id)->update($transfer);
 
             //Thêm mới
             if(!empty($transferDetails))
             {
-                DB::table('transfers_details')->insert($transferDetails);
+                \Skdepot\Model\TransferDetail::inserts($transferDetails);
             }
 
             //Cập nhật
             if(!empty($transferDetailsUp))
             {
-                \Stock\Model\TransferDetail::updateBatch($transferDetailsUp, 'transfer_detail_id');
+                \Skdepot\Model\TransferDetail::updateBatch($transferDetailsUp, 'transfer_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\TransferDetail::whereKey($productsDetail->pluck('transfer_detail_id')->toArray())->delete();
+                \Skdepot\Model\TransferDetail::whereKey($productsDetail->pluck('transfer_detail_id')->toArray())->delete();
             }
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -693,14 +693,14 @@ class TransferAdminAjax
         }
 
         $transfer = [
-            'status'        => \Stock\Status\Transfer::process->value,
+            'status'        => \Skdepot\Status\Transfer::process->value,
             'send_date' => $time,
             'total_send_quantity' => 0,
             'total_send_price' => 0,
         ];
 
         //Chi nhánh chuyển
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -746,7 +746,7 @@ class TransferAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\Transfer::where('code', $code)->count();
+                    $count = \Skdepot\Model\Transfer::where('code', $code)->count();
                 }
                 else
                 {
@@ -755,7 +755,7 @@ class TransferAdminAjax
             }
             else
             {
-                $count = \Stock\Model\Transfer::where('code', $code)->count();
+                $count = \Skdepot\Model\Transfer::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -778,7 +778,7 @@ class TransferAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
@@ -798,7 +798,7 @@ class TransferAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\TransferDetail::where('transfer_id', $object->id)
+            $productsDetail = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -844,7 +844,7 @@ class TransferAdminAjax
                 'price'              => $product['price'],
                 'send_quantity'      => $product['send_quantity'],
                 'send_price'         => $product['send_quantity']*$product['price'],
-                'status'             => \Stock\Status\Transfer::process->value,
+                'status'             => \Skdepot\Status\Transfer::process->value,
             ];
 
             if ($productsDetail->has($productId))
@@ -852,7 +852,7 @@ class TransferAdminAjax
                 $productDetail = $productsDetail[$productId];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\Transfer::success->value)
+                if ($productDetail->status === \Skdepot\Status\Transfer::success->value)
                 {
                     unset($productsDetail[$productId]);
                     continue;
@@ -892,19 +892,19 @@ class TransferAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\Transfer::find($id);
+        $object = \Skdepot\Model\Transfer::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\Transfer::cancel->value)
+        if($object->status === \Skdepot\Status\Transfer::cancel->value)
         {
             response()->error('phiếu chuyển hàng này đã được hủy');
         }
 
-        if($object->status === \Stock\Status\Transfer::success->value)
+        if($object->status === \Skdepot\Status\Transfer::success->value)
         {
             response()->error('phiếu chuyển hàng này đã hoàn thành không thể hủy');
         }
@@ -913,16 +913,16 @@ class TransferAdminAjax
 
             DB::beginTransaction();
 
-            if($object->status === \Stock\Status\Transfer::process->value)
+            if($object->status === \Skdepot\Status\Transfer::process->value)
             {
-                $products = \Stock\Model\TransferDetail::where('transfer_id', $object->id)
+                $products = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
                     ->where(function ($query) {
-                        $query->where('status', \Stock\Status\Transfer::process->value);
-                        $query->orWhere('status', \Stock\Status\Transfer::success->value);
+                        $query->where('status', \Skdepot\Status\Transfer::process->value);
+                        $query->orWhere('status', \Skdepot\Status\Transfer::success->value);
                     })
                     ->get();
 
-                $inventories = \Stock\Model\Inventory::whereIn('product_id', $products->pluck('product_id')->toArray())
+                $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $products->pluck('product_id')->toArray())
                     ->where('branch_id', $object->from_branch_id)
                     ->get();
 
@@ -937,7 +937,7 @@ class TransferAdminAjax
                             $inventoriesUp[] = [
                                 'id' => $inventory->id,
                                 'stock' => $inventory->stock + $product->send_quantity,
-                                'status' => \Stock\Status\Inventory::in->value,
+                                'status' => \Skdepot\Status\Inventory::in->value,
                             ];
                             break;
                         }
@@ -946,24 +946,24 @@ class TransferAdminAjax
 
                 if(have_posts($inventoriesUp))
                 {
-                    \Stock\Model\Inventory::updateBatch($inventoriesUp, 'id');
+                    \Skdepot\Model\Inventory::updateBatch($inventoriesUp, 'id');
                 }
             }
 
-            \Stock\Model\TransferDetail::where('transfer_id', $object->id)
-                ->where('status', '<>', \Stock\Status\Transfer::cancel->value)
+            \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
+                ->where('status', '<>', \Skdepot\Status\Transfer::cancel->value)
                 ->update([
-                    'status' => \Stock\Status\Transfer::cancel->value,
+                    'status' => \Skdepot\Status\Transfer::cancel->value,
                 ]);
 
-            \Stock\Model\Transfer::whereKey($object->id)->update([
-                'status' => \Stock\Status\Transfer::cancel->value,
+            \Skdepot\Model\Transfer::whereKey($object->id)->update([
+                'status' => \Skdepot\Status\Transfer::cancel->value,
             ]);
 
             DB::commit();
 
             response()->success('Hủy phiếu chuyển hàng thành công', [
-                'status' => Admin::badge(\Stock\Status\Transfer::cancel->badge(), 'Đã hủy')
+                'status' => Admin::badge(\Skdepot\Status\Transfer::cancel->badge(), 'Đã hủy')
             ]);
         }
         catch (\Exception $e)
@@ -988,7 +988,7 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\Transfer::find($id);
+        $object = \Skdepot\Model\Transfer::find($id);
 
         if(empty($object))
         {
@@ -1009,7 +1009,7 @@ class TransferAdminAjax
 
         $object->total_receive_price = Prd::price($object->total_receive_price);
 
-        $products = \Stock\Model\TransferDetail::where('transfer_id', $object->id)->get();
+        $products = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
@@ -1032,7 +1032,7 @@ class TransferAdminAjax
             response()->error($validate->errors());
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $type = $request->input('export');
 
@@ -1042,7 +1042,7 @@ class TransferAdminAjax
             $qr->where('from_branch_id', $branch->id);
             $qr->orWhere(function ($q) use ($branch) {
                 $q->where('to_branch_id', $branch->id);
-                $q->where('status', '<>', \Stock\Status\Transfer::draft->value);
+                $q->where('status', '<>', \Skdepot\Status\Transfer::draft->value);
             });
         });
 
@@ -1092,7 +1092,7 @@ class TransferAdminAjax
             }
         }
 
-        $objects = \Stock\Model\Transfer::gets($query);
+        $objects = \Skdepot\Model\Transfer::gets($query);
 
         if(empty($objects))
         {
@@ -1112,7 +1112,7 @@ class TransferAdminAjax
             }
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã chuyển hàng', function($item) {
             return $item->code ?? '';
@@ -1172,16 +1172,16 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\Transfer::find($id);
+        $object = \Skdepot\Model\Transfer::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\TransferDetail::where('transfer_id', $object->id)->get();
+        $products = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';
@@ -1231,7 +1231,7 @@ class TransferAdminAjax
                 response()->error($validate->errors());
             }
 
-            $myPath = STOCK_NAME.'/assets/imports/stock-take';
+            $myPath = SKDEPOT_NAME.'/assets/imports/stock-take';
 
             $path = $request->file('file')->store($myPath, ['disk' => 'plugin']);
 
@@ -1305,7 +1305,7 @@ class TransferAdminAjax
                 $rowDatas[] = $rowData;
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1384,12 +1384,12 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $object = \Stock\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
+        $object = \Skdepot\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
             $qr->where(function ($q) use ($branch) {
                 $q->where('to_branch_id', $branch->id);
-                $q->where('status', \Stock\Status\Transfer::process->value);
+                $q->where('status', \Skdepot\Status\Transfer::process->value);
             });
         })->first();
 
@@ -1398,7 +1398,7 @@ class TransferAdminAjax
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\Transfer::success->value || $object->status === \Stock\Status\Transfer::cancel->value)
+        if($object->status === \Skdepot\Status\Transfer::success->value || $object->status === \Skdepot\Status\Transfer::cancel->value)
         {
             response()->error('Trạng thái phiếu chuyển hàng không cho phép chỉnh sữa');
         }
@@ -1409,7 +1409,7 @@ class TransferAdminAjax
             $productsDetail
         ] = static::dataReceiveDraft($request, $object);
 
-        \Stock\Model\Transfer::whereKey($id)->update($transfer);
+        \Skdepot\Model\Transfer::whereKey($id)->update($transfer);
 
         try
         {
@@ -1418,7 +1418,7 @@ class TransferAdminAjax
             //Cập nhật
             if(!empty($transferDetails))
             {
-                \Stock\Model\TransferDetail::updateBatch($transferDetails, 'transfer_detail_id');
+                \Skdepot\Model\TransferDetail::updateBatch($transferDetails, 'transfer_detail_id');
             }
 
             DB::commit();
@@ -1463,7 +1463,7 @@ class TransferAdminAjax
         ];
 
         //Từ Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -1483,7 +1483,7 @@ class TransferAdminAjax
         $productTransfers = $request->input('products');
 
         //Danh sách sản phẩm chuyển hàng
-        $productsDetail = \Stock\Model\TransferDetail::where('transfer_id', $object->id)
+        $productsDetail = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
             ->get()
             ->keyBy('product_id');
 
@@ -1507,7 +1507,7 @@ class TransferAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\Transfer::success->value)
+                if ($productDetail->status === \Skdepot\Status\Transfer::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -1547,12 +1547,12 @@ class TransferAdminAjax
 
         $id = $request->input('id');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $object = \Stock\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
+        $object = \Skdepot\Model\Transfer::whereKey($id)->where(function ($qr) use ($branch) {
             $qr->where(function ($q) use ($branch) {
                 $q->where('to_branch_id', $branch->id);
-                $q->where('status', \Stock\Status\Transfer::process->value);
+                $q->where('status', \Skdepot\Status\Transfer::process->value);
             });
         })->first();
 
@@ -1561,7 +1561,7 @@ class TransferAdminAjax
             response()->error('phiếu chuyển hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\Transfer::success->value || $object->status === \Stock\Status\Transfer::cancel->value)
+        if($object->status === \Skdepot\Status\Transfer::success->value || $object->status === \Skdepot\Status\Transfer::cancel->value)
         {
             response()->error('Trạng thái phiếu chuyển hàng không cho phép chỉnh sữa');
         }
@@ -1586,20 +1586,20 @@ class TransferAdminAjax
             DB::beginTransaction();
 
             //Cập nhật phiếu kiểm kho hàng
-            \Stock\Model\Transfer::whereKey($id)->update($transfer);
+            \Skdepot\Model\Transfer::whereKey($id)->update($transfer);
 
             //Cập nhật
             if(!empty($transferDetails))
             {
-                \Stock\Model\TransferDetail::updateBatch($transferDetails, 'transfer_detail_id');
+                \Skdepot\Model\TransferDetail::updateBatch($transferDetails, 'transfer_detail_id');
             }
 
-            \Stock\Model\TransferDetail::where('transfer_id', $object->id)->update([
-                'status' => \Stock\Status\Transfer::success->value
+            \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)->update([
+                'status' => \Skdepot\Status\Transfer::success->value
             ]);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($toInventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($toInventoriesUpdate, 'id');
 
             if(have_posts($fromInventoriesUpdate))
             {
@@ -1608,9 +1608,9 @@ class TransferAdminAjax
                     return ['product_id' => $item['product_id'], 'branch_id' => $item['branch_id']];
                 }, $fromInventoriesUpdate);
 
-                $histories = \Stock\Model\History::where('target_code', $object->code)
+                $histories = \Skdepot\Model\History::where('target_code', $object->code)
                     ->where('target_id', $object->id)
-                    ->where('target_type', \Stock\Prefix::transfer->value)
+                    ->where('target_type', \Skdepot\Prefix::transfer->value)
                     ->whereIn(DB::raw('(product_id, branch_id)'), $conditions)
                     ->get();
 
@@ -1637,7 +1637,7 @@ class TransferAdminAjax
 
                 $sql = "UPDATE cle_inventories SET stock = CASE " . implode(' ', $cases) . " END, status = ? WHERE (product_id, branch_id) IN (" . implode(',', $conditions) . ")";
 
-                $bindings[] = \Stock\Status\Inventory::in->value;
+                $bindings[] = \Skdepot\Status\Inventory::in->value;
 
                 DB::statement($sql, $bindings);
 
@@ -1652,10 +1652,10 @@ class TransferAdminAjax
 
                     if(!empty($item['history']))
                     {
-                        $stop = \Stock\Model\History::where('product_id', $item['history']->product_id)
+                        $stop = \Skdepot\Model\History::where('product_id', $item['history']->product_id)
                             ->where('branch_id', $item['history']->branch_id)
                             ->where('id', '>', $item['history']->id)
-                            ->where('target_type', \Stock\Prefix::stockTake->value)
+                            ->where('target_type', \Skdepot\Prefix::stockTake->value)
                             ->first();
 
                         if(!empty($stop))
@@ -1730,11 +1730,11 @@ class TransferAdminAjax
             'receive_date'           => $time,
             'total_receive_quantity' => 0,
             'total_receive_price'    => 0,
-            'status'                 => \Stock\Status\Transfer::success->value
+            'status'                 => \Skdepot\Status\Transfer::success->value
         ];
 
         //Đến Chi nhánh
-        $branchTo = \Stock\Helper::getBranchCurrent();
+        $branchTo = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branchTo))
         {
@@ -1757,7 +1757,7 @@ class TransferAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branchTo->id)
             ->get();
@@ -1770,7 +1770,7 @@ class TransferAdminAjax
         $inventories = $inventories->keyBy('product_id');
 
         //Danh sách sản phẩm chuyển hàng
-        $productsDetail = \Stock\Model\TransferDetail::where('transfer_id', $object->id)
+        $productsDetail = \Skdepot\Model\TransferDetail::where('transfer_id', $object->id)
             ->get()
             ->keyBy('product_id');
 
@@ -1820,11 +1820,11 @@ class TransferAdminAjax
                     'transfer_id'        => $object->id ?? 0,
                     'receive_quantity'   => $product['receive_quantity'],
                     'receive_price'      => $product['receive_quantity']*$product['price'],
-                    'status'             => \Stock\Status\Transfer::success->value
+                    'status'             => \Skdepot\Status\Transfer::success->value
                 ];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\Transfer::success->value)
+                if ($productDetail->status === \Skdepot\Status\Transfer::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     unset($productTransfers[$key]);
@@ -1837,7 +1837,7 @@ class TransferAdminAjax
                     $toInventoriesUpdate[] = [
                         'id'     => $inventory->id,
                         'stock'  => $inventory->stock + $product['receive_quantity'],
-                        'status' => \Stock\Status\Inventory::in->value
+                        'status' => \Skdepot\Status\Inventory::in->value
                     ];
 
                     $inventoriesHistories[] = [
@@ -1847,7 +1847,7 @@ class TransferAdminAjax
                         //Đối tượng
                         'target_id'   => $object->id ?? 0,
                         'target_code' => $object->code ?? '',
-                        'target_type' => \Stock\Prefix::transfer->value,
+                        'target_type' => \Skdepot\Prefix::transfer->value,
                         'target_name' => 'Nhận hàng',
                         //Thông tin
                         'cost'          => $product['price'],

@@ -1,9 +1,9 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 Class DamageItemDetail extends \SkillDo\Model\Model
 {
-    protected string $table = 'inventories_damage_item_details';
+    protected string $table = 'skdepot_damage_item_details';
 
     protected string $primaryKey = 'damage_item_detail_id';
 }

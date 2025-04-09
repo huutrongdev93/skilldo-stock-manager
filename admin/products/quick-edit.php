@@ -2,7 +2,10 @@
 class AdminStockProductQuickEdit {
     static function modal(): void
     {
-        Plugin::view('stock-manager', 'admin/products/quick-edit');
+        if(Template::isPage('products_index'))
+        {
+            Plugin::view(SKDEPOT_NAME, 'admin/products/quick-edit');
+        }
     }
 }
 

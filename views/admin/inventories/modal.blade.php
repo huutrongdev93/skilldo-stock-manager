@@ -227,7 +227,7 @@
                 this.detail.history.loading.show();
 
                 let data = {
-                    action    : 'StockInventoryAdminAjax::histories',
+                    action    : 'InventoryAdminAjax::histories',
                     page      : this.detail.history.pagination.page,
                     limit     : this.detail.history.pagination.limit,
                     productId : this.productId,
@@ -275,7 +275,7 @@
                 let self = this
 
                 let data = {
-                    action    : 'StockInventoryAdminAjax::onHand',
+                    action    : 'InventoryAdminAjax::onHand',
                     productId : this.productId,
                 }
 
@@ -310,7 +310,7 @@
 
                 let data = form.serializeJSON()
                 data.cost = data.cost.replace(/,/g, '')
-                data.action     = 'StockInventoryAdminAjax::saveProduct',
+                data.action     = 'InventoryAdminAjax::saveProduct',
                 data.productId  = this.productId,
 
                 request.post(ajax, data, {

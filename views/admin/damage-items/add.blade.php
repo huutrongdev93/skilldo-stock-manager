@@ -2,10 +2,10 @@
     <div class="stock-page-form-content">
         <div class="stock-page-header mb-3 gap-4">
             <div class="stock-page-header-title">
-                <a href="{!! Url::route('admin.stock.damageItems') !!}" class="fs-4 fw-bold pe-3"><i class="fa-light fa-arrow-left-long"></i></a>
+                <a href="{!! Url::route('admin.damage.items') !!}" class="fs-4 fw-bold pe-3"><i class="fa-light fa-arrow-left-long"></i></a>
                 <span class="fs-3 fw-bold">Xuất Hủy Hàng</span>
             </div>
-            {!! Plugin::partial(STOCK_NAME, 'admin/search') !!}
+            {!! Plugin::partial(SKDEPOT_NAME, 'admin/search') !!}
             <div class="stock-page-header-action"></div>
         </div>
         <div class="stock-page-products box" id="js_damage_items_products">
@@ -13,7 +13,7 @@
                 <div class="stock-page-table js_damage_items_table" style="display: none">
                     {!! $table->display() !!}
                 </div>
-                {!! Plugin::partial(STOCK_NAME, 'admin/import', [
+                {!! Plugin::partial(SKDEPOT_NAME, 'admin/import', [
                     'module' => 'damage_items',
                     'examples' => 'MauFileXuatHuy'
                 ]) !!}

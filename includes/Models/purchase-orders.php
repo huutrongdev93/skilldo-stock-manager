@@ -1,11 +1,11 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 use SkillDo\DB;
 
 Class PurchaseOrder extends \SkillDo\Model\Model
 {
-    protected string $table = 'inventories_purchase_orders';
+    protected string $table = 'skdepot_purchase_orders';
 
     protected static function boot(): void
     {
@@ -17,7 +17,7 @@ Class PurchaseOrder extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::purchaseOrder->value, $object->id)]);
+                    ->update(['code' => \Skdepot\Helper::code(\Skdepot\Prefix::purchaseOrder->value, $object->id)]);
             }
         });
     }

@@ -10,7 +10,7 @@
             </a>
         </li>
         <li>
-            <a class="dropdown-item" href="{!! Url::route('admin.stock.purchaseReturns.edit', ['id' => $item->id]).'?type=clone' !!}">
+            <a class="dropdown-item" href="{!! Url::route('admin.purchase.returns.edit', ['id' => $item->id]).'?type=clone' !!}">
                 <i class="fa-duotone fa-solid fa-copy"></i>
                 <span>Sao chép</span>
             </a>

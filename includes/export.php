@@ -1,5 +1,5 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -183,7 +183,7 @@ class Export
 
         $writer = new Xlsx($this->spreadsheet);
 
-        $filePathData = 'views/plugins/'.STOCK_NAME.'/'.$path;
+        $filePathData = 'views/plugins/'.SKDEPOT_NAME.'/'.$path;
 
         $writer->save($filePathData.$filename);
 

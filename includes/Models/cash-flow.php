@@ -1,6 +1,6 @@
 <?php
 
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 use Qr;
 use SkillDo\DB;
@@ -52,23 +52,23 @@ class CashFlow extends \Skilldo\Model\Model
         {
             if($action == 'add' && empty($object->code))
             {
-                $code = \Stock\Helper::code((($object->amount < 0) ? 'PC' : 'PT'), $object->id);
+                $code = \Skdepot\Helper::code((($object->amount < 0) ? 'PC' : 'PT'), $object->id);
 
                 if($object->target_type == 'Order')
                 {
-                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrder->value, $object->id);
+                    $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowOrder->value, $object->id);
                 }
                 if($object->target_type == 'OrderReturn')
                 {
-                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowOrderReturn->value, $object->id);
+                    $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowOrderReturn->value, $object->id);
                 }
-                if($object->target_type == \Stock\Prefix::purchaseOrder->value)
+                if($object->target_type == \Skdepot\Prefix::purchaseOrder->value)
                 {
-                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseOrder->value, $object->id);
+                    $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowPurchaseOrder->value, $object->id);
                 }
-                if($object->target_type == \Stock\Prefix::purchaseReturn->value)
+                if($object->target_type == \Skdepot\Prefix::purchaseReturn->value)
                 {
-                    $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseReturn->value, $object->id);
+                    $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowPurchaseReturn->value, $object->id);
                 }
 
                 DB::table($object->getTable())

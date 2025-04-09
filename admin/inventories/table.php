@@ -1,6 +1,5 @@
 <?php
-namespace Stock\Table;
-use Branch;
+namespace Skdepot\Table;
 use Qr;
 use Admin;
 use SkillDo\DB;
@@ -10,7 +9,7 @@ use SkillDo\Table\Columns\ColumnImage;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
 use SkillDo\Http\Request;
-use Stock\Status\Inventory as Status;
+use Skdepot\Status\Inventory as Status;
 use Url;
 
 class Inventories extends SKDObjectTable
@@ -115,7 +114,7 @@ class Inventories extends SKDObjectTable
                 'tooltip' => 'Nhập hàng',
                 'data-id' => $item->id,
                 'data-branch-id' => $item->branch_id,
-                'href' => Url::route('admin.stock.purchaseOrders.new').'?source=products',
+                'href' => Url::route('admin.purchase.orders.new').'?source=products',
                 'class' => 'js_inventory_btn_purchase_order'
             ]);
 
@@ -124,7 +123,7 @@ class Inventories extends SKDObjectTable
                 'tooltip' => 'Xuất hàng',
                 'data-id' => $item->id,
                 'data-branch-id' => $item->branch_id,
-                'href' => Url::route('admin.stock.purchaseReturns.new').'?source=products',
+                'href' => Url::route('admin.purchase.returns.new').'?source=products',
                 'class' => 'js_inventory_btn_purchase_return'
             ]);
         }
@@ -140,16 +139,23 @@ class Inventories extends SKDObjectTable
     function headerSearch(Form $form, Request $request): Form
     {
         $form->text('keyword', ['placeholder' => trans('table.search.keyword').'...'], request()->input('keyword'));
-        $form->select2('status', \Stock\Status\Inventory::options()->pluck('label', 'value')
+        $form->select2('status', \Skdepot\Status\Inventory::options()->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], request()->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
     }
 
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
+    }
+
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $status = request()->input('status');
 
@@ -227,7 +233,7 @@ class Inventories extends SKDObjectTable
             ->where('p2.type', 'variations')
             ->groupBy('p2.parent_id');
 
-        if($status == \Stock\Status\Inventory::out->value)
+        if($status == \Skdepot\Status\Inventory::out->value)
         {
             $subQuery->where('i2.status', $status);
         }
@@ -240,7 +246,7 @@ class Inventories extends SKDObjectTable
 
         $query->where("$pn.type", 'product');
 
-        if($status == \Stock\Status\Inventory::in->value)
+        if($status == \Skdepot\Status\Inventory::in->value)
         {
             $query->where(function ($q) use ($status, $pn) {
                 $q->where("$pn.hasVariation", 0)
@@ -251,7 +257,7 @@ class Inventories extends SKDObjectTable
                     });
             });
         }
-        else if($status == \Stock\Status\Inventory::out->value)
+        else if($status == \Skdepot\Status\Inventory::out->value)
         {
             $query->where(function ($q) use ($status, $pn) {
                 $q->where("$pn.hasVariation", 0)
@@ -305,7 +311,7 @@ class Inventories extends SKDObjectTable
 
     public function dataDisplay($objects)
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if($objects->count() == 1 && $objects->first()->hasVariation === 0)
         {
@@ -446,7 +452,7 @@ class InventoriesChild extends SKDObjectTable
                         $table->display();
                         echo '</div>';
                     }
-//                    \Plugin::view(STOCK_NAME, 'admin/inventories/product-variations', [
+//                    \Plugin::view(SKDEPOT_NAME, 'admin/inventories/product-variations', [
 //                        'variations' => $column->item->variations ?? []
 //                    ]);
                 })
@@ -545,7 +551,7 @@ class ProductVariation extends SKDObjectTable
             'tooltip' => 'Nhập hàng',
             'data-id' => $item->id,
             'data-branch-id' => $item->branch_id,
-            'href' => Url::route('admin.stock.purchaseOrders.new').'?source=products',
+            'href' => Url::route('admin.purchase.orders.new').'?source=products',
             'class' => 'js_inventory_btn_purchase_order'
         ]);
 
@@ -554,7 +560,7 @@ class ProductVariation extends SKDObjectTable
             'tooltip' => 'Xuất hàng',
             'data-id' => $item->id,
             'data-branch-id' => $item->branch_id,
-            'href' => Url::route('admin.stock.purchaseReturns.new').'?source=products',
+            'href' => Url::route('admin.purchase.returns.new').'?source=products',
             'class' => 'js_inventory_btn_purchase_return'
         ]);
 

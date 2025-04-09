@@ -14,11 +14,11 @@ class CashFlowGroupController extends MY_Controller {
 
     public function receiptIndex(Request $request): void
     {
-        Cms::setData('table', (new \Stock\Table\CashFlowGroupReceipt()));
+        Cms::setData('table', (new \Skdepot\Table\CashFlowGroupReceipt()));
 
         Cms::setData('title', 'Loại phiếu thu');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/index', 'plugin');
 
         $this->template->render();
     }
@@ -29,7 +29,7 @@ class CashFlowGroupController extends MY_Controller {
 
         Admin::creatForm('cash_flow_group_receipt');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/save', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/save', 'plugin');
 
         $this->template->render();
     }
@@ -38,7 +38,7 @@ class CashFlowGroupController extends MY_Controller {
     {
         Cms::setData('module', 'cash_flow_group_receipt');
 
-        $object = \Stock\Model\CashFlowGroup::where('type', 'receipt')
+        $object = \Skdepot\Model\CashFlowGroup::where('type', 'receipt')
             ->whereKey($id)
             ->first();
 
@@ -47,7 +47,7 @@ class CashFlowGroupController extends MY_Controller {
             Admin::creatForm('cash_flow_group_receipt', $object);
         }
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/save', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/save', 'plugin');
 
         $this->template->render();
     }
@@ -56,11 +56,11 @@ class CashFlowGroupController extends MY_Controller {
     {
         Cms::setData('module', 'cash_flow_group_payment');
 
-        Cms::setData('table', (new \Stock\Table\CashFlowGroupPayment()));
+        Cms::setData('table', (new \Skdepot\Table\CashFlowGroupPayment()));
 
         Cms::setData('title', 'Loại phiếu chi');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/index', 'plugin');
 
         $this->template->render();
     }
@@ -71,7 +71,7 @@ class CashFlowGroupController extends MY_Controller {
 
         Admin::creatForm('cash_flow_group_payment');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/save', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/save', 'plugin');
 
         $this->template->render();
     }
@@ -80,7 +80,7 @@ class CashFlowGroupController extends MY_Controller {
     {
         Cms::setData('module', 'cash_flow_group_payment');
 
-        $object = \Stock\Model\CashFlowGroup::where('type', 'payment')
+        $object = \Skdepot\Model\CashFlowGroup::where('type', 'payment')
             ->whereKey($id)
             ->first();
 
@@ -89,7 +89,7 @@ class CashFlowGroupController extends MY_Controller {
             Admin::creatForm('cash_flow_group_payment', $object);
         }
 
-        $this->template->setView(STOCK_NAME.'/views/admin/cash-flow-group/save', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/cash-flow-group/save', 'plugin');
 
         $this->template->render();
     }

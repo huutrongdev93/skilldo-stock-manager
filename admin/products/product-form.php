@@ -18,9 +18,9 @@ class AdminStockProductForm {
 
         if(!empty($variationId))
         {
-            $branch = \Stock\Helper::getBranchWebsite();
+            $branch = \Skdepot\Helper::getBranchWebsite();
 
-            $inventory = Inventory::where('product_id', $variationId);
+            $inventory = \Skdepot\Model\Inventory::where('product_id', $variationId);
 
             if(have_posts($branch))
             {
@@ -48,9 +48,9 @@ class AdminStockProductForm {
 
         if($module === 'products' && $object->hasVariation === 0)
         {
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
-            $inventory = Inventory::where('product_id', $object->id)->where('branch_id', $branch->id)->first();
+            $inventory = \Skdepot\Model\Inventory::where('product_id', $object->id)->where('branch_id', $branch->id)->first();
 
             if(have_posts($inventory))
             {

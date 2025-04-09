@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 Class History extends \SkillDo\Model\Model {
 

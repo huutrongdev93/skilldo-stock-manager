@@ -2,13 +2,13 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-class StockPurchaseReturnAdminAjax
+class PurchaseReturnAdminAjax
 {
     static function detail(\SkillDo\Http\Request $request): void
     {
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
@@ -16,7 +16,7 @@ class StockPurchaseReturnAdminAjax
         }
         $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
         $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
-        $object->status         = Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($object->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($object->status)->label());
+        $object->status         = Admin::badge(\Skdepot\Status\PurchaseReturn::tryFrom($object->status)->badge(), \Skdepot\Status\PurchaseReturn::tryFrom($object->status)->label());
         $object->total        = \Prd::price($object->subtotal - $object->total_payment - $object->return_discount);
         $object->subtotal      = \Prd::price($object->subtotal);
         $object->return_discount = \Prd::price($object->return_discount);
@@ -39,7 +39,7 @@ class StockPurchaseReturnAdminAjax
 
         $id  = $request->input('id');
 
-        $query = Qr::where('inventories_purchase_returns_details.purchase_return_id', $id);
+        $query = Qr::where('skdepot_purchase_returns_details.purchase_return_id', $id);
 
         $selected = [
             'product_id',
@@ -55,14 +55,14 @@ class StockPurchaseReturnAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\PurchaseReturnDetail::count(clone $query);
+        $total = \Skdepot\Model\PurchaseReturnDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\PurchaseReturnDetail::gets($query);
+        $objects = \Skdepot\Model\PurchaseReturnDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -70,7 +70,7 @@ class StockPurchaseReturnAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\PurchaseReturn\ProductDetail([
+        $table = new \Skdepot\Table\PurchaseReturn\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -104,7 +104,7 @@ class StockPurchaseReturnAdminAjax
 
         if($type == 'source-product')
         {
-            $branch  = \Stock\Helper::getBranchCurrent();
+            $branch  = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -143,7 +143,7 @@ class StockPurchaseReturnAdminAjax
 
             $products = \Ecommerce\Model\Product::widthVariation()
                 ->select($selected)
-                ->leftJoin('inventories_purchase_orders_details as po', function ($join) use ($id) {
+                ->leftJoin('skdepot_purchase_orders_details as po', function ($join) use ($id) {
                     $join->on('po.product_id', '=', 'products.id');
                 })
                 ->where('po.purchase_order_id', $id)
@@ -168,7 +168,7 @@ class StockPurchaseReturnAdminAjax
 
             $products = \Ecommerce\Model\Product::widthVariation()
                 ->select($selected)
-                ->leftJoin('inventories_purchase_returns_details as po', function ($join) use ($id) {
+                ->leftJoin('skdepot_purchase_returns_details as po', function ($join) use ($id) {
                     $join->on('po.product_id', '=', 'products.id');
                 })
                 ->where('po.purchase_return_id', $id)
@@ -221,7 +221,7 @@ class StockPurchaseReturnAdminAjax
         {
             DB::beginTransaction();
 
-            $purchaseReturnId = \Stock\Model\PurchaseReturn::create($purchaseReturn);
+            $purchaseReturnId = \Skdepot\Model\PurchaseReturn::create($purchaseReturn);
 
             if(empty($purchaseReturnId) || is_skd_error($purchaseReturnId))
             {
@@ -233,7 +233,7 @@ class StockPurchaseReturnAdminAjax
                 $detail['purchase_return_id'] = $purchaseReturnId;
             }
 
-            DB::table('inventories_purchase_returns_details')->insert($purchaseReturnDetails);
+            \Skdepot\Model\PurchaseReturnDetail::inserts($purchaseReturnDetails);
 
             DB::commit();
 
@@ -257,14 +257,14 @@ class StockPurchaseReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu trả hàng đã hủy hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseReturn::success->value || $object->status === \Stock\Status\PurchaseReturn::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseReturn::success->value || $object->status === \Skdepot\Status\PurchaseReturn::cancel->value)
         {
             response()->error('Phiếu trả hàng này không thể cập nhật');
         }
@@ -282,7 +282,7 @@ class StockPurchaseReturnAdminAjax
         {
             DB::beginTransaction();
 
-            \Stock\Model\PurchaseReturn::whereKey($id)->update($purchaseReturn);
+            \Skdepot\Model\PurchaseReturn::whereKey($id)->update($purchaseReturn);
 
             //Lấy danh sách chi tiết phiếu sẽ cập nhật
             $purchaseReturnDetailsUp = [];
@@ -305,19 +305,19 @@ class StockPurchaseReturnAdminAjax
             //Thêm mới
             if(!empty($purchaseReturnDetails))
             {
-                DB::table('inventories_purchase_returns_details')->insert($purchaseReturnDetails);
+                \Skdepot\Model\PurchaseReturnDetail::inserts($purchaseReturnDetails);
             }
 
             //Cập nhật
             if(!empty($purchaseReturnDetailsUp))
             {
-                \Stock\Model\PurchaseReturnDetail::updateBatch($purchaseReturnDetailsUp, 'purchase_return_detail_id');
+                \Skdepot\Model\PurchaseReturnDetail::updateBatch($purchaseReturnDetailsUp, 'purchase_return_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\PurchaseReturnDetail::whereKey($productsDetail->pluck('purchase_return_detail_id')->toArray())->delete();
+                \Skdepot\Model\PurchaseReturnDetail::whereKey($productsDetail->pluck('purchase_return_detail_id')->toArray())->delete();
             }
 
             DB::commit();
@@ -355,14 +355,14 @@ class StockPurchaseReturnAdminAjax
         }
 
         $purchaseReturn = [
-            'status'            => \Stock\Status\PurchaseReturn::draft->value,
+            'status'            => \Skdepot\Status\PurchaseReturn::draft->value,
             'return_discount'   => (int)$request->input('return_discount'),
             'total_payment'     => (int)$request->input('total_payment'),
             'purchase_date' => $time
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -388,7 +388,7 @@ class StockPurchaseReturnAdminAjax
 
         if(!empty($supplierId))
         {
-            $supplier = \Stock\Model\Suppliers::find($supplierId);
+            $supplier = \Skdepot\Model\Suppliers::find($supplierId);
         }
 
         $purchaseReturn['supplier_id']     = $supplier->id ?? 0;
@@ -405,7 +405,7 @@ class StockPurchaseReturnAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\PurchaseReturn::where('code', $code)->count();
+                    $count = \Skdepot\Model\PurchaseReturn::where('code', $code)->count();
                 }
                 else
                 {
@@ -414,7 +414,7 @@ class StockPurchaseReturnAdminAjax
             }
             else
             {
-                $count = \Stock\Model\PurchaseReturn::where('code', $code)->count();
+                $count = \Skdepot\Model\PurchaseReturn::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -448,7 +448,7 @@ class StockPurchaseReturnAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
+            $productsDetail = \Skdepot\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -472,7 +472,7 @@ class StockPurchaseReturnAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\PurchaseReturn::success->value)
+                if ($productDetail->status === \Skdepot\Status\PurchaseReturn::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -545,7 +545,7 @@ class StockPurchaseReturnAdminAjax
             $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value,
             ];
 
             foreach ($inventoryCosts as $keyCost => $inventoryCost)
@@ -583,7 +583,7 @@ class StockPurchaseReturnAdminAjax
             DB::beginTransaction();
 
             //Tạo phiếu nhập hàng
-            $purchaseReturnId = \Stock\Model\PurchaseReturn::create($purchaseReturn);
+            $purchaseReturnId = \Skdepot\Model\PurchaseReturn::create($purchaseReturn);
 
             if(empty($purchaseReturnId) || is_skd_error($purchaseReturnId))
             {
@@ -592,7 +592,7 @@ class StockPurchaseReturnAdminAjax
 
             if(empty($purchaseReturn['code']))
             {
-                $purchaseReturn['code'] = \Stock\Helper::code(\Stock\Prefix::purchaseReturn->value, $purchaseReturnId);
+                $purchaseReturn['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::purchaseReturn->value, $purchaseReturnId);
             }
 
             // Cập nhật mã phiếu vào lịch sử kho
@@ -601,7 +601,7 @@ class StockPurchaseReturnAdminAjax
                 $history['target_id'] = $purchaseReturnId;
                 $history['target_code'] = $purchaseReturn['code'];
                 $history['target_name'] = 'Trả hàng';
-                $history['target_type'] = \Stock\Prefix::purchaseReturn->value;
+                $history['target_type'] = \Skdepot\Prefix::purchaseReturn->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -612,18 +612,18 @@ class StockPurchaseReturnAdminAjax
                 unset($detail['purchase_return_detail_id']);
             }
 
-            DB::table('inventories_purchase_returns_details')->insert($purchaseReturnDetails);
+            \Skdepot\Model\PurchaseReturnDetail::inserts($purchaseReturnDetails);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
             if(have_posts($inventoryCosts))
             {
-                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
+                \Skdepot\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -653,14 +653,14 @@ class StockPurchaseReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu trả hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseReturn::success->value || $object->status === \Stock\Status\PurchaseReturn::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseReturn::success->value || $object->status === \Skdepot\Status\PurchaseReturn::cancel->value)
         {
             response()->error('Phiếu trả hàng này không thể cập nhật');
         }
@@ -712,7 +712,7 @@ class StockPurchaseReturnAdminAjax
             $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value,
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value,
             ];
 
             foreach ($inventoryCosts as $keyCost => $inventoryCost)
@@ -739,7 +739,7 @@ class StockPurchaseReturnAdminAjax
                 //Đối tượng
                 'target_id'   => $object->id ?? 0,
                 'target_code' => $object->code ?? '',
-                'target_type' => \Stock\Prefix::purchaseReturn->value,
+                'target_type' => \Skdepot\Prefix::purchaseReturn->value,
                 'target_name' => 'Trả hàng',
 
                 //Thông tin
@@ -772,36 +772,36 @@ class StockPurchaseReturnAdminAjax
             DB::beginTransaction();
 
             //Cập nhật phiếu trả hàng
-            \Stock\Model\PurchaseReturn::whereKey($id)->update($purchaseReturn);
+            \Skdepot\Model\PurchaseReturn::whereKey($id)->update($purchaseReturn);
 
             //Thêm mới
             if(!empty($purchaseReturnDetails))
             {
-                DB::table('inventories_purchase_returns_details')->insert($purchaseReturnDetails);
+                \Skdepot\Model\PurchaseReturnDetail::inserts($purchaseReturnDetails);
             }
 
             //Cập nhật
             if(!empty($purchaseReturnDetailsUp))
             {
-                \Stock\Model\PurchaseReturnDetail::updateBatch($purchaseReturnDetailsUp, 'purchase_return_detail_id');
+                \Skdepot\Model\PurchaseReturnDetail::updateBatch($purchaseReturnDetailsUp, 'purchase_return_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\PurchaseReturnDetail::whereKey($productsDetail->pluck('purchase_return_detail_id')->toArray())->delete();
+                \Skdepot\Model\PurchaseReturnDetail::whereKey($productsDetail->pluck('purchase_return_detail_id')->toArray())->delete();
             }
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
             if(have_posts($inventoryCosts))
             {
-                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
+                \Skdepot\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -862,14 +862,14 @@ class StockPurchaseReturnAdminAjax
         }
 
         $purchaseReturn = [
-            'status'            => \Stock\Status\PurchaseReturn::success->value,
+            'status'            => \Skdepot\Status\PurchaseReturn::success->value,
             'purchase_date'     => $time,
             'return_discount'   => (int)$request->input('return_discount'),
             'total_payment'     => (int)$request->input('total_payment')
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -897,7 +897,7 @@ class StockPurchaseReturnAdminAjax
 
         if(!empty($supplierId))
         {
-            $supplier = \Stock\Model\Suppliers::find($supplierId);
+            $supplier = \Skdepot\Model\Suppliers::find($supplierId);
         }
 
         $purchaseReturn['supplier_id']     = $supplier->id ?? 0;
@@ -914,7 +914,7 @@ class StockPurchaseReturnAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\PurchaseReturn::where('code', $code)->count();
+                    $count = \Skdepot\Model\PurchaseReturn::where('code', $code)->count();
                 }
                 else
                 {
@@ -923,7 +923,7 @@ class StockPurchaseReturnAdminAjax
             }
             else
             {
-                $count = \Stock\Model\PurchaseReturn::where('code', $code)->count();
+                $count = \Skdepot\Model\PurchaseReturn::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -973,7 +973,7 @@ class StockPurchaseReturnAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
+            $productsDetail = \Skdepot\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -1007,7 +1007,7 @@ class StockPurchaseReturnAdminAjax
                 'quantity'           => $product['quantity'],
                 'price'              => $product['price'],
                 'subtotal'          => $product['price']*$product['quantity'],
-                'status'             => \Stock\Status\PurchaseReturn::success->value,
+                'status'             => \Skdepot\Status\PurchaseReturn::success->value,
                 'discount'           => $discount,
             ];
 
@@ -1016,7 +1016,7 @@ class StockPurchaseReturnAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\PurchaseReturn::success->value)
+                if ($productDetail->status === \Skdepot\Status\PurchaseReturn::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -1034,7 +1034,7 @@ class StockPurchaseReturnAdminAjax
             $purchaseReturnDetails[] = $purchaseReturnDetail;
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
@@ -1112,23 +1112,23 @@ class StockPurchaseReturnAdminAjax
         $amount = $purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'];
 
         //Tạo công nợ cho đơn xuất hàng
-        \Stock\Model\Debt::create([
+        \Skdepot\Model\Debt::create([
             'before'        => ($supplier->debt)*-1,
             'amount'        => $amount,
             'balance'       => ($supplier->debt - $amount)*-1,
             'partner_id'    => $supplier->id,
             'target_id'     => $purchaseReturnId,
             'target_code'   => $purchaseReturn['code'],
-            'target_type'   => \Stock\Prefix::purchaseReturn->value,
+            'target_type'   => \Skdepot\Prefix::purchaseReturn->value,
             'time'          => $purchaseReturn['purchase_date']
         ]);
 
         if($purchaseReturn['total_payment'] > 0)
         {
             //Tạo phiếu thu
-            $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseReturn->value, $purchaseReturnId);
+            $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowPurchaseReturn->value, $purchaseReturnId);
 
-            $idCashFlow = \Stock\Model\CashFlow::create([
+            $idCashFlow = \Skdepot\Model\CashFlow::create([
                 'code'      => $code,
                 'branch_id' => $purchaseReturn['branch_id'],
                 'branch_name' => $purchaseReturn['branch_name'],
@@ -1144,34 +1144,34 @@ class StockPurchaseReturnAdminAjax
                 'partner_type' => 'S',
 
                 //Loại
-                'group_id' => \Stock\CashFlowGroup\Transaction::supplierReceipt->id(),
-                'group_name' => \Stock\CashFlowGroup\Transaction::supplierReceipt->label(),
+                'group_id' => \Skdepot\CashFlowGroup\Transaction::supplierReceipt->id(),
+                'group_name' => \Skdepot\CashFlowGroup\Transaction::supplierReceipt->label(),
                 'origin' => 'purchase',
                 'method' => 'cash',
                 'amount' => $purchaseReturn['total_payment'],
 
                 'target_id'     => $purchaseReturnId,
                 'target_code'   => $purchaseReturn['code'],
-                'target_type'   => \Stock\Prefix::purchaseReturn->value,
+                'target_type'   => \Skdepot\Prefix::purchaseReturn->value,
                 'time'          => $purchaseReturn['purchase_date'],
-                'status'        => \Stock\Status\CashFlow::success->value,
+                'status'        => \Skdepot\Status\CashFlow::success->value,
                 'user_created'  => Auth::id()
             ]);
 
             //Tạo công nợ cho phiêu thu
-            \Stock\Model\Debt::create([
+            \Skdepot\Model\Debt::create([
                 'before'        => ($supplier->debt)*-1,
                 'amount'        => $purchaseReturn['total_payment']*-1,
                 'balance'       => ($supplier->debt - $amount + $purchaseReturn['total_payment'])*-1,
                 'partner_id'    => $supplier->id,
                 'target_id'     => $idCashFlow,
                 'target_code'   => $code,
-                'target_type'   => 'PT'.\Stock\Prefix::purchaseReturn->value,
+                'target_type'   => 'PT'.\Skdepot\Prefix::purchaseReturn->value,
                 'time'          => $purchaseReturn['purchase_date']
             ]);
         }
 
-        \Stock\Model\Suppliers::whereKey($supplier->id)
+        \Skdepot\Model\Suppliers::whereKey($supplier->id)
             ->update([
                 'total_invoiced' => DB::raw('total_invoiced - '. ($purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'])),
                 'debt' => DB::raw('debt - '. ($purchaseReturn['subtotal'] -  $purchaseReturn['return_discount'] + $purchaseReturn['total_payment'])),
@@ -1191,34 +1191,34 @@ class StockPurchaseReturnAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu trả hàng không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseReturn::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseReturn::cancel->value)
         {
             response()->error('phiếu trả hàng này đã hủy');
         }
-        if($object->status === \Stock\Status\PurchaseReturn::success->value)
+        if($object->status === \Skdepot\Status\PurchaseReturn::success->value)
         {
             response()->error('phiếu trả hàng này đã hoàn thành không thể hủy');
         }
 
-        \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
-            ->where('status', \Stock\Status\PurchaseReturn::draft->value)
+        \Skdepot\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)
+            ->where('status', \Skdepot\Status\PurchaseReturn::draft->value)
             ->update([
-                'status' => \Stock\Status\PurchaseReturn::cancel->value,
+                'status' => \Skdepot\Status\PurchaseReturn::cancel->value,
             ]);
 
-        \Stock\Model\PurchaseReturn::whereKey($object->id)->update([
-            'status' => \Stock\Status\PurchaseReturn::cancel->value,
+        \Skdepot\Model\PurchaseReturn::whereKey($object->id)->update([
+            'status' => \Skdepot\Status\PurchaseReturn::cancel->value,
         ]);
 
         response()->success('Hủy phiếu trả hàng thành công', [
-            'status' => Admin::badge(\Stock\Status\PurchaseReturn::cancel->badge(), 'Đã hủy')
+            'status' => Admin::badge(\Skdepot\Status\PurchaseReturn::cancel->badge(), 'Đã hủy')
         ]);
     }
 
@@ -1235,7 +1235,7 @@ class StockPurchaseReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
@@ -1252,7 +1252,7 @@ class StockPurchaseReturnAdminAjax
 
         $object->total_payment = Prd::price($object->total_payment);
 
-        $products = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
+        $products = \Skdepot\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
@@ -1326,7 +1326,7 @@ class StockPurchaseReturnAdminAjax
             }
         }
 
-        $objects = \Stock\Model\PurchaseReturn::gets($query);
+        $objects = \Skdepot\Model\PurchaseReturn::gets($query);
 
         if(empty($objects))
         {
@@ -1339,7 +1339,7 @@ class StockPurchaseReturnAdminAjax
             $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã trả hàng', function($item) {
             return $item->code ?? '';
@@ -1399,16 +1399,16 @@ class StockPurchaseReturnAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseReturn::find($id);
+        $object = \Skdepot\Model\PurchaseReturn::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu trả hàng không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
+        $products = \Skdepot\Model\PurchaseReturnDetail::where('purchase_return_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';
@@ -1458,7 +1458,7 @@ class StockPurchaseReturnAdminAjax
                 response()->error($validate->errors());
             }
 
-            $myPath = STOCK_NAME.'/assets/imports/purchase-return';
+            $myPath = SKDEPOT_NAME.'/assets/imports/purchase-return';
 
             $path = $request->file('file')->store($myPath, ['disk' => 'plugin']);
 
@@ -1533,7 +1533,7 @@ class StockPurchaseReturnAdminAjax
                 $rowDatas[] = $rowData;
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1603,15 +1603,15 @@ class StockPurchaseReturnAdminAjax
     }
 }
 
-Ajax::admin('StockPurchaseReturnAdminAjax::detail');
-Ajax::admin('StockPurchaseReturnAdminAjax::loadProductsDetail');
-Ajax::admin('StockPurchaseReturnAdminAjax::loadProductsEdit');
-Ajax::admin('StockPurchaseReturnAdminAjax::addDraft');
-Ajax::admin('StockPurchaseReturnAdminAjax::saveDraft');
-Ajax::admin('StockPurchaseReturnAdminAjax::add');
-Ajax::admin('StockPurchaseReturnAdminAjax::save');
-Ajax::admin('StockPurchaseReturnAdminAjax::cancel');
-Ajax::admin('StockPurchaseReturnAdminAjax::print');
-Ajax::admin('StockPurchaseReturnAdminAjax::export');
-Ajax::admin('StockPurchaseReturnAdminAjax::exportDetail');
-Ajax::admin('StockPurchaseReturnAdminAjax::import');
+Ajax::admin('PurchaseReturnAdminAjax::detail');
+Ajax::admin('PurchaseReturnAdminAjax::loadProductsDetail');
+Ajax::admin('PurchaseReturnAdminAjax::loadProductsEdit');
+Ajax::admin('PurchaseReturnAdminAjax::addDraft');
+Ajax::admin('PurchaseReturnAdminAjax::saveDraft');
+Ajax::admin('PurchaseReturnAdminAjax::add');
+Ajax::admin('PurchaseReturnAdminAjax::save');
+Ajax::admin('PurchaseReturnAdminAjax::cancel');
+Ajax::admin('PurchaseReturnAdminAjax::print');
+Ajax::admin('PurchaseReturnAdminAjax::export');
+Ajax::admin('PurchaseReturnAdminAjax::exportDetail');
+Ajax::admin('PurchaseReturnAdminAjax::import');

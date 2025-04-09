@@ -1,11 +1,11 @@
-class PurchaseReturnIndexHandle extends WarehouseIndexHandle
+class PurchaseReturnIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({
             module: 'purchase_return',
             ajax: {
-                loadProducts: 'StockPurchaseReturnAdminAjax::loadProductsDetail',
-                print: 'StockPurchaseReturnAdminAjax::print'
+                loadProducts: 'PurchaseReturnAdminAjax::loadProductsDetail',
+                print: 'PurchaseReturnAdminAjax::print'
             }
         });
     }
@@ -22,7 +22,7 @@ class PurchaseReturnIndexHandle extends WarehouseIndexHandle
     }
 }
 
-class PurchaseReturnNewHandle extends WarehouseNewHandle
+class PurchaseReturnNewHandle extends SkdepotNewHandle
 {
     constructor()
     {
@@ -31,12 +31,12 @@ class PurchaseReturnNewHandle extends WarehouseNewHandle
         super({
             module: module,
             ajax: {
-                loadProducts: 'StockPurchaseReturnAdminAjax::loadProductsEdit',
-                addDraft: 'StockPurchaseReturnAdminAjax::addDraft',
-                saveDraft: 'StockPurchaseReturnAdminAjax::saveDraft',
-                add: 'StockPurchaseReturnAdminAjax::add',
-                save: 'StockPurchaseReturnAdminAjax::save',
-                import: 'StockPurchaseReturnAdminAjax::import',
+                loadProducts: 'PurchaseReturnAdminAjax::loadProductsEdit',
+                addDraft: 'PurchaseReturnAdminAjax::addDraft',
+                saveDraft: 'PurchaseReturnAdminAjax::saveDraft',
+                add: 'PurchaseReturnAdminAjax::add',
+                save: 'PurchaseReturnAdminAjax::save',
+                import: 'PurchaseReturnAdminAjax::import',
             }
         });
 

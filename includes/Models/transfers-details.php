@@ -1,9 +1,9 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 Class TransferDetail extends \SkillDo\Model\Model
 {
-    protected string $table = 'transfers_details';
+    protected string $table = 'skdepot_transfers_details';
 
     protected string $primaryKey = 'transfer_detail_id';
 }

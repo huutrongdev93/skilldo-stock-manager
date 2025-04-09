@@ -1,18 +1,6 @@
 <?php
-class AdminSuppliersButton {
-
-    static function tableHeaderButton($buttons): array
-    {
-        $buttons[] = Admin::button('add', ['href' => Url::route('admin.suppliers.new')]);
-        $buttons[] = Admin::button('reload');
-        return $buttons;
-    }
-
-    static function bulkAction(array $actionList): array
-    {
-        return $actionList;
-    }
-
+class AdminSuppliersButton
+{
     static function formButton($module): void
     {
         $buttons = [];
@@ -43,6 +31,4 @@ class AdminSuppliersButton {
         Admin::view('include/form/form-action', ['buttons' => $buttons, 'module' => $module]);
     }
 }
-add_filter('table_suppliers_header_buttons', 'AdminSuppliersButton::tableHeaderButton');
-add_filter('table_suppliers_bulk_action_buttons', 'AdminSuppliersButton::bulkAction', 30);
 add_action('form_suppliers_action_button', 'AdminSuppliersButton::formButton');

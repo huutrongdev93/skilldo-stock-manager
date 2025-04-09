@@ -1,10 +1,9 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 
 use Branch;
 use Illuminate\Support\Collection;
 use SkillDo\DB;
-use Stock\Model\Inventory;
 
 class Helper {
 
@@ -13,24 +12,6 @@ class Helper {
         $code = str_pad($id, 6, '0', STR_PAD_LEFT);
 
         return $prefix . $code;
-    }
-
-    static function status($key = '', $type = '') {
-        $status = [
-            'instock' => [
-                'label' => trans('stock.status.instock'),
-                'color' => 'green',
-            ],
-            'outstock' => [
-                'label' => trans('stock.status.outstock'),
-                'color' => 'red',
-            ]
-        ];
-        if(!empty($key) && !empty($type) && isset($status[$key])) {
-            if(!empty($status[$key][$type])) return apply_filters('inventory_status_'.$type, $status[$key][$type], $key, $type);
-            return apply_filters( 'inventory_status', $status[$key], $key, $type);
-        }
-        return apply_filters( 'inventory_status', $status, $key);
     }
 
     static function getBranchAll()
@@ -85,7 +66,7 @@ class Helper {
      */
     static function getBranchWebsite(): array|\SkillDo\Model\Model
     {
-        $website = \Stock\Config::get('website');
+        $website = \Skdepot\Config::get('website');
 
         $branch = [];
 
@@ -120,7 +101,7 @@ class Helper {
         }
         else
         {
-            $branches = \Stock\Helper::getBranchAll();
+            $branches = \Skdepot\Helper::getBranchAll();
         }
 
         $inventoriesAdd = [];
@@ -134,7 +115,7 @@ class Helper {
 
             foreach ($branches as $branch)
             {
-                $inventory = Inventory::where('product_id', $product->id)
+                $inventory = \Skdepot\Model\Inventory::where('product_id', $product->id)
                     ->where('branch_id', $branch->id)
                     ->count();
 
@@ -149,7 +130,7 @@ class Helper {
                     'product_id'    => $product->id,
                     'parent_id'     => $product->parent_id,
                     'price_cost'    => 0,
-                    'status'        => \Stock\Status\Inventory::out->value,
+                    'status'        => \Skdepot\Status\Inventory::out->value,
                     'stock'         => 0,
                     'branch_id'     => $branch->id,
                     'branch_name'   => $branch->name,
@@ -157,7 +138,7 @@ class Helper {
 
                 if(count($inventoriesAdd) >= 500)
                 {
-                    DB::table('inventories')->insert($inventoriesAdd);
+                    \Skdepot\Model\Inventory::inserts($inventoriesAdd);
 
                     $inventoriesAdd = [];
                 }
@@ -166,10 +147,9 @@ class Helper {
 
         if(!empty($inventoriesAdd))
         {
-            DB::table('inventories')->insert($inventoriesAdd);
+            \Skdepot\Model\Inventory::inserts($inventoriesAdd);
         }
     }
-
 
     static function icon(string $key): string
     {
@@ -195,7 +175,6 @@ class CashFlowHelper
         ]);
     }
 }
-
 
 class ReportColumns
 {

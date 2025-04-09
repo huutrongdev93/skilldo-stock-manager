@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
 use Branch;
@@ -9,12 +9,13 @@ use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class PurchaseReturn extends SKDObjectTable
 {
-    protected string $module = 'inventories_purchase_returns';
+    protected string $module = 'purchase_returns';
 
-    protected mixed $model = \Stock\Model\PurchaseReturn::class;
+    protected mixed $model = \Skdepot\Model\PurchaseReturn::class;
 
     function getColumns() {
 
@@ -65,10 +66,10 @@ class PurchaseReturn extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\PurchaseReturn::tryFrom($status)->badge();
+                    return \Skdepot\Status\PurchaseReturn::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\PurchaseReturn::tryFrom($status)->label();
+                    return \Skdepot\Status\PurchaseReturn::tryFrom($status)->label();
                 })
         ];
 
@@ -88,7 +89,7 @@ class PurchaseReturn extends SKDObjectTable
             'user_created_name' => $item->user_created_name,
             'purchase_name' => $item->purchase_name,
             'supplier_name' => $item->supplier_name,
-            'status' => Admin::badge(\Stock\Status\PurchaseReturn::tryFrom($item->status)->badge(), \Stock\Status\PurchaseReturn::tryFrom($item->status)->label()),
+            'status' => Admin::badge(\Skdepot\Status\PurchaseReturn::tryFrom($item->status)->badge(), \Skdepot\Status\PurchaseReturn::tryFrom($item->status)->label()),
             'return_discount' => \Prd::price($item->return_discount),
             'subtotal' => \Prd::price($item->subtotal),
             'total' => \Prd::price($item->subtotal - $item->return_discount),
@@ -106,11 +107,11 @@ class PurchaseReturn extends SKDObjectTable
             'class' => 'js_btn_target'
         ]);
 
-        if($item->status === \Stock\Status\PurchaseReturn::draft->value)
+        if($item->status === \Skdepot\Status\PurchaseReturn::draft->value)
         {
             $buttons[] = Admin::button('blue', [
                 'icon' => Admin::icon('edit'),
-                'href' => \Url::route('admin.stock.purchaseReturns.edit', ['id' => $item->id]),
+                'href' => \Url::route('admin.purchase.returns.edit', ['id' => $item->id]),
                 'tooltip' => 'Cập nhật',
             ]);
 
@@ -118,8 +119,8 @@ class PurchaseReturn extends SKDObjectTable
                 'icon'      => Admin::icon('close'),
                 'tooltip'   => 'Đồng ý',
                 'id'        => $item->id,
-                'model'     =>  \Stock\Model\PurchaseReturn::class,
-                'ajax'      => 'StockPurchaseReturnAdminAjax::cancel',
+                'model'     =>  \Skdepot\Model\PurchaseReturn::class,
+                'ajax'      => 'PurchaseReturnAdminAjax::cancel',
                 'heading'   => 'Đồng ý',
                 'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu trả hàng này?',
                 'attr' => [
@@ -128,7 +129,7 @@ class PurchaseReturn extends SKDObjectTable
             ]);
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/purchase-return/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/purchase-return/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -149,11 +150,30 @@ class PurchaseReturn extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\PurchaseReturn::options()->pluck('label', 'value')
+        $form->select2('status', \Skdepot\Status\PurchaseReturn::options()->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], request()->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.purchase.returns.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -190,7 +210,7 @@ class PurchaseReturn extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

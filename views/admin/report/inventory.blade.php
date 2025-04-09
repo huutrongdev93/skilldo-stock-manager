@@ -116,7 +116,7 @@
 </script>
 @endif
 
-{!! Plugin::partial(STOCK_NAME, 'admin/report/export-modal', [
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/report/export-modal', [
     'report' => 'sales_'.$report['key'],
 ]); !!}
 

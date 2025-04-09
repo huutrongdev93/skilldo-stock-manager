@@ -1,4 +1,4 @@
-class OrderReturnIndexHandle extends WarehouseIndexHandle
+class OrderReturnIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({

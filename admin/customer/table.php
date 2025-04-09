@@ -1,12 +1,9 @@
 <?php
-namespace Stock\Table\Customer;
+namespace Skdepot\Table\Customer;
 
-use Admin;
-use Branch;
 use Qr;
 use SkillDo\Form\Form;
 use SkillDo\Http\Request;
-use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\Columns\ColumnView;
 use SkillDo\Table\SKDObjectTable;
@@ -17,7 +14,7 @@ class Debt extends SKDObjectTable
 
     protected string $module = 'users_debt';
 
-    protected mixed $model = \Stock\Model\UserDebt::class;
+    protected mixed $model = \Skdepot\Model\UserDebt::class;
 
     function getColumns() {
 
@@ -28,11 +25,11 @@ class Debt extends SKDObjectTable
             'column' => fn($item, $args) => ColumnView::make('target_code', $item, $args)->html(function ($column){
                 if(!empty($column->item->target_id))
                 {
-                    if($column->item->target_type == \Stock\Prefix::adjustment->value)
+                    if($column->item->target_type == \Skdepot\Prefix::adjustment->value)
                     {
                         echo '<a href="#" class="js_btn_target" data-target="adjustment" data-target-id="'.$column->item->target_id.'">'.$column->item->target_code.'</a>';
                     }
-                    else if($column->item->target_type == \Stock\Prefix::purchaseOrder->value)
+                    else if($column->item->target_type == \Skdepot\Prefix::purchaseOrder->value)
                     {
                         echo '<a href="#" class="js_btn_target" data-target="purchase-order" data-target-id="'.$column->item->target_id.'" data-target-cash-flow="0">'.$column->item->target_code.'</a>';
                     }

@@ -25,7 +25,7 @@ Class StockOrderStatus {
 
                 $productsId = $products->pluck('product_id')->toArray();
 
-                $inventories = Inventory::whereIn('product_id', $productsId)
+                $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                     ->where('branch_id', $order->branch_id)
                     ->get()
                     ->keyBy('product_id');
@@ -97,7 +97,7 @@ Class StockOrderStatus {
 
             $inventoriesHistory = [];
 
-            $inventories = Inventory::whereIn('product_id', $productsId)
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                 ->where('branch_id', $order->branch_id)
                 ->get()
                 ->keyBy('product_id');
@@ -122,7 +122,7 @@ Class StockOrderStatus {
                         'stock'     => $inventory->stock,
                         'reserved'  => $inventory->reserved,
                         'quantity'  => 0,
-                        'status'    => \Stock\Status\Inventory::in->value
+                        'status'    => \Skdepot\Status\Inventory::in->value
                     ];
                 }
 
@@ -159,7 +159,7 @@ Class StockOrderStatus {
                 ];
 
                 if($inventoryUp['stock'] <= 0) {
-                    $inventoryUp['status'] = \Stock\Status\Inventory::out->value;
+                    $inventoryUp['status'] = \Skdepot\Status\Inventory::out->value;
                 }
 
                 unset($inventoriesUp[$productId]['quantity']);
@@ -176,7 +176,7 @@ Class StockOrderStatus {
 
                 if(have_posts($inventoriesHistory))
                 {
-                    DB::table('inventories_history')->insert($inventoriesHistory);
+                    \Skdepot\Model\History::inserts($inventoriesHistory);
                 }
 
                 Order::updateMeta($order->id, 'inventory_status', $inventoriesUp);
@@ -199,7 +199,7 @@ Class StockOrderStatus {
 
             $productsId = $products->pluck('product_id')->toArray();
 
-            $inventories = Inventory::whereIn('product_id', $productsId)
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                 ->where('branch_id', $order->branch_id)
                 ->get()
                 ->keyBy('product_id');
@@ -225,7 +225,7 @@ Class StockOrderStatus {
                     'id'         => $inventory->id,
                     'stock'      => $inventory->stock + $item->quantity,
                     'price_cost' => $priceCost,
-                    'status'     => \Stock\Status\Inventory::in->value,
+                    'status'     => \Skdepot\Status\Inventory::in->value,
                 ];
 
                 $inventoriesHistory[] = [
@@ -261,7 +261,7 @@ Class StockOrderStatus {
 
                 if(have_posts($inventoriesHistory))
                 {
-                    DB::table('inventories_history')->insert($inventoriesHistory);
+                    \Skdepot\Model\History::inserts($inventoriesHistory);
                 }
 
                 Order::updateMeta($order->id, 'inventory_status', '');

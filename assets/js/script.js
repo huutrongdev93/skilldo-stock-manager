@@ -1,4 +1,4 @@
-class StockExportHandel
+class SkdepotExportHandel
 {
     constructor() {
         this.modal = {
@@ -172,7 +172,7 @@ class StockExportHandel
     }
 }
 
-class WarehouseSearchProductsHandler
+class SkdepotSearchProductsHandler
 {
     constructor() {
 
@@ -222,7 +222,7 @@ class WarehouseSearchProductsHandler
         this.productsSearch.empty()
 
         request.post(ajax, {
-            action: 'Stock_Manager_Ajax::searchProducts',
+            action: 'SkdepotAjax::searchProducts',
             keyword: keyword
         }).then(function (response) {
 
@@ -260,7 +260,7 @@ class WarehouseSearchProductsHandler
         loading.start()
 
         request.post(ajax, {
-            action: 'Stock_Manager_Ajax::searchProductsByCategory',
+            action: 'SkdepotAjax::searchProductsByCategory',
             id: id
         }).then(function (response) {
 
@@ -294,7 +294,7 @@ class WarehouseSearchProductsHandler
     }
 }
 
-class WarehouseIndexHandle
+class SkdepotIndexHandle
 {
     constructor({ module, ajax }) {
 
@@ -326,7 +326,7 @@ class WarehouseIndexHandle
             id : 0
         }
 
-        this.export = new StockExportHandel();
+        this.export = new SkdepotExportHandel();
 
         this.export.eventsTable();
 
@@ -485,7 +485,7 @@ class WarehouseIndexHandle
     }
 }
 
-class WarehouseNewHandle
+class SkdepotNewHandle
 {
     constructor({ module, ajax }) {
 
@@ -518,7 +518,7 @@ class WarehouseNewHandle
 
         this.products = SkilldoUtil.reducer();
 
-        this.search = new WarehouseSearchProductsHandler();
+        this.search = new SkdepotSearchProductsHandler();
 
         this.search.events(this)
 
@@ -955,9 +955,9 @@ class PurchaseOrderModalDetail
     constructor()
     {
         this.ajax = {
-            detail: 'StockPurchaseOrderAdminAjax::detail',
-            products: 'StockPurchaseOrderAdminAjax::loadProductsDetail',
-            cashFlow: 'StockPurchaseOrderAdminAjax::loadCashFlowDetail',
+            detail: 'PurchaseOrderAdminAjax::detail',
+            products: 'PurchaseOrderAdminAjax::loadProductsDetail',
+            cashFlow: 'PurchaseOrderAdminAjax::loadCashFlowDetail',
         }
 
         let modalId = '#js_purchase_order_modal_detail'
@@ -1168,8 +1168,8 @@ class PurchaseReturnModalDetail
     constructor()
     {
         this.ajax = {
-            detail: 'StockPurchaseReturnAdminAjax::detail',
-            products: 'StockPurchaseReturnAdminAjax::loadProductsDetail',
+            detail: 'PurchaseReturnAdminAjax::detail',
+            products: 'PurchaseReturnAdminAjax::loadProductsDetail',
         }
 
         let modalId = '#js_purchase_return_modal_detail'
@@ -1305,7 +1305,7 @@ class PurchaseReturnModalDetail
     }
 }
 
-class WarehouseDetail {
+class SkdepotDetail {
 
     constructor()
     {
@@ -1362,5 +1362,4 @@ class WarehouseDetail {
                 return self.onClickTarget($(this))
             })
     }
-
 }

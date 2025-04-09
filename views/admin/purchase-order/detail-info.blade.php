@@ -14,11 +14,11 @@
                 {!! Admin::tabs([
                     'products' => [
                         'label'   => 'Sản phẩm', //Tiêu đề của tab
-                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-products', ['table' => (new \Stock\Table\PurchaseOrder\ProductDetail())])
+                        'content' => Plugin::partial(SKDEPOT_NAME, 'admin/purchase-order/detail-products', ['table' => (new \Skdepot\Table\PurchaseOrder\ProductDetail())])
                     ],
                     'cashFlow' => [
                         'label'   => 'Lịch sử thanh toán',
-                        'content' => Plugin::partial(STOCK_NAME, 'admin/purchase-order/detail-cash-flow')
+                        'content' => Plugin::partial(SKDEPOT_NAME, 'admin/purchase-order/detail-cash-flow')
                     ],
                 ], 'products', ['class' => 'mb-0']) !!}
             </div>

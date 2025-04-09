@@ -1,9 +1,9 @@
 {
-    "name":"Stock manager",
-    "class":"stock_manager",
+    "name":"Siêu Kho Depot",
+    "class":"SkDepot",
     "url":"https://sikido.vn",
     "description":"Ứng dụng quản lý kho hàng nhiều chi nhánh",
     "author":"Nguyễn Hữu Trọng",
-    "version":"2.0.3",
-    "thumb": "assets/thumb.png"
+    "version":"1.0.0",
+    "thumb": "assets/thumb.jpg"
 }

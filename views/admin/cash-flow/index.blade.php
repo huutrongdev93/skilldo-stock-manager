@@ -6,7 +6,7 @@ Admin::partial('components/page-default/page-index', [
 !!}
 
 {!!
-Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal', [
+Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/add/modal', [
     'modalTitle' => 'Lập phiếu thu',
     'modalId'    => 'receipt',
     'form'       => $formReceipt,
@@ -14,7 +14,7 @@ Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal', [
 !!}
 
 {!!
-Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal', [
+Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/add/modal', [
     'modalTitle' => 'Lập phiếu chi',
     'modalId'    => 'payment',
     'form'       => $formPayment,
@@ -22,7 +22,7 @@ Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal', [
 !!}
 
 {!!
-Plugin::partial(STOCK_NAME, 'admin/cash-flow/add/modal-partner', [
+Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/add/modal-partner', [
     'modalTitle' => 'Lập phiếu chi',
     'form'       => $formPartner,
 ]);

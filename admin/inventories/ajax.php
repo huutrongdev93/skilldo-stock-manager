@@ -2,7 +2,7 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-Class StockInventoryAdminAjax
+Class InventoryAdminAjax
 {
     static function histories(SkillDo\Http\Request $request): void
     {
@@ -16,14 +16,14 @@ Class StockInventoryAdminAjax
 
         $productId = (int)$request->input('productId');
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $total = \Stock\Model\History::where('product_id', $productId)
+        $total = \Skdepot\Model\History::where('product_id', $productId)
             ->where('branch_id', $branch->id)
             ->orderByDesc('created')
             ->count();
 
-        $histories = \Stock\Model\History::where('product_id', $productId)
+        $histories = \Skdepot\Model\History::where('product_id', $productId)
             ->where('branch_id', $branch->id)
             ->orderByDesc('created')
             ->limit($limit)
@@ -44,15 +44,15 @@ Class StockInventoryAdminAjax
 
                     $attributes['data-target'] = match ($history->target_type)
                     {
-                        \Stock\Prefix::adjustment->value => 'adjustment',
-                        \Stock\Prefix::purchaseOrder->value => 'purchase-order',
-                        \Stock\Prefix::purchaseReturn->value => 'purchase-return',
-                        \Stock\Prefix::damageItem->value => 'damage-item',
-                        \Stock\Prefix::transfer->value => 'transfer',
+                        \Skdepot\Prefix::adjustment->value => 'adjustment',
+                        \Skdepot\Prefix::purchaseOrder->value => 'purchase-order',
+                        \Skdepot\Prefix::purchaseReturn->value => 'purchase-return',
+                        \Skdepot\Prefix::damageItem->value => 'damage-item',
+                        \Skdepot\Prefix::transfer->value => 'transfer',
                         default => 'cash-flow',
                     };
 
-                    if($history->target_type == \Stock\Prefix::purchaseOrder->value)
+                    if($history->target_type == \Skdepot\Prefix::purchaseOrder->value)
                     {
                         $attributes['data-target-cash-flow'] = 0;
                     }
@@ -91,7 +91,7 @@ Class StockInventoryAdminAjax
     {
         $productId = (int)$request->input('productId');
 
-        $inventories = \Stock\Model\Inventory::where('product_id', $productId)
+        $inventories = \Skdepot\Model\Inventory::where('product_id', $productId)
             ->orderByDesc('created')
             ->get();
 
@@ -124,9 +124,9 @@ Class StockInventoryAdminAjax
             response()->error('Sản phẩm đã bị xóa hoặc chưa được thêm vào');
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
-        $inventory = \Stock\Model\Inventory::where('product_id', $id)
+        $inventory = \Skdepot\Model\Inventory::where('product_id', $id)
             ->where('branch_id', $branch->id)
             ->first();
 
@@ -189,7 +189,7 @@ Class StockInventoryAdminAjax
                     ->update($productUpdate);
 
                 //Kho hàng
-                \Stock\Model\Inventory::where('product_id', $product->id)->update([
+                \Skdepot\Model\Inventory::where('product_id', $product->id)->update([
                     'product_name' => $productUpdate['title'] ?? $product->title,
                     'product_code' => $productUpdate['code'] ?? $product->code,
                 ]);
@@ -207,7 +207,7 @@ Class StockInventoryAdminAjax
                         ]);
                     }
 
-                    \Stock\Model\Inventory::where('parent_id', $product->parent_id)->update([
+                    \Skdepot\Model\Inventory::where('parent_id', $product->parent_id)->update([
                         'product_name' => $title,
                     ]);
                 }
@@ -215,19 +215,19 @@ Class StockInventoryAdminAjax
                 if(!empty($productUpdate['code']))
                 {
                     //Nhập hàng
-                    \Stock\Model\PurchaseOrderDetail::where('product_code', $product->code)->update([
+                    \Skdepot\Model\PurchaseOrderDetail::where('product_code', $product->code)->update([
                         'product_code' => $code,
                     ]);
                     //Trả hàng hhập
-                    \Stock\Model\PurchaseReturnDetail::where('product_code', $product->code)->update([
+                    \Skdepot\Model\PurchaseReturnDetail::where('product_code', $product->code)->update([
                         'product_code' => $code,
                     ]);
                     //Xuất hủy hàng
-                    \Stock\Model\DamageItemDetail::where('product_code', $product->code)->update([
+                    \Skdepot\Model\DamageItemDetail::where('product_code', $product->code)->update([
                         'product_code' => $code,
                     ]);
                     //Kiểm kho
-                    \Stock\Model\StockTakeDetail::where('product_code', $product->code)->update([
+                    \Skdepot\Model\StockTakeDetail::where('product_code', $product->code)->update([
                         'product_code' => $code,
                     ]);
                 }
@@ -239,7 +239,7 @@ Class StockInventoryAdminAjax
                 //Cập nhật giá vốn
                 if(isset($inventoryUp['price_cost']))
                 {
-                    $modelInventory = \Stock\Model\Inventory::where('product_id', $product->id);
+                    $modelInventory = \Skdepot\Model\Inventory::where('product_id', $product->id);
 
                     if($cost_scope == 1)
                     {
@@ -270,7 +270,7 @@ Class StockInventoryAdminAjax
                         'user_name' => $user->firstname.' '.$user->lastname,
 
                         'balance_date' => time(),
-                        'status' => \Stock\Status\StockTake::success->value,
+                        'status' => \Skdepot\Status\StockTake::success->value,
                         // Tổng số lượng hàng thực tế
                         'total_actual_quantity' => $stock,
                         'total_actual_price' => $stock*$inventory->price_cost,
@@ -308,11 +308,11 @@ Class StockInventoryAdminAjax
                         'actual_quantity'    => $stock,
                         'adjustment_quantity'=> $adjustment_quantity,
                         'adjustment_price'   => $adjustment_price,
-                        'status'             => \Stock\Status\StockTake::success->value,
+                        'status'             => \Skdepot\Status\StockTake::success->value,
                     ];
 
                     //Tạo phiếu kiểm kho hàng
-                    $stockTakeId = \Stock\Model\StockTake::create($stockTake);
+                    $stockTakeId = \Skdepot\Model\StockTake::create($stockTake);
 
                     if(empty($stockTakeId) || is_skd_error($stockTakeId))
                     {
@@ -321,25 +321,25 @@ Class StockInventoryAdminAjax
 
                     if(empty($stockTake['code']))
                     {
-                        $stockTake['code'] = \Stock\Helper::code(\Stock\Prefix::stockTake->value, $stockTakeId);
+                        $stockTake['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::stockTake->value, $stockTakeId);
                     }
 
                     //Tạo chi tiết phiếu kiểm kho hàng
-                    \Stock\Model\StockTakeDetail::create([
+                    \Skdepot\Model\StockTakeDetail::create([
                         ...$stockTakeDetail,
                         'stock_take_id' => $stockTakeId
                     ]);
 
                     //Cập nhật kho
-                    \Stock\Model\Inventory::where('product_id', $product->id)
+                    \Skdepot\Model\Inventory::where('product_id', $product->id)
                         ->where('branch_id', $branch->id)
                         ->update([
                             'stock' => $stock,
-                            'status' => ($stock > 0) ? \Stock\Status\Inventory::in->value : \Stock\Status\Inventory::out->value
+                            'status' => ($stock > 0) ? \Skdepot\Status\Inventory::in->value : \Skdepot\Status\Inventory::out->value
                         ]);
 
                     //Cập nhật lịch sử
-                    DB::table('inventories_history')->insert([
+                    \Skdepot\Model\Inventory::create([
                         'inventory_id'  => $inventory->id,
                         'product_id'    => $inventory->product_id,
                         'branch_id'     => $inventory->branch_id,
@@ -352,7 +352,7 @@ Class StockInventoryAdminAjax
                         'target_id'   => $stockTakeId,
                         'target_code' => $stockTake['code'],
                         'target_name' => 'Kiểm hàng',
-                        'target_type' => \Stock\Prefix::stockTake->value,
+                        'target_type' => \Skdepot\Prefix::stockTake->value,
                         //Thông tin
                         'cost'          => $inventory->price_cost,
                         'price'         => $stockTakeDetail['adjustment_price'],
@@ -378,6 +378,6 @@ Class StockInventoryAdminAjax
 
     }
 }
-Ajax::admin('StockInventoryAdminAjax::histories');
-Ajax::admin('StockInventoryAdminAjax::saveProduct');
-Ajax::admin('StockInventoryAdminAjax::onHand');
+Ajax::admin('InventoryAdminAjax::histories');
+Ajax::admin('InventoryAdminAjax::saveProduct');
+Ajax::admin('InventoryAdminAjax::onHand');

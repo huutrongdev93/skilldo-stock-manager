@@ -18,13 +18,13 @@ Class CashFlowGroupForm
     static function saveReceipt($id, $insertData)
     {
         $insertData['type'] = 'receipt';
-        return \Stock\Model\CashFlowGroup::insert($insertData);
+        return \Skdepot\Model\CashFlowGroup::insert($insertData);
     }
 
     static function savePayment($id, $insertData)
     {
         $insertData['type'] = 'payment';
-        return \Stock\Model\CashFlowGroup::insert($insertData);
+        return \Skdepot\Model\CashFlowGroup::insert($insertData);
     }
 }
 add_filter('manage_cash_flow_group_receipt_input', 'CashFlowGroupForm::form');

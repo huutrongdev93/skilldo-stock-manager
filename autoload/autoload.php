@@ -1,5 +1,5 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 use Admin;
 use Storage;
 use Str;
@@ -8,7 +8,7 @@ class ClassAutoLoad {
 
     static $storage = null;
 
-    protected string $name = STOCK_NAME;
+    protected string $name = SKDEPOT_NAME;
 
     protected array $files = [];
 

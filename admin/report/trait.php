@@ -1,5 +1,5 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 
 trait ReportTrait
 {
@@ -36,7 +36,7 @@ trait ReportTrait
 
     static function exportWithColumns($columns, $args): string
     {
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $sheet = $export->getSheet('default');
 

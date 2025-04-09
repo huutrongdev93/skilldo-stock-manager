@@ -1,8 +1,5 @@
 <?php
-
-namespace Stock\Model;
-
-use SkillDo\DB;
+namespace Skdepot\Model;
 
 class UserDebt extends \Skilldo\Model\Model
 {

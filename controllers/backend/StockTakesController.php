@@ -14,22 +14,22 @@ class StockTakesController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\StockTake();
+        $table = new \Skdepot\Table\StockTake();
 
-        $tableProduct = new \Stock\Table\StockTake\ProductDetail();
+        $tableProduct = new \Skdepot\Table\StockTake\ProductDetail();
 
         Cms::setData('table', $table);
 
         Cms::setData('tableProduct', $tableProduct);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/stock-take/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/stock-take/index', 'plugin');
 
         $this->template->render();
     }
 
     public function add(Request $request): void
     {
-        $table = new \Stock\Table\StockTake\ProductAdd();
+        $table = new \Skdepot\Table\StockTake\ProductAdd();
 
         Cms::setData('table', $table);
 
@@ -37,7 +37,7 @@ class StockTakesController extends MY_Controller {
 
         Cms::setData('action', 'add');
 
-        $this->template->setView(STOCK_NAME.'/views/admin/stock-take/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/stock-take/add', 'plugin');
 
         $this->template->render();
     }
@@ -48,7 +48,7 @@ class StockTakesController extends MY_Controller {
 
         $type = $request->input('type');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if($type === 'clone')
         {
@@ -61,11 +61,11 @@ class StockTakesController extends MY_Controller {
 
         Cms::setData('object', $object);
 
-        Cms::setData('table', (new \Stock\Table\StockTake\ProductAdd()));
+        Cms::setData('table', (new \Skdepot\Table\StockTake\ProductAdd()));
 
         Cms::setData('form', $this->form($object));
 
-        $this->template->setView(STOCK_NAME.'/views/admin/stock-take/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/stock-take/add', 'plugin');
 
         $this->template->render();
     }
@@ -97,7 +97,7 @@ class StockTakesController extends MY_Controller {
                 'multiple' => false,
                 'noImage' => true,
             ], $object->user_id ?? Auth::id())
-            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseOrder::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Skdepot\Status\PurchaseOrder::draft->label().'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Tổng SL thực tế</b>  <b class="js_stock_take_total_actual_quantity">0</b></p>')
             ->textarea('note', [
                 'label' => 'Ghi chú'

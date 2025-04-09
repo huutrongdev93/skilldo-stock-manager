@@ -10,20 +10,20 @@ class AdminStockProductAction {
     {
         if($product->hasVariation == 0)
         {
-            $branches = \Stock\Helper::getBranchAll();
+            $branches = \Skdepot\Helper::getBranchAll();
 
             foreach ($branches as $branch)
             {
                 $priceCost = (int)Str::price(request()->input('price_cost'));
 
-                Inventory::create([
+                \Skdepot\Model\Inventory::create([
                     'product_id'   => $product->id,
                     'product_name' => $product->title,
                     'product_code' => $product->code,
                     'branch_id'    => $branch->id,
                     'branch_name'  => $branch->name,
                     'stock'        => 0,
-                    'status'       => \Stock\Status\Inventory::out->value,
+                    'status'       => \Skdepot\Status\Inventory::out->value,
                     'price_cost'   => $priceCost
                 ]);
             }
@@ -39,9 +39,9 @@ class AdminStockProductAction {
 
             if($product->hasVariation == 0)
             {
-                $branches = \Stock\Helper::getBranchAll();
+                $branches = \Skdepot\Helper::getBranchAll();
 
-                $branchCurrent = \Stock\Helper::getBranchCurrent();
+                $branchCurrent = \Skdepot\Helper::getBranchCurrent();
 
                 $priceCost = Str::price(request()->input('price_cost'));
 
@@ -51,14 +51,14 @@ class AdminStockProductAction {
 
                 foreach ($branches as $branch)
                 {
-                    $count = Inventory::where('product_id', $product->id)
+                    $count = \Skdepot\Model\Inventory::where('product_id', $product->id)
                         ->where('parent_id', 0)
                         ->where('branch_id', $branch->id)
                         ->count();
 
                     if($count == 0)
                     {
-                        Inventory::create([
+                        \Skdepot\Model\Inventory::create([
                             'product_id'   => $product->id,
                             'product_name' => $product->title,
                             'product_code' => $product->code,
@@ -66,7 +66,7 @@ class AdminStockProductAction {
                             'branch_name'  => $branch->name,
                             'price_cost'  => $priceCost,
                             'stock'     => 0,
-                            'status'    => \Stock\Status\Inventory::out->value
+                            'status'    => \Skdepot\Status\Inventory::out->value
                         ]);
                     }
                     else
@@ -82,21 +82,21 @@ class AdminStockProductAction {
 
                 if($upName)
                 {
-                    Inventory::where('product_id', $product->id)->update([
+                    \Skdepot\Model\Inventory::where('product_id', $product->id)->update([
                         'product_name' => $product->title,
                         'product_code' => $product->code,
                     ]);
                 }
                 if($upPriceCost)
                 {
-                    Inventory::where('product_id', $product->id)
+                    \Skdepot\Model\Inventory::where('product_id', $product->id)
                         ->where('branch_id', $branchCurrent->id)
                         ->update(['price_cost' => $priceCost]);
                 }
             }
             else
             {
-                Inventory::where('parent_id', $product->id)->update([
+                \Skdepot\Model\Inventory::where('parent_id', $product->id)->update([
                     'product_name' => $product->title,
                 ]);
             }
@@ -105,7 +105,7 @@ class AdminStockProductAction {
 
     static function variationsAdd($variations): void
     {
-        $branches = \Stock\Helper::getBranchAll();
+        $branches = \Skdepot\Helper::getBranchAll();
 
         $inventories = [];
 
@@ -116,7 +116,7 @@ class AdminStockProductAction {
                     'product_code'  => $variation->code,
                     'product_id'    => $variation->id,
                     'parent_id'     => $variation->parent_id,
-                    'status'        => \Stock\Status\Inventory::out->value,
+                    'status'        => \Skdepot\Status\Inventory::out->value,
                     'stock'         => 0,
                     'branch_id'     => $branch->id,
                     'branch_name'   => $branch->name,
@@ -125,16 +125,16 @@ class AdminStockProductAction {
             }
         }
 
-        DB::table('inventories')->insert($inventories);
+        \Skdepot\Model\Inventory::inserts($inventories);
     }
 
     static function variationAddOrUp($variation): void
     {
-        $branches = \Stock\Helper::getBranchAll();
+        $branches = \Skdepot\Helper::getBranchAll();
 
-        $branchCurrent = \Stock\Helper::getBranchCurrent();
+        $branchCurrent = \Skdepot\Helper::getBranchCurrent();
 
-        $inventoriesCheck = Inventory::where('parent_id', $variation->parent_id)->get();
+        $inventoriesCheck = \Skdepot\Model\Inventory::where('parent_id', $variation->parent_id)->get();
 
         $inventoriesAdd = [];
 
@@ -170,7 +170,7 @@ class AdminStockProductAction {
             }
             else
             {
-                $inventoryChange['status']      = \Stock\Status\Inventory::out->value;
+                $inventoryChange['status']      = \Skdepot\Status\Inventory::out->value;
                 $inventoryChange['stock']       = 0;
                 $inventoryChange['branch_id']   = $branch->id;
                 $inventoryChange['product_id']  = $variation->id;
@@ -183,20 +183,20 @@ class AdminStockProductAction {
 
         if(have_posts($inventoriesAdd))
         {
-            DB::table('inventories')->insert($inventoriesAdd);
+            \Skdepot\Model\Inventory::inserts($inventoriesAdd);
         }
 
         if(have_posts($inventoriesUp))
         {
-            Inventory::updateBatch($inventoriesUp, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUp, 'id');
         }
 
-        Inventory::where('product_id', $variation->parent_id)->delete();
+        \Skdepot\Model\Inventory::where('product_id', $variation->parent_id)->delete();
     }
 
     static function variationDelete($id, $variations): void
     {
-        Inventory::where('product_id', $id)->delete();
+        \Skdepot\Model\Inventory::where('product_id', $id)->delete();
 
         $productId = 0;
 
@@ -213,13 +213,13 @@ class AdminStockProductAction {
         //nếu đã xóa hết biến thể
         if(!empty($productId) && !have_posts($variations))
         {
-            $branches = \Stock\Helper::getBranchAll();
+            $branches = \Skdepot\Helper::getBranchAll();
 
             $product =\Ecommerce\Model\Product::select('id', 'code', 'title')->whereKey($productId)->first();
 
             foreach ($branches as $branch)
             {
-                $count = Inventory::where('product_id', $productId)
+                $count = \Skdepot\Model\Inventory::where('product_id', $productId)
                     ->where('branch_id', $branch->id)
                     ->count();
 
@@ -230,14 +230,14 @@ class AdminStockProductAction {
                         'product_code'  => $product->code,
                         'product_id'    => $productId,
                         'parent_id'     => 0,
-                        'status'        => \Stock\Status\Inventory::out->value,
+                        'status'        => \Skdepot\Status\Inventory::out->value,
                         'stock'         => 0,
                         'branch_id'     => $branch->id,
                         'branch_name'   => $branch->name,
                         'price_cost'    => 0,
                     ];
 
-                    Inventory::create($inventory);
+                    \Skdepot\Model\Inventory::create($inventory);
                 }
             }
         }
@@ -253,8 +253,8 @@ class AdminStockProductAction {
 
             if(have_posts($productID))
             {
-                Inventory::whereIn('parent_id', $productID)->delete();
-                Inventory::whereIn('product_id', $productID)->delete();
+                \Skdepot\Model\Inventory::whereIn('parent_id', $productID)->delete();
+                \Skdepot\Model\Inventory::whereIn('product_id', $productID)->delete();
             }
         }
     }

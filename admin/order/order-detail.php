@@ -3,13 +3,13 @@ class StockOrderDetailHistory
 {
     static public function addTab($order): void
     {
-        Plugin::view(STOCK_NAME, 'admin/order/history-tab', ['order' => $order]);
+        Plugin::view(SKDEPOT_NAME, 'admin/order/history-tab', ['order' => $order]);
     }
 
     static public function tabContent($order): void
     {
-        Plugin::view(STOCK_NAME, 'admin/order/history-tab-payment', ['order' => $order]);
-        Plugin::view(STOCK_NAME, 'admin/order/history-tab-return', ['order' => $order]);
+        Plugin::view(SKDEPOT_NAME, 'admin/order/history-tab-payment', ['order' => $order]);
+        Plugin::view(SKDEPOT_NAME, 'admin/order/history-tab-return', ['order' => $order]);
     }
 }
 

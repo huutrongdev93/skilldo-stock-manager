@@ -48,7 +48,7 @@
 </div>
 
 <script id="js_order_report_item_template" type="text/x-custom-template">
-    @foreach(\Stock\ReportColumns::financial() as $key => $column)
+    @foreach(\Skdepot\ReportColumns::financial() as $key => $column)
         <div class="report-gird">
             <div class="report-gird-item">{!! $column['label'] !!}</div>
             <div class="report-gird-item text-primary {!! $column['valueClass'] ?? '' !!}">{!! '${'.$key.'}' !!}</div>

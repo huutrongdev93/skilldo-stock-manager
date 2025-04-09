@@ -64,7 +64,7 @@
 
 	        let data = {
 		        productId : productId,
-		        action : 'Stock_Manager_Ajax::quickEditLoad'
+		        action : 'SkdepotAjax::quickEditLoad'
 	        }
 
 	        request.post(ajax, data).then(function (response) {
@@ -102,7 +102,7 @@
 
             let data = $(this).serializeJSON();
 
-            data.action = 'Stock_Manager_Ajax::quickEditSave';
+            data.action = 'SkdepotAjax::quickEditSave';
 
             request.post(ajax, data).then(function(response) {
 

@@ -1,13 +1,6 @@
 <?php
-class CashFlowGroupButton {
-
-    static function receiptTableButton($buttons): array
-    {
-        $buttons[] = Admin::button('add', ['href' => Url::route('admin.cashFlow.group.receipt.new')]);
-        $buttons[] = Admin::button('reload');
-        return $buttons;
-    }
-
+class CashFlowGroupButton
+{
     static function receiptFormButton($module): void
     {
         $buttons = [];
@@ -34,13 +27,6 @@ class CashFlowGroupButton {
         }
 
         Admin::view('include/form/form-action', ['buttons' => $buttons, 'module' => $module]);
-    }
-
-    static function paymentTableButton($buttons): array
-    {
-        $buttons[] = Admin::button('add', ['href' => Url::route('admin.cashFlow.group.payment.new')]);
-        $buttons[] = Admin::button('reload');
-        return $buttons;
     }
 
     static function paymentFormButton($module): void
@@ -71,8 +57,6 @@ class CashFlowGroupButton {
         Admin::view('include/form/form-action', ['buttons' => $buttons, 'module' => $module]);
     }
 }
-add_filter('table_cash_flow_group_receipt_header_buttons', 'CashFlowGroupButton::receiptTableButton');
-add_action('form_cash_flow_group_receipt_action_button', 'CashFlowGroupButton::receiptFormButton');
 
-add_filter('table_cash_flow_group_payment_header_buttons', 'CashFlowGroupButton::paymentTableButton');
+add_action('form_cash_flow_group_receipt_action_button', 'CashFlowGroupButton::receiptFormButton');
 add_action('form_cash_flow_group_payment_action_button', 'CashFlowGroupButton::paymentFormButton');

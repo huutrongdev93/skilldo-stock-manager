@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table\OrderReturn;
+namespace Skdepot\Table\OrderReturn;
 use Admin;
 use Prd;
 use Sicommerce_Cart;
@@ -87,6 +87,13 @@ class Order extends SKDObjectTable {
         return $form;
     }
 
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
+    }
+
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
     {
         $query->where('status', \Ecommerce\Enum\Order\Status::COMPLETED->value);
@@ -126,7 +133,7 @@ class Order extends SKDObjectTable {
             $query->setMetaQuery('billing_fullname', $keyword, 'like');
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

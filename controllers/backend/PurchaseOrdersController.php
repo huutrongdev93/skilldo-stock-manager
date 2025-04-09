@@ -14,11 +14,11 @@ class PurchaseOrdersController extends MY_Controller {
 
     public function index(Request $request): void
     {
-        $table = new \Stock\Table\PurchaseOrder();
+        $table = new \Skdepot\Table\PurchaseOrder();
 
         Cms::setData('table', $table);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/purchase-order/index', 'plugin');
 
         $this->template->render();
     }
@@ -27,7 +27,7 @@ class PurchaseOrdersController extends MY_Controller {
     {
         $source = $request->input('source');
 
-        $table = new \Stock\Table\PurchaseOrder\ProductAdd();
+        $table = new \Skdepot\Table\PurchaseOrder\ProductAdd();
 
         Cms::setData('table', $table);
 
@@ -37,7 +37,7 @@ class PurchaseOrdersController extends MY_Controller {
 
         Cms::setData('source', $source);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/purchase-order/add', 'plugin');
 
         $this->template->render();
     }
@@ -48,7 +48,7 @@ class PurchaseOrdersController extends MY_Controller {
 
         $type = $request->input('type');
 
-        $purchaseOrder = \Stock\Model\PurchaseOrder::find($id);
+        $purchaseOrder = \Skdepot\Model\PurchaseOrder::find($id);
 
         if($type === 'clone')
         {
@@ -59,13 +59,13 @@ class PurchaseOrdersController extends MY_Controller {
 
         Cms::setData('purchaseOrder', $purchaseOrder);
 
-        $table = new \Stock\Table\PurchaseOrder\ProductAdd();
+        $table = new \Skdepot\Table\PurchaseOrder\ProductAdd();
 
         Cms::setData('table', $table);
 
         Cms::setData('form', $this->form($purchaseOrder));
 
-        $this->template->setView(STOCK_NAME.'/views/admin/purchase-order/add', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/purchase-order/add', 'plugin');
 
         $this->template->render();
     }
@@ -111,7 +111,7 @@ class PurchaseOrdersController extends MY_Controller {
                 'start' => '<div class="form-group"><div class="row">',
                 'end' => '</div></div>',
             ])
-            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Stock\Status\PurchaseOrder::draft->label().'</b></p>')
+            ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Trạng thái</b>  <b>'.\Skdepot\Status\PurchaseOrder::draft->label().'</b></p>')
             ->none('<p class="d-flex justify-content-between align-items-center h-10 mb-4"><b>Tổng tiền hàng</b>  <b class="js_purchase_order_cost_total">0</b></p>')
             ->price('discount', [
                 'label' => 'Giảm giá',

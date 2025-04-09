@@ -1,15 +1,15 @@
 <?php
-class StockManagerAdmin {
+class SkdepotAdmin {
     /**
      * Thêm button vào thanh điều hướng admin
      */
     static function button($buttons)
     {
-        $branches = \Stock\Helper::getBranchAll();
+        $branches = \Skdepot\Helper::getBranchAll();
 
-        $currentBranch = \Stock\Helper::getBranchCurrent();
+        $currentBranch = \Skdepot\Helper::getBranchCurrent();
 
-        $buttons['stock'] = \Plugin::partial(STOCK_NAME, 'admin/button', [
+        $buttons['stock'] = \Plugin::partial(SKDEPOT_NAME, 'admin/button', [
             'branches' => $branches,
             'currentBranch' => $currentBranch
         ]);
@@ -58,7 +58,7 @@ class StockManagerAdmin {
         {
             $breadcrumb['inventory'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.index'),
+                'url'    => Url::route('admin.inventory.index'),
                 'label'  => 'Kho hàng'
             ];
 
@@ -66,7 +66,7 @@ class StockManagerAdmin {
             {
                 $breadcrumb['damageItems'] = [
                     'active' => true,
-                    'url'    => Url::route('admin.stock.damageItems'),
+                    'url'    => Url::route('admin.damage.items'),
                     'label'  => 'Phiếu xuất hủy'
                 ];
             }
@@ -76,13 +76,13 @@ class StockManagerAdmin {
         {
             $breadcrumb['inventory'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.index'),
+                'url'    => Url::route('admin.inventory.index'),
                 'label'  => 'Kho hàng'
             ];
 
             $breadcrumb['purchaseOrders'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.purchaseOrders'),
+                'url'    => Url::route('admin.purchase.orders'),
                 'label'  => 'Phiếu nhập hàng'
             ];
 
@@ -95,7 +95,7 @@ class StockManagerAdmin {
             {
                 $breadcrumb['purchaseOrdersAdd'] = [
                     'active' => true,
-                    'url'    => Url::route('admin.stock.purchaseOrders.new'),
+                    'url'    => Url::route('admin.purchase.orders.new'),
                     'label'  => 'Thêm phiếu nhập hàng'
                 ];
             }
@@ -105,13 +105,13 @@ class StockManagerAdmin {
         {
             $breadcrumb['inventory'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.index'),
+                'url'    => Url::route('admin.inventory.index'),
                 'label'  => 'Kho hàng'
             ];
 
             $breadcrumb['purchaseReturns'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.purchaseReturns'),
+                'url'    => Url::route('admin.purchase.returns'),
                 'label'  => 'Phiếu trả hàng'
             ];
 
@@ -124,7 +124,7 @@ class StockManagerAdmin {
             {
                 $breadcrumb['purchaseReturnsAdd'] = [
                     'active' => true,
-                    'url'    => Url::route('admin.stock.purchaseReturns.new'),
+                    'url'    => Url::route('admin.purchase.returns.new'),
                     'label'  => 'Thêm phiếu trả hàng'
                 ];
             }
@@ -134,13 +134,13 @@ class StockManagerAdmin {
         {
             $breadcrumb['inventory'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.index'),
+                'url'    => Url::route('admin.inventory.index'),
                 'label'  => 'Kho hàng'
             ];
 
             $breadcrumb['stockTakes'] = [
                 'active' => false,
-                'url'    => Url::route('admin.stock.stockTakes'),
+                'url'    => Url::route('admin.stock.takes'),
                 'label'  => 'Phiếu kiểm kho'
             ];
 
@@ -153,7 +153,7 @@ class StockManagerAdmin {
             {
                 $breadcrumb['stockTakesAdd'] = [
                     'active' => true,
-                    'url'    => Url::route('admin.stock.stockTakes.new'),
+                    'url'    => Url::route('admin.stock.takes.new'),
                     'label'  => 'Thêm phiếu kiểm kho'
                 ];
             }
@@ -288,7 +288,7 @@ class StockManagerAdmin {
 
     static function detail(): void
     {
-        Plugin::view(STOCK_NAME, 'admin/detail');
+        Plugin::view(SKDEPOT_NAME, 'admin/detail');
     }
 
     static function fileDemo(): void
@@ -309,7 +309,7 @@ class StockManagerAdmin {
 
                     if (!empty($file)) {
 
-                        $filePath = Path::plugin(STOCK_NAME) . '/assets/files/' . $file . '.xlsx';
+                        $filePath = Path::plugin(SKDEPOT_NAME) . '/assets/files/' . $file . '.xlsx';
 
                         if (file_exists($filePath)) {
                             response()->download($filePath, $file . '.xlsx');
@@ -324,8 +324,8 @@ class StockManagerAdmin {
     }
 }
 
-add_filter('admin_theme_header_button', 'StockManagerAdmin::button');
-add_action('admin_init', 'StockManagerAdmin::navigation', 10);
-add_filter('admin_breadcrumb', 'StockManagerAdmin::breadcrumb', 50, 3);
-add_action('template_redirect', 'StockManagerAdmin::fileDemo');
-add_action('admin_footer', 'StockManagerAdmin::detail');
+add_filter('admin_theme_header_button', 'SkdepotAdmin::button');
+add_action('admin_init', 'SkdepotAdmin::navigation', 10);
+add_filter('admin_breadcrumb', 'SkdepotAdmin::breadcrumb', 50, 3);
+add_action('template_redirect', 'SkdepotAdmin::fileDemo');
+add_action('admin_footer', 'SkdepotAdmin::detail');

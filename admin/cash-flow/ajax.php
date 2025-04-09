@@ -28,7 +28,7 @@ class CashFlowAdminAjax
 
         $partner['address_full'] = $partner['address'].', '.$address;
 
-        $id = \Stock\Model\CashFlowPartner::create($partner);
+        $id = \Skdepot\Model\CashFlowPartner::create($partner);
 
         if(empty($id) || is_skd_error($id))
         {
@@ -83,7 +83,7 @@ class CashFlowAdminAjax
 
         if(!empty($code))
         {
-            $count = \Stock\Model\CashFlow::where('code', $code)->count();
+            $count = \Skdepot\Model\CashFlow::where('code', $code)->count();
 
             if($count > 0)
             {
@@ -94,7 +94,7 @@ class CashFlowAdminAjax
         }
 
         //Loại thu / chi
-        $group = \Stock\Model\CashFlowGroup::where('type', $type)
+        $group = \Skdepot\Model\CashFlowGroup::where('type', $type)
             ->whereKey($cashFlow['group_id'])
             ->first();
 
@@ -132,7 +132,7 @@ class CashFlowAdminAjax
         {
             $partner_value = (int)$request->input('partner_value_supplier');
 
-            $partner = \Stock\Model\Suppliers::whereKey($partner_value)->first();
+            $partner = \Skdepot\Model\Suppliers::whereKey($partner_value)->first();
 
             if(!have_posts($partner))
             {
@@ -167,7 +167,7 @@ class CashFlowAdminAjax
         {
             $partner_value = (int)$request->input('partner_value_other');
 
-            $partner = \Stock\Model\CashFlowPartner::whereKey($partner_value)->first();
+            $partner = \Skdepot\Model\CashFlowPartner::whereKey($partner_value)->first();
 
             if(!have_posts($partner))
             {
@@ -201,7 +201,7 @@ class CashFlowAdminAjax
 
         $cashFlow['time'] = $time;
 
-        $id = \Stock\Model\CashFlow::create($cashFlow);
+        $id = \Skdepot\Model\CashFlow::create($cashFlow);
 
         if(empty($id) || is_skd_error($id))
         {
@@ -215,14 +215,14 @@ class CashFlowAdminAjax
     {
         $id = $request->input('id');
 
-        $object = \Stock\Model\CashFlow::find($id);
+        $object = \Skdepot\Model\CashFlow::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu thu/chi không có trên hệ thống');
         }
 
-        $object->status_label = \Stock\Status\CashFlow::tryFrom($object->status)->label();
+        $object->status_label = \Skdepot\Status\CashFlow::tryFrom($object->status)->label();
 
         $object->partner_type_name = match ($object->partner_type) {
             'C' => 'Khách hàng',
@@ -238,17 +238,17 @@ class CashFlowAdminAjax
             $object->target_note = 'Phiếu thu tự động được tạo gắn với đơn hàng <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
         }
 
-        if(!empty($object->target_code) && $object->target_type == \Stock\Prefix::purchaseOrder->value)
+        if(!empty($object->target_code) && $object->target_type == \Skdepot\Prefix::purchaseOrder->value)
         {
             $object->target_note = 'Phiếu chi tự động được tạo gắn với phiếu nhập hàng <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
         }
 
-        if(!empty($object->target_code) && $object->target_type == \Stock\Prefix::purchaseReturn->value)
+        if(!empty($object->target_code) && $object->target_type == \Skdepot\Prefix::purchaseReturn->value)
         {
             $object->target_note = 'Phiếu thu tự động được tạo gắn với phiếu trả hàng nhập <a href="'.Url::admin('plugins/order/detail/'.$object->target_id).'" target="_blank">'.$object->target_code.'</a>';
         }
 
-        $childrens = \Stock\Model\CashFlow::widthChildren()
+        $childrens = \Skdepot\Model\CashFlow::widthChildren()
             ->where('parent_id', $object->id)
             ->get()
             ->map(function($child){

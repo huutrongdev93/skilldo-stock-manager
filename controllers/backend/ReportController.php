@@ -80,7 +80,7 @@ class ReportController extends MY_Controller {
 
         Cms::setData('reports', $reports);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/report/index', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/report/index', 'plugin');
 
         $this->template->render();
     }
@@ -108,7 +108,7 @@ class ReportController extends MY_Controller {
         if($type === 'time')
         {
             $report['title'] = 'Doanh thu theo thời gian';
-            $report['columns'] = \Stock\ReportColumns::salesTime();
+            $report['columns'] = \Skdepot\ReportColumns::salesTime();
 
             $form->select('group', [
                 'day'  => 'Theo ngày',
@@ -120,26 +120,26 @@ class ReportController extends MY_Controller {
         if($type === 'product')
         {
             $report['title'] = 'Doanh thu theo sản phẩm';
-            $report['columns'] = \Stock\ReportColumns::salesProduct();
+            $report['columns'] = \Skdepot\ReportColumns::salesProduct();
         }
 
         if($type === 'branch')
         {
             $report['title'] = 'Doanh thu theo chi nhánh';
-            $report['columns'] = \Stock\ReportColumns::salesBranch();
+            $report['columns'] = \Skdepot\ReportColumns::salesBranch();
         }
 
         if($type === 'customer')
         {
             $report['title'] = 'Doanh thu theo khách hàng';
-            $report['columns'] = \Stock\ReportColumns::salesCustomer();
+            $report['columns'] = \Skdepot\ReportColumns::salesCustomer();
         }
 
         Cms::setData('form', $form);
 
         Cms::setData('report', $report);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/report/sales', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/report/sales', 'plugin');
 
         $this->template->render();
     }
@@ -166,7 +166,7 @@ class ReportController extends MY_Controller {
 
         Cms::setData('report', $report);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/report/financial', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/report/financial', 'plugin');
 
         $this->template->render();
     }
@@ -194,21 +194,21 @@ class ReportController extends MY_Controller {
         if($by === 'supplier')
         {
             $report['title'] = 'Danh sách hàng nhập theo NCC';
-            $report['columns'] = \Stock\ReportColumns::inventorySupplier();
-            $report['columnsChild'] = \Stock\ReportColumns::inventorySupplierChild();
+            $report['columns'] = \Skdepot\ReportColumns::inventorySupplier();
+            $report['columnsChild'] = \Skdepot\ReportColumns::inventorySupplierChild();
         }
 
         if($by === 'product')
         {
             $report['title'] = 'Danh sách hàng nhập theo sản phẩm';
-            $report['columns'] = \Stock\ReportColumns::inventoryProduct();
+            $report['columns'] = \Skdepot\ReportColumns::inventoryProduct();
         }
 
         Cms::setData('form', $form);
 
         Cms::setData('report', $report);
 
-        $this->template->setView(STOCK_NAME.'/views/admin/report/inventory', 'plugin');
+        $this->template->setView(SKDEPOT_NAME.'/views/admin/report/inventory', 'plugin');
 
         $this->template->render();
     }

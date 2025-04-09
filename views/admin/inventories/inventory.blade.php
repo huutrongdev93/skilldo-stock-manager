@@ -2,4 +2,4 @@
     'name'      => trans('inventories.title'),
     'table'     => $table,
 ]) !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/inventories/modal'); !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/inventories/modal'); !!}

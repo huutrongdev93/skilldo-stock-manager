@@ -12,7 +12,7 @@
                 let id = element.attr('data-id');
 
                 let data = {
-                    action: 'StockBranchAjax::website',
+                    action: 'SkdepotBranchAjax::website',
                     id: id
                 }
 

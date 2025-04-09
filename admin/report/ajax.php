@@ -2,7 +2,7 @@
 
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
-use Stock\ReportTrait;
+use Skdepot\ReportTrait;
 
 class StockReportSaleAdminAjax
 {
@@ -501,7 +501,7 @@ class StockReportSaleAdminAjax
             ...$args
         ]);
 
-        $columns = \Stock\ReportColumns::salesTime();
+        $columns = \Skdepot\ReportColumns::salesTime();
 
         $path = static::exportWithColumns($columns, [
             'columnsData'   => [$totals, ...$reports],
@@ -516,7 +516,7 @@ class StockReportSaleAdminAjax
     {
         [$reports, $totals] = static::salesProduct($args);
 
-        $columns = \Stock\ReportColumns::salesProduct();
+        $columns = \Skdepot\ReportColumns::salesProduct();
 
         $path = static::exportWithColumns($columns, [
             'columnsData'   => [$totals, ...$reports],
@@ -531,7 +531,7 @@ class StockReportSaleAdminAjax
     {
         [$reports, $totals] = static::salesBranch($args);
 
-        $columns = \Stock\ReportColumns::salesBranch();
+        $columns = \Skdepot\ReportColumns::salesBranch();
 
         $path = static::exportWithColumns($columns, [
             'columnsData'   => [$totals, ...$reports],
@@ -546,7 +546,7 @@ class StockReportSaleAdminAjax
     {
         [$reports, $totals] = static::salesCustomer($args);
 
-        $columns = \Stock\ReportColumns::salesCustomer();
+        $columns = \Skdepot\ReportColumns::salesCustomer();
 
         $path = static::exportWithColumns($columns, [
             'columnsData'   => [$totals, ...$reports],
@@ -586,7 +586,7 @@ class StockReportFinancialAdminAjax
 
     static function getData($args)
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $cancel = \Ecommerce\Enum\Order\Status::CANCELLED->value;
 
@@ -610,7 +610,7 @@ class StockReportFinancialAdminAjax
         $totals->revenue = $totals->subtotal - $totals->deductionRevenue;
 
         //Chi phí hủy hàng
-        $damageItem = \Stock\Model\DamageItem::select([
+        $damageItem = \Skdepot\Model\DamageItem::select([
             DB::raw('SUM(subtotal) as subtotal'),
         ])
         ->where('branch_id', $branch->id)
@@ -620,7 +620,7 @@ class StockReportFinancialAdminAjax
         $totals->damageItem = $damageItem->subtotal ?? 0;
 
         //Chi phí nhập hàng
-        $purchaseOrder = \Stock\Model\PurchaseOrder::select([
+        $purchaseOrder = \Skdepot\Model\PurchaseOrder::select([
             DB::raw('SUM(subtotal) - SUM(discount) as subtotal'),
         ])
             ->where('branch_id', $branch->id)
@@ -632,7 +632,7 @@ class StockReportFinancialAdminAjax
         $totals->expenses = $totals->damageItem + $totals->purchaseOrder;
 
         //Thu nhập trả hàng
-        $purchaseReturn = \Stock\Model\PurchaseReturn::select([
+        $purchaseReturn = \Skdepot\Model\PurchaseReturn::select([
             DB::raw('SUM(subtotal) - SUM(return_discount) as subtotal'),
         ])
             ->where('branch_id', $branch->id)
@@ -642,7 +642,7 @@ class StockReportFinancialAdminAjax
         $totals->purchaseReturn = $purchaseReturn->subtotal ?? 0;
 
         //thu nhập trả hàng
-        $orderReturn = \Stock\Model\OrderReturn::select([
+        $orderReturn = \Skdepot\Model\OrderReturn::select([
             DB::raw('SUM(surcharge) as surcharge'),
         ])
             ->where('branch_id', $branch->id)
@@ -701,7 +701,7 @@ class StockReportInventoryAdminAjax
 
     static function supplierData($args): array
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $select = [
             DB::raw('SUM(cle_po.total_quantity) as quantity'),
@@ -711,13 +711,13 @@ class StockReportInventoryAdminAjax
             DB::raw('SUM(cle_po.subtotal) - COALESCE(SUM(cle_pr.subtotal), 0) as netValue')
         ];
 
-        $reports = DB::table('inventories_purchase_orders as po')
-            ->leftJoin('inventories_purchase_returns as pr', function ($join) use ($branch) {
+        $reports = DB::table('skdepot_purchase_orders as po')
+            ->leftJoin('skdepot_purchase_returns as pr', function ($join) use ($branch) {
                 $join->on('po.supplier_id', '=', 'pr.supplier_id')
-                    ->where('pr.status', '=', \Stock\Status\PurchaseReturn::success->value)
+                    ->where('pr.status', '=', \Skdepot\Status\PurchaseReturn::success->value)
                     ->where('pr.branch_id', $branch->id);
             })
-            ->where('po.status', '=', \Stock\Status\PurchaseOrder::success->value)
+            ->where('po.status', '=', \Skdepot\Status\PurchaseOrder::success->value)
             ->where('po.branch_id', $branch->id)
             ->select([
                 'po.supplier_id as id',
@@ -727,19 +727,19 @@ class StockReportInventoryAdminAjax
             ->groupBy('po.supplier_id')
             ->get();
 
-        $totals = DB::table('inventories_purchase_orders as po')
-            ->leftJoin('inventories_purchase_returns as pr', function ($join) use ($branch) {
+        $totals = DB::table('skdepot_purchase_orders as po')
+            ->leftJoin('skdepot_purchase_returns as pr', function ($join) use ($branch) {
                 $join->on('po.supplier_id', '=', 'pr.supplier_id')
-                    ->where('pr.status', '=', \Stock\Status\PurchaseReturn::success->value)
+                    ->where('pr.status', '=', \Skdepot\Status\PurchaseReturn::success->value)
                     ->where('pr.branch_id', $branch->id);
             })
-            ->where('po.status', '=', \Stock\Status\PurchaseOrder::success->value)
+            ->where('po.status', '=', \Skdepot\Status\PurchaseOrder::success->value)
             ->where('po.branch_id', $branch->id)
             ->select($select)
             ->whereBetween('po.purchase_date', [$args['timeStart'], $args['timeEnd']])
             ->first();
 
-        $suppliers = \Stock\Model\Suppliers::widthStop()->get()->keyBy('id');
+        $suppliers = \Skdepot\Model\Suppliers::widthStop()->get()->keyBy('id');
 
         foreach ($reports as $report)
         {
@@ -802,7 +802,7 @@ class StockReportInventoryAdminAjax
 
     static function supplierDataDetail($id, $args)
     {
-        $purchases = DB::table('inventories_purchase_orders')
+        $purchases = DB::table('skdepot_purchase_orders')
             ->select(
                 'id',
                 'code',
@@ -812,11 +812,11 @@ class StockReportInventoryAdminAjax
                 DB::raw('"Nhập hàng" as type') // Thêm cột type để phân biệt
             )
             ->where('supplier_id', $id)
-            ->where('status', \Stock\Status\PurchaseOrder::success->value)
+            ->where('status', \Skdepot\Status\PurchaseOrder::success->value)
             ->whereBetween('purchase_date', [$args['timeStart'], $args['timeEnd']]);
 
         // Lấy danh sách phiếu trả hàng
-        $returns = DB::table('inventories_purchase_returns')
+        $returns = DB::table('skdepot_purchase_returns')
             ->select(
                 'id',
                 'code',
@@ -826,7 +826,7 @@ class StockReportInventoryAdminAjax
                 DB::raw('"Trả hàng" as type')
             )
             ->where('supplier_id', $id)
-            ->where('status', \Stock\Status\PurchaseReturn::success->value)
+            ->where('status', \Skdepot\Status\PurchaseReturn::success->value)
             ->whereBetween('purchase_date', [$args['timeStart'], $args['timeEnd']]);
 
         // Kết hợp 2 query sử dụng union và sắp xếp theo ngày
@@ -877,7 +877,7 @@ class StockReportInventoryAdminAjax
 
     static function productData($args): array
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $select = [
             DB::raw('SUM(cle_pod.quantity) as quantity'),
@@ -887,18 +887,18 @@ class StockReportInventoryAdminAjax
             DB::raw('SUM(cle_pod.quantity*cle_pod.price) - COALESCE(SUM(cle_prd.quantity*cle_prd.price), 0) as netValue')
         ];
 
-        $reports = DB::table('inventories_purchase_orders as po')
-            ->where('po.status', '=', \Stock\Status\PurchaseOrder::success->value)
+        $reports = DB::table('skdepot_purchase_orders as po')
+            ->where('po.status', '=', \Skdepot\Status\PurchaseOrder::success->value)
             ->where('po.branch_id', $branch->id)
             ->whereBetween('po.purchase_date', [$args['timeStart'], $args['timeEnd']])
-            ->join('inventories_purchase_orders_details as pod', 'po.id', '=', 'pod.purchase_order_id')
-            ->leftJoin('inventories_purchase_returns as pr', function ($join) use ($branch, $args) {
+            ->join('skdepot_purchase_orders_details as pod', 'po.id', '=', 'pod.purchase_order_id')
+            ->leftJoin('skdepot_purchase_returns as pr', function ($join) use ($branch, $args) {
                 $join->on('po.supplier_id', '=', 'pr.supplier_id')
-                    ->where('pr.status', '=', \Stock\Status\PurchaseReturn::success->value)
+                    ->where('pr.status', '=', \Skdepot\Status\PurchaseReturn::success->value)
                     ->where('pr.branch_id', $branch->id)
                     ->whereBetween('pr.purchase_date', [$args['timeStart'], $args['timeEnd']]);
             })
-            ->leftJoin('inventories_purchase_returns_details as prd', 'pr.id', '=', 'prd.purchase_return_id')
+            ->leftJoin('skdepot_purchase_returns_details as prd', 'pr.id', '=', 'prd.purchase_return_id')
             ->select([
                 'pod.product_id as id',
                 'pod.product_code as code',
@@ -908,18 +908,18 @@ class StockReportInventoryAdminAjax
             ->groupBy('pod.product_id', 'pod.product_code')
             ->get();
 
-        $totals = DB::table('inventories_purchase_orders as po')
-            ->where('po.status', '=', \Stock\Status\PurchaseOrder::success->value)
+        $totals = DB::table('skdepot_purchase_orders as po')
+            ->where('po.status', '=', \Skdepot\Status\PurchaseOrder::success->value)
             ->where('po.branch_id', $branch->id)
             ->whereBetween('po.purchase_date', [$args['timeStart'], $args['timeEnd']])
-            ->join('inventories_purchase_orders_details as pod', 'po.id', '=', 'pod.purchase_order_id')
-            ->leftJoin('inventories_purchase_returns as pr', function ($join) use ($branch, $args) {
+            ->join('skdepot_purchase_orders_details as pod', 'po.id', '=', 'pod.purchase_order_id')
+            ->leftJoin('skdepot_purchase_returns as pr', function ($join) use ($branch, $args) {
                 $join->on('po.supplier_id', '=', 'pr.supplier_id')
-                    ->where('pr.status', '=', \Stock\Status\PurchaseReturn::success->value)
+                    ->where('pr.status', '=', \Skdepot\Status\PurchaseReturn::success->value)
                     ->where('pr.branch_id', $branch->id)
                     ->whereBetween('pr.purchase_date', [$args['timeStart'], $args['timeEnd']]);
             })
-            ->leftJoin('inventories_purchase_returns_details as prd', 'pr.id', '=', 'prd.purchase_return_id')
+            ->leftJoin('skdepot_purchase_returns_details as prd', 'pr.id', '=', 'prd.purchase_return_id')
             ->select($select)
             ->first();
 
@@ -981,9 +981,9 @@ class StockReportInventoryAdminAjax
     {
         [$reports, $totals] = static::supplierData($args);
 
-        $columns = \Stock\ReportColumns::inventorySupplier();
+        $columns = \Skdepot\ReportColumns::inventorySupplier();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $sheet = $export->addSheet('BaoCaoNhapHang', 'BaoCaoNhapHang');
 
@@ -996,7 +996,7 @@ class StockReportInventoryAdminAjax
 
         $sheet->setData([$totals, ...$reports]);
 
-        $columns = \Stock\ReportColumns::inventorySupplierChild();
+        $columns = \Skdepot\ReportColumns::inventorySupplierChild();
 
         foreach ($reports as $report)
         {
@@ -1023,7 +1023,7 @@ class StockReportInventoryAdminAjax
     {
         [$reports, $totals] = static::productData($args);
 
-        $columns = \Stock\ReportColumns::inventoryProduct();
+        $columns = \Skdepot\ReportColumns::inventoryProduct();
 
         $path = static::exportWithColumns($columns, [
             'columnsData'   => [$totals, ...$reports],

@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
 use Branch;
@@ -9,12 +9,13 @@ use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class DamageItem extends SKDObjectTable
 {
-    protected string $module = 'inventories_damage_items';
+    protected string $module = 'damage_items';
 
-    protected mixed $model = \Stock\Model\DamageItem::class;
+    protected mixed $model = \Skdepot\Model\DamageItem::class;
 
     function getColumns() {
 
@@ -56,10 +57,10 @@ class DamageItem extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\DamageItem::tryFrom($status)->badge();
+                    return \Skdepot\Status\DamageItem::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\DamageItem::tryFrom($status)->label();
+                    return \Skdepot\Status\DamageItem::tryFrom($status)->label();
                 })
         ];
 
@@ -78,7 +79,7 @@ class DamageItem extends SKDObjectTable
             'branch_name' => $item->branch_name,
             'user_created_name' => $item->user_created_name,
             'damage_name' => $item->damage_name,
-            'status' => Admin::badge(\Stock\Status\DamageItem::tryFrom($item->status)->badge(), \Stock\Status\DamageItem::tryFrom($item->status)->label()),
+            'status' => Admin::badge(\Skdepot\Status\DamageItem::tryFrom($item->status)->badge(), \Skdepot\Status\DamageItem::tryFrom($item->status)->label()),
             'subtotal' => \Prd::price($item->subtotal),
         ];
 
@@ -90,11 +91,11 @@ class DamageItem extends SKDObjectTable
             'class' => 'js_damage_items_btn_detail'
         ]);
 
-        if($item->status === \Stock\Status\DamageItem::draft->value)
+        if($item->status === \Skdepot\Status\DamageItem::draft->value)
         {
             $buttons[] = Admin::button('blue', [
                 'icon' => Admin::icon('edit'),
-                'href' => \Url::route('admin.stock.damageItems', ['id' => $item->id]),
+                'href' => \Url::route('admin.damage.items', ['id' => $item->id]),
                 'tooltip' => 'Cập nhật',
             ]);
 
@@ -102,8 +103,8 @@ class DamageItem extends SKDObjectTable
                 'icon'      => Admin::icon('close'),
                 'tooltip'   => 'Đồng ý',
                 'id'        => $item->id,
-                'model'     =>  \Stock\Model\DamageItem::class,
-                'ajax'      => 'StockDamageItemsAdminAjax::cancel',
+                'model'     =>  \Skdepot\Model\DamageItem::class,
+                'ajax'      => 'DamageItemsAdminAjax::cancel',
                 'heading'   => 'Đồng ý',
                 'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu xuất hàng này?',
                 'attr' => [
@@ -112,7 +113,7 @@ class DamageItem extends SKDObjectTable
             ]);
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/damage-items/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/damage-items/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -133,11 +134,30 @@ class DamageItem extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\DamageItem::options()->pluck('label', 'value')
+        $form->select2('status', \Skdepot\Status\DamageItem::options()->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], request()->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.damage.items.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -174,7 +194,7 @@ class DamageItem extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

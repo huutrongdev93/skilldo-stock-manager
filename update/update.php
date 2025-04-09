@@ -1,5 +1,5 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 
 use Option;
 use Plugin;
@@ -16,7 +16,7 @@ class Updater
 
     public function __construct()
     {
-        $this->version = Plugin::getInfo(STOCK_NAME)['version'];
+        $this->version = Plugin::getInfo(SKDEPOT_NAME)['version'];
 
         $this->currentVersion = Option::get('stock_manager_version');
 
@@ -34,7 +34,7 @@ class Updater
 
         $className = 'UpdateVersion'.str_replace('.', '', $version);
 
-        if(!class_exists('Stock\\Update\\'.$className))
+        if(!class_exists('Skdepot\\Update\\'.$className))
         {
             if(file_exists(__DIR__.'/'. $version.'/UpdateVersion.php'))
             {
@@ -42,9 +42,9 @@ class Updater
             }
         }
 
-        if(class_exists('Stock\\Update\\'.$className))
+        if(class_exists('Skdepot\\Update\\'.$className))
         {
-            $className = 'Stock\\Update\\'.$className;
+            $className = 'Skdepot\\Update\\'.$className;
 
             $this->update = new $className();
         }
@@ -71,7 +71,17 @@ class Updater
         }
         else
         {
-            Plugin::setCheckUpdate(STOCK_NAME, $this->version);
+            Plugin::setCheckUpdate(SKDEPOT_NAME, $this->version);
         }
+    }
+}
+
+if(!request()->ajax())
+{
+    if(Plugin::getCheckUpdate(SKDEPOT_NAME) !== SKDEPOT_VERSION)
+    {
+        $updater = new \Skdepot\Updater();
+
+        $updater->checkForUpdates();
     }
 }

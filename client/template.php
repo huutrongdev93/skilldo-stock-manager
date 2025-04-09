@@ -8,13 +8,13 @@ Class ProductDetailInventory {
 
     static function productDetailData($object): void
     {
-        $branch = \Stock\Helper::getBranchWebsite();
+        $branch = \Skdepot\Helper::getBranchWebsite();
 
         if(have_posts($object) && have_posts($branch))
         {
             if($object->hasVariation == 0)
             {
-                $inventory = \Stock\Model\Inventory::where('branch_id', $branch->id)
+                $inventory = \Skdepot\Model\Inventory::where('branch_id', $branch->id)
                     ->where('product_id', $object->id)
                     ->first();
 
@@ -22,14 +22,14 @@ Class ProductDetailInventory {
 
                 $object->stock_status = $inventory->status;
 
-                if($object->stock_status == \Stock\Status\Inventory::out->value)
+                if($object->stock_status == \Skdepot\Status\Inventory::out->value)
                 {
                     $object->isActivePurchase = false;
                 }
             }
             else
             {
-                $inventories = \Stock\Model\Inventory::where('branch_id', $branch->id)
+                $inventories = \Skdepot\Model\Inventory::where('branch_id', $branch->id)
                     ->where('parent_id', $object->id)
                     ->get()
                     ->keyBy('product_id');
@@ -44,7 +44,7 @@ Class ProductDetailInventory {
 
                     $variation->stock_status = $inventory->status;
 
-                    if($variation->stock_status == \Stock\Status\Inventory::out->value)
+                    if($variation->stock_status == \Skdepot\Status\Inventory::out->value)
                     {
                         foreach($object->variationAttributes as $variationAttributeKey => $variationAttributeValue)
                         {
@@ -84,7 +84,7 @@ Class ProductDetailInventory {
 
     static function status($object): void
     {
-        Plugin::view('stock-manager', 'status', [
+        Plugin::view(SKDEPOT_NAME, 'status', [
             'object' => $object
         ]);
     }

@@ -19,7 +19,7 @@ class SuppliersPopover extends PopoverHandle
             $args->where('name', 'like', '%' . $this->keyword . '%');
         }
 
-        $objects = \Stock\Model\Suppliers::gets($args);
+        $objects = \Skdepot\Model\Suppliers::gets($args);
 
         if(have_posts($objects)) {
             foreach ($objects as $value) {
@@ -40,7 +40,7 @@ class SuppliersPopover extends PopoverHandle
 
         if(have_posts($listId)) {
 
-            $objects = \Stock\Model\Suppliers::gets(Qr::whereIn('id', $listId)->select('id', 'name', 'image'));
+            $objects = \Skdepot\Model\Suppliers::gets(Qr::whereIn('id', $listId)->select('id', 'name', 'image'));
 
             foreach ($objects as $value) {
 

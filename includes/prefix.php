@@ -1,7 +1,5 @@
 <?php
-namespace Stock;
-
-use Illuminate\Support\Collection;
+namespace Skdepot;
 
 enum Prefix: string
 {

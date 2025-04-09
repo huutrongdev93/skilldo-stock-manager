@@ -1,11 +1,11 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 use SkillDo\DB;
 
 Class StockTake extends \SkillDo\Model\Model
 {
-    protected string $table = 'stock_takes';
+    protected string $table = 'skdepot_stock_takes';
 
     protected static function boot(): void
     {
@@ -17,7 +17,7 @@ Class StockTake extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code(\Stock\Prefix::stockTake->value, $object->id)]);
+                    ->update(['code' => \Skdepot\Helper::code(\Skdepot\Prefix::stockTake->value, $object->id)]);
             }
         });
     }

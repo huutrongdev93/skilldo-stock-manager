@@ -1,11 +1,11 @@
-class DamageItemsIndexHandle extends WarehouseIndexHandle
+class DamageItemsIndexHandle extends SkdepotIndexHandle
 {
     constructor() {
         super({
             module: 'damage_items',
             ajax: {
-                loadProducts: 'StockDamageItemsAdminAjax::loadProductsDetail',
-                print: 'StockDamageItemsAdminAjax::print'
+                loadProducts: 'DamageItemsAdminAjax::loadProductsDetail',
+                print: 'DamageItemsAdminAjax::print'
             }
         });
     }
@@ -29,7 +29,7 @@ class DamageItemsIndexHandle extends WarehouseIndexHandle
     }
 }
 
-class DamageItemsNewHandle extends WarehouseNewHandle
+class DamageItemsNewHandle extends SkdepotNewHandle
 {
     constructor()
     {
@@ -38,12 +38,12 @@ class DamageItemsNewHandle extends WarehouseNewHandle
         super({
             module: module,
             ajax: {
-                loadProducts: 'StockDamageItemsAdminAjax::loadProductsEdit',
-                addDraft: 'StockDamageItemsAdminAjax::addDraft',
-                saveDraft: 'StockDamageItemsAdminAjax::saveDraft',
-                add: 'StockDamageItemsAdminAjax::add',
-                save: 'StockDamageItemsAdminAjax::save',
-                import: 'StockDamageItemsAdminAjax::import',
+                loadProducts: 'DamageItemsAdminAjax::loadProductsEdit',
+                addDraft: 'DamageItemsAdminAjax::addDraft',
+                saveDraft: 'DamageItemsAdminAjax::saveDraft',
+                add: 'DamageItemsAdminAjax::add',
+                save: 'DamageItemsAdminAjax::save',
+                import: 'DamageItemsAdminAjax::import',
             }
         });
 

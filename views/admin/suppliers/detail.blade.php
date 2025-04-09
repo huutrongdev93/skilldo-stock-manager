@@ -63,20 +63,20 @@
 {!! Admin::tabs([
     'purchaseOrder' => [
         'label'   => 'Lịch sử nhập hàng', //Tiêu đề của tab
-        'content' => Plugin::partial(STOCK_NAME, 'admin/suppliers/detail/tab-purchase-order', ['table' => $tablePurchaseOrder]), //Nội dung của tab
+        'content' => Plugin::partial(SKDEPOT_NAME, 'admin/suppliers/detail/tab-purchase-order', ['table' => $tablePurchaseOrder]), //Nội dung của tab
     ],
     'purchaseReturn' => [
         'label'   => 'Lịch sử trả hàng',
-        'content' => Plugin::partial(STOCK_NAME, 'admin/suppliers/detail/tab-purchase-order', ['table' => $tablePurchaseReturn])
+        'content' => Plugin::partial(SKDEPOT_NAME, 'admin/suppliers/detail/tab-purchase-order', ['table' => $tablePurchaseReturn])
     ],
     'debt' => [
         'label'   => 'Nợ cần trả NCC',
-        'content' => Plugin::partial(STOCK_NAME, 'admin/suppliers/detail/tab-debt', ['table' => $tableDebt, 'object' => $object])
+        'content' => Plugin::partial(SKDEPOT_NAME, 'admin/suppliers/detail/tab-debt', ['table' => $tableDebt, 'object' => $object])
     ],
 ], 'debt', ['class' => 'mb-0']) !!}
 
 
-{!! Plugin::partial(STOCK_NAME, 'admin/suppliers/detail/modal-update-balance') !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/suppliers/detail/modal-update-balance') !!}
 
 <style>
     .nav-tabs.nav-tabs-horizontal {

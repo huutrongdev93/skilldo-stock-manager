@@ -1,12 +1,10 @@
 <?php
 
-namespace Stock\Model;
-
-use SkillDo\DB;
+namespace Skdepot\Model;
 
 class Debt extends \Skilldo\Model\Model
 {
-    protected string $table = 'debt';
+    protected string $table = 'suppliers_debt';
 
     protected string $primaryKey = 'id';
 }

@@ -1,5 +1,5 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 use Qr;
 use SkillDo\DB;
 use SkillDo\Model\Model;
@@ -64,7 +64,7 @@ Class Suppliers extends Model {
             {
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
-                    ->update(['code' => \Stock\Helper::code('NCC', $object->id)]);
+                    ->update(['code' => \Skdepot\Helper::code('NCC', $object->id)]);
             }
         });
 

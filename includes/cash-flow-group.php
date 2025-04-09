@@ -1,5 +1,5 @@
 <?php
-namespace Stock\CashFlowGroup;
+namespace Skdepot\CashFlowGroup;
 
 enum Transaction: string
 {

@@ -13,4 +13,4 @@
     </div>
 </div>
 
-{!! Plugin::partial(STOCK_NAME, 'admin/suppliers/detail/modal-debt-payment') !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/suppliers/detail/modal-debt-payment') !!}

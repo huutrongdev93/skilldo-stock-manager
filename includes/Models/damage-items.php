@@ -1,11 +1,11 @@
 <?php
-namespace Stock\Model;
+namespace Skdepot\Model;
 
 use SkillDo\DB;
 
 Class DamageItem extends \SkillDo\Model\Model
 {
-    protected string $table = 'inventories_damage_items';
+    protected string $table = 'skdepot_damage_items';
 
     protected static function boot(): void
     {
@@ -17,7 +17,7 @@ Class DamageItem extends \SkillDo\Model\Model
                 DB::table($object->getTable())
                     ->where($object->getPrimaryKey(), $object->id)
                     ->where('code', '')
-                    ->update(['code' => \Stock\Helper::code('XH', $object->id)]);
+                    ->update(['code' => \Skdepot\Helper::code('XH', $object->id)]);
             }
         });
     }

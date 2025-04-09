@@ -16,7 +16,7 @@ class StockTakeAdminAjax
 
         $id  = $request->input('id');
 
-        $query = Qr::where('stock_take_details.stock_take_id', $id);
+        $query = Qr::where('skdepot_stock_take_details.stock_take_id', $id);
 
         $selected = [
             'product_id',
@@ -32,14 +32,14 @@ class StockTakeAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\StockTakeDetail::count(clone $query);
+        $total = \Skdepot\Model\StockTakeDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\StockTakeDetail::gets($query);
+        $objects = \Skdepot\Model\StockTakeDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -47,7 +47,7 @@ class StockTakeAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\StockTake\ProductDetail([
+        $table = new \Skdepot\Table\StockTake\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -90,7 +90,7 @@ class StockTakeAdminAjax
 
         $query = Qr::select($selected);
 
-        $query->leftJoin('stock_take_details as po', function ($join) use ($id) {
+        $query->leftJoin('skdepot_stock_take_details as po', function ($join) use ($id) {
             $join->on('po.product_id', '=', 'products.id');
         });
 
@@ -105,7 +105,7 @@ class StockTakeAdminAjax
 
         if(have_posts($products))
         {
-            $inventories = \Stock\Model\Inventory::whereIn('product_id', $products
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $products
                 ->pluck('id')
                 ->toArray())
                 ->select('id', 'product_id', 'stock', 'reserved')
@@ -159,7 +159,7 @@ class StockTakeAdminAjax
         {
             DB::beginTransaction();
 
-            $stockTakeId = \Stock\Model\StockTake::create($stockTake);
+            $stockTakeId = \Skdepot\Model\StockTake::create($stockTake);
 
             if(empty($stockTakeId) || is_skd_error($stockTakeId))
             {
@@ -171,7 +171,7 @@ class StockTakeAdminAjax
                 $detail['stock_take_id'] = $stockTakeId;
             }
 
-            DB::table('stock_take_details')->insert($stockTakeDetails);
+            \Skdepot\Model\StockTakeDetail::inserts($stockTakeDetails);
 
             DB::commit();
 
@@ -195,14 +195,14 @@ class StockTakeAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu kiểm kho không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\StockTake::success->value || $object->status === \Stock\Status\StockTake::cancel->value)
+        if($object->status === \Skdepot\Status\StockTake::success->value || $object->status === \Skdepot\Status\StockTake::cancel->value)
         {
             response()->error('Trạng thái phiếu kiểm kho không cho phép chỉnh sữa');
         }
@@ -214,7 +214,7 @@ class StockTakeAdminAjax
             $productsDetail
         ] = static::dataDraft($request, $object);
 
-        \Stock\Model\StockTake::whereKey($id)->update($stockTake);
+        \Skdepot\Model\StockTake::whereKey($id)->update($stockTake);
 
         //Lấy danh sách chi tiết phiếu kiểm kho sẽ cập nhật
         $stockTakeDetailsUp = [];
@@ -241,19 +241,19 @@ class StockTakeAdminAjax
             //Thêm mới
             if(!empty($stockTakeDetails))
             {
-                DB::table('stock_take_details')->insert($stockTakeDetails);
+                \Skdepot\Model\StockTakeDetail::inserts($stockTakeDetails);
             }
 
             //Cập nhật
             if(!empty($stockTakeDetailsUp))
             {
-                \Stock\Model\StockTakeDetail::updateBatch($stockTakeDetailsUp, 'stock_take_detail_id');
+                \Skdepot\Model\StockTakeDetail::updateBatch($stockTakeDetailsUp, 'stock_take_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\StockTakeDetail::whereKey($productsDetail->pluck('stock_take_detail_id')->toArray())->delete();
+                \Skdepot\Model\StockTakeDetail::whereKey($productsDetail->pluck('stock_take_detail_id')->toArray())->delete();
             }
 
             DB::commit();
@@ -293,7 +293,7 @@ class StockTakeAdminAjax
         }
 
         $stockTake = [
-            'status' => \Stock\Status\StockTake::draft->value,
+            'status' => \Skdepot\Status\StockTake::draft->value,
             'total_actual_quantity' => 0,
             'total_actual_price' => 0,
             'total_increase_quantity' => 0,
@@ -305,7 +305,7 @@ class StockTakeAdminAjax
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -337,7 +337,7 @@ class StockTakeAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\StockTake::where('code', $code)->count();
+                    $count = \Skdepot\Model\StockTake::where('code', $code)->count();
                 }
                 else
                 {
@@ -346,7 +346,7 @@ class StockTakeAdminAjax
             }
             else
             {
-                $count = \Stock\Model\StockTake::where('code', $code)->count();
+                $count = \Skdepot\Model\StockTake::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -372,7 +372,7 @@ class StockTakeAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\StockTakeDetail::where('stock_take_id', $object->id)
+            $productsDetail = \Skdepot\Model\StockTakeDetail::where('stock_take_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -408,7 +408,7 @@ class StockTakeAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\StockTake::success->value)
+                if ($productDetail->status === \Skdepot\Status\StockTake::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -491,7 +491,7 @@ class StockTakeAdminAjax
             $inventoriesUpdate[] = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value
             ];
 
             $inventoriesHistories[] = [
@@ -517,7 +517,7 @@ class StockTakeAdminAjax
             DB::beginTransaction();
 
             //Tạo phiếu kiểm kho hàng
-            $stockTakeId = \Stock\Model\StockTake::create($stockTake);
+            $stockTakeId = \Skdepot\Model\StockTake::create($stockTake);
 
             if(empty($stockTakeId) || is_skd_error($stockTakeId))
             {
@@ -526,7 +526,7 @@ class StockTakeAdminAjax
 
             if(empty($stockTake['code']))
             {
-                $stockTake['code'] = \Stock\Helper::code(\Stock\Prefix::stockTake->value, $stockTakeId);
+                $stockTake['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::stockTake->value, $stockTakeId);
             }
 
             // Cập nhật mã phiếu vào lịch sử kho
@@ -535,7 +535,7 @@ class StockTakeAdminAjax
                 $history['target_id'] = $stockTakeId;
                 $history['target_code'] = $stockTake['code'];
                 $history['target_name'] = 'Kiểm hàng';
-                $history['target_type'] = \Stock\Prefix::stockTake->value;
+                $history['target_type'] = \Skdepot\Prefix::stockTake->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -546,13 +546,13 @@ class StockTakeAdminAjax
                 unset($detail['stock_take_detail_id']);
             }
 
-            DB::table('stock_take_details')->insert($stockTakeDetails);
+            \Skdepot\Model\StockTakeDetail::inserts($stockTakeDetails);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -576,14 +576,14 @@ class StockTakeAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu kiểm kho đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status !== \Stock\Status\StockTake::draft->value)
+        if($object->status !== \Skdepot\Status\StockTake::draft->value)
         {
             response()->error('Trạng thái phiếu kiểm kho này đã không thể cập nhật');
         }
@@ -621,7 +621,7 @@ class StockTakeAdminAjax
                 $inventoriesUpdate[] = [
                     'id'     => $inventory->id,
                     'stock'  => $newStock,
-                    'status' => ($newStock == 0) ? \Stock\Status\Inventory::out->value : \Stock\Status\Inventory::in->value
+                    'status' => ($newStock == 0) ? \Skdepot\Status\Inventory::out->value : \Skdepot\Status\Inventory::in->value
                 ];
 
                 $inventoriesHistories[] = [
@@ -636,7 +636,7 @@ class StockTakeAdminAjax
                     //Đối tượng
                     'target_id'   => $object->id ?? 0,
                     'target_code' => $object->code ?? '',
-                    'target_type' => \Stock\Prefix::stockTake->value,
+                    'target_type' => \Skdepot\Prefix::stockTake->value,
                     'target_name' => 'Kiểm hàng',
                     //Thông tin
                     'cost'          => $detail['price'],
@@ -669,31 +669,31 @@ class StockTakeAdminAjax
             DB::beginTransaction();
 
             //Cập nhật phiếu kiểm kho hàng
-            \Stock\Model\StockTake::whereKey($id)->update($stockTake);
+            \Skdepot\Model\StockTake::whereKey($id)->update($stockTake);
 
             //Thêm mới
             if(!empty($stockTakeDetails))
             {
-                DB::table('stock_take_details')->insert($stockTakeDetails);
+                \Skdepot\Model\StockTakeDetail::inserts($stockTakeDetails);
             }
 
             //Cập nhật
             if(!empty($stockTakeDetailsUp))
             {
-                \Stock\Model\StockTakeDetail::updateBatch($stockTakeDetailsUp, 'stock_take_detail_id');
+                \Skdepot\Model\StockTakeDetail::updateBatch($stockTakeDetailsUp, 'stock_take_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\StockTakeDetail::whereKey($productsDetail->pluck('stock_take_detail_id')->toArray())->delete();
+                \Skdepot\Model\StockTakeDetail::whereKey($productsDetail->pluck('stock_take_detail_id')->toArray())->delete();
             }
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             DB::commit();
 
@@ -747,7 +747,7 @@ class StockTakeAdminAjax
         }
 
         $stockTake = [
-            'status'        => \Stock\Status\StockTake::success->value,
+            'status'        => \Skdepot\Status\StockTake::success->value,
             'balance_date' => $time,
             'total_actual_quantity' => 0,
             'total_actual_price' => 0,
@@ -760,7 +760,7 @@ class StockTakeAdminAjax
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -795,7 +795,7 @@ class StockTakeAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\StockTake::where('code', $code)->count();
+                    $count = \Skdepot\Model\StockTake::where('code', $code)->count();
                 }
                 else
                 {
@@ -804,7 +804,7 @@ class StockTakeAdminAjax
             }
             else
             {
-                $count = \Stock\Model\StockTake::where('code', $code)->count();
+                $count = \Skdepot\Model\StockTake::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -827,7 +827,7 @@ class StockTakeAdminAjax
 
         $productsId = array_unique($productsId);
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])->whereIn('product_id', $productsId)
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
 
@@ -846,7 +846,7 @@ class StockTakeAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\StockTakeDetail::where('stock_take_id', $object->id)
+            $productsDetail = \Skdepot\Model\StockTakeDetail::where('stock_take_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -907,7 +907,7 @@ class StockTakeAdminAjax
                 $productDetail = $productsDetail[$productId];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\StockTake::success->value)
+                if ($productDetail->status === \Skdepot\Status\StockTake::success->value)
                 {
                     unset($productsDetail[$productId]);
                     continue;
@@ -972,34 +972,34 @@ class StockTakeAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu kiểm kho đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\StockTake::cancel->value)
+        if($object->status === \Skdepot\Status\StockTake::cancel->value)
         {
             response()->error('phiếu kiểm kho này đã được hủy');
         }
-        if($object->status === \Stock\Status\StockTake::success->value)
+        if($object->status === \Skdepot\Status\StockTake::success->value)
         {
             response()->error('phiếu kiểm kho này đã hoàn thành không thể hủy');
         }
 
-        \Stock\Model\StockTakeDetail::where('stock_take_id', $object->id)
-            ->where('status', \Stock\Status\StockTake::draft->value)
+        \Skdepot\Model\StockTakeDetail::where('stock_take_id', $object->id)
+            ->where('status', \Skdepot\Status\StockTake::draft->value)
             ->update([
-                'status' => \Stock\Status\StockTake::cancel->value,
+                'status' => \Skdepot\Status\StockTake::cancel->value,
             ]);
 
-        \Stock\Model\StockTake::whereKey($object->id)->update([
-            'status' => \Stock\Status\StockTake::cancel->value,
+        \Skdepot\Model\StockTake::whereKey($object->id)->update([
+            'status' => \Skdepot\Status\StockTake::cancel->value,
         ]);
 
         response()->success('Hủy phiếu kiểm kho hàng thành công', [
-            'status' => Admin::badge(\Stock\Status\StockTake::cancel->badge(), 'Đã hủy')
+            'status' => Admin::badge(\Skdepot\Status\StockTake::cancel->badge(), 'Đã hủy')
         ]);
     }
 
@@ -1016,7 +1016,7 @@ class StockTakeAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if(empty($object))
         {
@@ -1031,7 +1031,7 @@ class StockTakeAdminAjax
         $object->total_reduced_price = Prd::price($object->total_reduced_price);
         $object->total_adjustment_price = Prd::price($object->total_adjustment_price);
 
-        $products = \Stock\Model\StockTakeDetail::where('stock_take_id', $object->id)->get();
+        $products = \Skdepot\Model\StockTakeDetail::where('stock_take_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
@@ -1103,7 +1103,7 @@ class StockTakeAdminAjax
             }
         }
 
-        $objects = \Stock\Model\StockTake::gets($query);
+        $objects = \Skdepot\Model\StockTake::gets($query);
 
         if(empty($objects))
         {
@@ -1116,7 +1116,7 @@ class StockTakeAdminAjax
             $object->balance_date = date('d/m/Y H:s', $object->balance_date);
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã kiểm kho', function($item) {
             return $item->code ?? '';
@@ -1164,16 +1164,16 @@ class StockTakeAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\StockTake::find($id);
+        $object = \Skdepot\Model\StockTake::find($id);
 
         if(empty($object))
         {
             response()->error('phiếu kiểm kho đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\StockTakeDetail::where('stock_take_id', $object->id)->get();
+        $products = \Skdepot\Model\StockTakeDetail::where('stock_take_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';
@@ -1223,7 +1223,7 @@ class StockTakeAdminAjax
                 response()->error($validate->errors());
             }
 
-            $myPath = STOCK_NAME.'/assets/imports/stock-take';
+            $myPath = SKDEPOT_NAME.'/assets/imports/stock-take';
 
             $path = $request->file('file')->store($myPath, ['disk' => 'plugin']);
 
@@ -1296,7 +1296,7 @@ class StockTakeAdminAjax
                 $rowDatas[] = $rowData;
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',

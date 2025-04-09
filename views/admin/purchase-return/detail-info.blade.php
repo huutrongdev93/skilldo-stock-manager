@@ -12,7 +12,7 @@
                 <div class="js_detail_content"></div>
                 <hr />
                 <div id="js_purchase_return_detail_products">
-                    {!! (new \Stock\Table\PurchaseReturn\ProductDetail())->display() !!}
+                    {!! (new \Skdepot\Table\PurchaseReturn\ProductDetail())->display() !!}
                 </div>
                 <div class="pagination mt-3"></div>
             </div>

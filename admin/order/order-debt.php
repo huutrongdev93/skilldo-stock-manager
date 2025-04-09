@@ -26,7 +26,7 @@ Class StockOrderStatusDebt {
                     $customer = User::find($order->customer_id);
 
                     //Cộng công nợ khi đơn hàng được xác nhận
-                    $idUserDebt = \Stock\Model\UserDebt::create([
+                    $idUserDebt = \Skdepot\Model\UserDebt::create([
                         'before'            => $customer->debt,
                         'amount'            => $order->total,
                         'balance'           => $customer->debt + $order->total,
@@ -67,8 +67,8 @@ Class StockOrderStatusDebt {
                         $cashFlow = [
                             'branch_id'     => $order->branch_id,
                             'branch_name'   => $order->branch_name,
-                            'group_id'      => \Stock\CashFlowGroup\Transaction::orderReturn->id(),
-                            'group_name'    => \Stock\CashFlowGroup\Transaction::orderReturn->label(),
+                            'group_id'      => \Skdepot\CashFlowGroup\Transaction::orderReturn->id(),
+                            'group_name'    => \Skdepot\CashFlowGroup\Transaction::orderReturn->label(),
                             'user_id'       => Auth::user()->id,
                             'user_name'     => Auth::user()->firstname.' '.Auth::user()->lastname,
                             'partner_id'    => $customer->id,
@@ -85,10 +85,10 @@ Class StockOrderStatusDebt {
                             'target_type'   => 'Order',
                             'time'          => time(),
                             'note'          => 'Phiếu chi được tạo tự động khi đơn hàng '.$order->code.' bị hủy',
-                            'status'        =>  \Stock\Status\CashFlow::success->value,
+                            'status'        =>  \Skdepot\Status\CashFlow::success->value,
                         ];
 
-                        $idCashFlow = \Stock\Model\CashFlow::create($cashFlow);
+                        $idCashFlow = \Skdepot\Model\CashFlow::create($cashFlow);
 
                         if(!empty($idCashFlow) && !is_skd_error($idCashFlow))
                         {
@@ -98,7 +98,7 @@ Class StockOrderStatusDebt {
                     //Nếu đơn hàng chưa thanh toán thì trừ công nợ
                     else
                     {
-                        \Stock\Model\UserDebt::create([
+                        \Skdepot\Model\UserDebt::create([
                             'before'            => $customer->debt,
                             'amount'            => $order->total*-1,
                             'balance'           => $customer->debt - $order->total,

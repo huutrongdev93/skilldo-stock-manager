@@ -15,8 +15,8 @@
     </div>
 </div>
 
-{!! Plugin::partial(STOCK_NAME, 'admin/customer/detail/modal-debt-payment') !!}
-{!! Plugin::partial(STOCK_NAME, 'admin/customer/detail/modal-update-balance') !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/customer/detail/modal-debt-payment') !!}
+{!! Plugin::partial(SKDEPOT_NAME, 'admin/customer/detail/modal-update-balance') !!}
 
 <script>
     $(function() {

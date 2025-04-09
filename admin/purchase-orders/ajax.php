@@ -2,13 +2,13 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-class StockPurchaseOrderAdminAjax
+class PurchaseOrderAdminAjax
 {
     static function detail(\SkillDo\Http\Request $request): void
     {
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
@@ -16,7 +16,7 @@ class StockPurchaseOrderAdminAjax
         }
         $object->purchase_date = !empty($object->purchase_date) ? $object->purchase_date : strtotime($object->created);
         $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
-        $object->status         = Admin::badge(\Stock\Status\PurchaseOrder::tryFrom($object->status)->badge(), \Stock\Status\PurchaseOrder::tryFrom($object->status)->label());
+        $object->status         = Admin::badge(\Skdepot\Status\PurchaseOrder::tryFrom($object->status)->badge(), \Skdepot\Status\PurchaseOrder::tryFrom($object->status)->label());
         $object->payment        = \Prd::price($object->subtotal - $object->total_payment - $object->discount);
         $object->subtotal      = \Prd::price($object->subtotal);
         $object->discount       = \Prd::price($object->discount);
@@ -39,7 +39,7 @@ class StockPurchaseOrderAdminAjax
 
         $id  = $request->input('id');
 
-        $query = Qr::where('inventories_purchase_orders_details.purchase_order_id', $id);
+        $query = Qr::where('skdepot_purchase_orders_details.purchase_order_id', $id);
 
         $selected = [
             'product_id',
@@ -53,14 +53,14 @@ class StockPurchaseOrderAdminAjax
         $query->select($selected);
 
         # [Total decoders]
-        $total = \Stock\Model\PurchaseOrderDetail::count(clone $query);
+        $total = \Skdepot\Model\PurchaseOrderDetail::count(clone $query);
 
         # [List data]
         $query
             ->limit($limit)
             ->offset(($page - 1)*$limit);
 
-        $objects = \Stock\Model\PurchaseOrderDetail::gets($query);
+        $objects = \Skdepot\Model\PurchaseOrderDetail::gets($query);
 
         foreach ($objects as $object)
         {
@@ -68,7 +68,7 @@ class StockPurchaseOrderAdminAjax
         }
 
         # [created table]
-        $table = new \Stock\Table\PurchaseOrder\ProductDetail([
+        $table = new \Skdepot\Table\PurchaseOrder\ProductDetail([
             'items' => $objects,
         ]);
 
@@ -98,10 +98,10 @@ class StockPurchaseOrderAdminAjax
     {
         $id   = (int)$request->input('id');
 
-        $cashFlows = \Stock\Model\CashFlow::widthChildren()
+        $cashFlows = \Skdepot\Model\CashFlow::widthChildren()
             ->select('id', 'code', 'target_id', 'target_code', 'parent_id', 'created', 'amount', 'order_value', 'need_pay_value', 'paid_value')
             ->where('target_id', $id)
-            ->where('target_type', \Stock\Prefix::purchaseOrder->value)
+            ->where('target_type', \Skdepot\Prefix::purchaseOrder->value)
             ->get();
 
         response()->success(trans('ajax.load.success'), $cashFlows);
@@ -115,7 +115,7 @@ class StockPurchaseOrderAdminAjax
 
         if($type == 'source-product')
         {
-            $branch  = \Stock\Helper::getBranchCurrent();
+            $branch  = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -153,7 +153,7 @@ class StockPurchaseOrderAdminAjax
 
             $query = Qr::select($selected);
 
-            $query->leftJoin('inventories_purchase_orders_details as po', function ($join) use ($id) {
+            $query->leftJoin('skdepot_purchase_orders_details as po', function ($join) use ($id) {
                 $join->on('po.product_id', '=', 'products.id');
             });
 
@@ -206,7 +206,7 @@ class StockPurchaseOrderAdminAjax
         {
             DB::beginTransaction();
 
-            $purchaseOrderId = \Stock\Model\PurchaseOrder::create($purchaseOrder);
+            $purchaseOrderId = \Skdepot\Model\PurchaseOrder::create($purchaseOrder);
 
             if(empty($purchaseOrderId) || is_skd_error($purchaseOrderId))
             {
@@ -218,7 +218,7 @@ class StockPurchaseOrderAdminAjax
                 $detail['purchase_order_id'] = $purchaseOrderId;
             }
 
-            DB::table('inventories_purchase_orders_details')->insert($purchaseOrderDetails);
+            \Skdepot\Model\PurchaseOrderDetail::inserts($purchaseOrderDetails);
 
             DB::commit();
 
@@ -242,14 +242,14 @@ class StockPurchaseOrderAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
             response()->error('Phiếu nhập đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseOrder::success->value || $object->status === \Stock\Status\PurchaseOrder::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseOrder::success->value || $object->status === \Skdepot\Status\PurchaseOrder::cancel->value)
         {
             response()->error('Trạng thái phiếu nhập không cho phép chỉnh sữa');
         }
@@ -263,7 +263,7 @@ class StockPurchaseOrderAdminAjax
             $productsDetail // Danh sách chi tiết sản phẩm sẽ xóa
         ] = static::purchaseDataDraft($request, $object);
 
-        \Stock\Model\PurchaseOrder::whereKey($id)->update($purchaseOrder);
+        \Skdepot\Model\PurchaseOrder::whereKey($id)->update($purchaseOrder);
 
         //Lấy danh sách chi tiết phiếu nhập sẽ cập nhật
         $purchaseOrderDetailsUp = [];
@@ -290,19 +290,19 @@ class StockPurchaseOrderAdminAjax
             //Thêm mới
             if(!empty($purchaseOrderDetails))
             {
-                DB::table('inventories_purchase_orders_details')->insert($purchaseOrderDetails);
+                \Skdepot\Model\PurchaseOrderDetail::inserts($purchaseOrderDetails);
             }
 
             //Cập nhật
             if(!empty($purchaseOrderDetailsUp))
             {
-                \Stock\Model\PurchaseOrderDetail::updateBatch($purchaseOrderDetailsUp, 'purchase_order_detail_id');
+                \Skdepot\Model\PurchaseOrderDetail::updateBatch($purchaseOrderDetailsUp, 'purchase_order_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\PurchaseOrderDetail::whereKey($productsDetail->pluck('purchase_order_detail_id')->toArray())->delete();
+                \Skdepot\Model\PurchaseOrderDetail::whereKey($productsDetail->pluck('purchase_order_detail_id')->toArray())->delete();
             }
 
             DB::commit();
@@ -342,14 +342,14 @@ class StockPurchaseOrderAdminAjax
         }
 
         $purchaseOrder = [
-            'status'        => \Stock\Status\PurchaseOrder::draft->value,
+            'status'        => \Skdepot\Status\PurchaseOrder::draft->value,
             'discount'      => (int)$request->input('discount'),
             'total_payment' => (int)$request->input('total_payment'),
             'purchase_date' => $time
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {
@@ -375,7 +375,7 @@ class StockPurchaseOrderAdminAjax
 
         if(!empty($supplierId))
         {
-            $supplier = \Stock\Model\Suppliers::find($supplierId);
+            $supplier = \Skdepot\Model\Suppliers::find($supplierId);
         }
 
         $purchaseOrder['supplier_id']     = $supplier->id ?? 0;
@@ -392,7 +392,7 @@ class StockPurchaseOrderAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\PurchaseOrder::where('code', $code)->count();
+                    $count = \Skdepot\Model\PurchaseOrder::where('code', $code)->count();
                 }
                 else
                 {
@@ -401,7 +401,7 @@ class StockPurchaseOrderAdminAjax
             }
             else
             {
-                $count = \Stock\Model\PurchaseOrder::where('code', $code)->count();
+                $count = \Skdepot\Model\PurchaseOrder::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -437,7 +437,7 @@ class StockPurchaseOrderAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
+            $productsDetail = \Skdepot\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -451,7 +451,7 @@ class StockPurchaseOrderAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\PurchaseOrder::success->value)
+                if ($productDetail->status === \Skdepot\Status\PurchaseOrder::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -529,7 +529,7 @@ class StockPurchaseOrderAdminAjax
             $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => \Stock\Status\Inventory::in->value
+                'status' => \Skdepot\Status\Inventory::in->value
             ];
 
             foreach ($inventoryCosts as $keyCost => $inventoryCost)
@@ -567,11 +567,11 @@ class StockPurchaseOrderAdminAjax
             DB::beginTransaction();
 
             //Tạo phiếu nhập hàng
-            $purchaseOrderId = \Stock\Model\PurchaseOrder::create($purchaseOrder);
+            $purchaseOrderId = \Skdepot\Model\PurchaseOrder::create($purchaseOrder);
 
             if(empty($purchaseOrder['code']))
             {
-                $purchaseOrder['code'] = \Stock\Helper::code(\Stock\Prefix::purchaseOrder->value, $purchaseOrderId);
+                $purchaseOrder['code'] = \Skdepot\Helper::code(\Skdepot\Prefix::purchaseOrder->value, $purchaseOrderId);
             }
 
             if(empty($purchaseOrderId) || is_skd_error($purchaseOrderId))
@@ -585,7 +585,7 @@ class StockPurchaseOrderAdminAjax
                 $history['target_id'] = $purchaseOrderId;
                 $history['target_code'] = $purchaseOrder['code'];
                 $history['target_name'] = 'Nhập hàng';
-                $history['target_type'] = \Stock\Prefix::purchaseOrder->value;
+                $history['target_type'] = \Skdepot\Prefix::purchaseOrder->value;
                 $inventoriesHistories[$key] = $history;
             }
 
@@ -596,18 +596,18 @@ class StockPurchaseOrderAdminAjax
                 unset($detail['purchase_order_detail_id']);
             }
 
-            DB::table('inventories_purchase_orders_details')->insert($purchaseOrderDetails);
+            \Skdepot\Model\PurchaseOrderDetail::inserts($purchaseOrderDetails);
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
             if(have_posts($inventoryCosts))
             {
-                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
+                \Skdepot\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -637,14 +637,14 @@ class StockPurchaseOrderAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
             response()->error('Phiếu nhập đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status !== \Stock\Status\PurchaseOrder::draft->value)
+        if($object->status !== \Skdepot\Status\PurchaseOrder::draft->value)
         {
             response()->error('Trạng thái phiếu nhập này đã không thể cập nhật');
         }
@@ -689,7 +689,7 @@ class StockPurchaseOrderAdminAjax
             $inventoryUpdate = [
                 'id'     => $inventory->id,
                 'stock'  => $newStock,
-                'status' => \Stock\Status\Inventory::in->value
+                'status' => \Skdepot\Status\Inventory::in->value
             ];
 
             foreach ($inventoryCosts as $keyCost => $inventoryCost)
@@ -716,7 +716,7 @@ class StockPurchaseOrderAdminAjax
                 //Đối tượng
                 'target_id'   => $object->id ?? 0,
                 'target_code' => $object->code ?? '',
-                'target_type' => \Stock\Prefix::purchaseOrder->value,
+                'target_type' => \Skdepot\Prefix::purchaseOrder->value,
                 'target_name' => 'Nhập hàng',
 
                 //Thông tin
@@ -749,36 +749,36 @@ class StockPurchaseOrderAdminAjax
             DB::beginTransaction();
 
             //Cập nhật phiếu nhập hàng
-            \Stock\Model\PurchaseOrder::whereKey($id)->update($purchaseOrder);
+            \Skdepot\Model\PurchaseOrder::whereKey($id)->update($purchaseOrder);
 
             //Thêm mới
             if(!empty($purchaseOrderDetails))
             {
-                DB::table('inventories_purchase_orders_details')->insert($purchaseOrderDetails);
+                \Skdepot\Model\PurchaseOrderDetail::inserts($purchaseOrderDetails);
             }
 
             //Cập nhật
             if(!empty($purchaseOrderDetailsUp))
             {
-                \Stock\Model\PurchaseOrderDetail::updateBatch($purchaseOrderDetailsUp, 'purchase_order_detail_id');
+                \Skdepot\Model\PurchaseOrderDetail::updateBatch($purchaseOrderDetailsUp, 'purchase_order_detail_id');
             }
 
             //Xóa
             if(!empty($productsDetail))
             {
-                \Stock\Model\PurchaseOrderDetail::whereKey($productsDetail->pluck('purchase_order_detail_id')->toArray())->delete();
+                \Skdepot\Model\PurchaseOrderDetail::whereKey($productsDetail->pluck('purchase_order_detail_id')->toArray())->delete();
             }
 
             //Cập nhật kho hàng
-            \Stock\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
+            \Skdepot\Model\Inventory::updateBatch($inventoriesUpdate, 'id');
 
             //Cập nhật lịch sử
-            DB::table('inventories_history')->insert($inventoriesHistories);
+            \Skdepot\Model\History::inserts($inventoriesHistories);
 
             //Cập nhật giá vốn trung bình
             if(have_posts($inventoryCosts))
             {
-                \Stock\Model\Inventory::updateBatch($inventoryCosts, 'id');
+                \Skdepot\Model\Inventory::updateBatch($inventoryCosts, 'id');
             }
 
             if(!empty($supplier))
@@ -839,7 +839,7 @@ class StockPurchaseOrderAdminAjax
         }
 
         $purchaseOrder = [
-            'status'        => \Stock\Status\PurchaseOrder::success->value,
+            'status'        => \Skdepot\Status\PurchaseOrder::success->value,
             'discount'      => (int)$request->input('discount'),
             'total_payment' => (int)$request->input('total_payment'),
             'purchase_date' => $time,
@@ -847,7 +847,7 @@ class StockPurchaseOrderAdminAjax
         ];
 
         //Chi nhánh
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(empty($branch))
         {
@@ -875,7 +875,7 @@ class StockPurchaseOrderAdminAjax
 
         if(!empty($supplierId))
         {
-            $supplier = \Stock\Model\Suppliers::find($supplierId);
+            $supplier = \Skdepot\Model\Suppliers::find($supplierId);
         }
 
         $purchaseOrder['supplier_id']     = $supplier->id ?? 0;
@@ -892,7 +892,7 @@ class StockPurchaseOrderAdminAjax
 
                 if($object->code != $code)
                 {
-                    $count = \Stock\Model\PurchaseOrder::where('code', $code)->count();
+                    $count = \Skdepot\Model\PurchaseOrder::where('code', $code)->count();
                 }
                 else
                 {
@@ -901,7 +901,7 @@ class StockPurchaseOrderAdminAjax
             }
             else
             {
-                $count = \Stock\Model\PurchaseOrder::where('code', $code)->count();
+                $count = \Skdepot\Model\PurchaseOrder::where('code', $code)->count();
             }
 
             if($count > 0)
@@ -956,7 +956,7 @@ class StockPurchaseOrderAdminAjax
 
         if($isEdit)
         {
-            $productsDetail = \Stock\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
+            $productsDetail = \Skdepot\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
                 ->get()
                 ->keyBy('product_id');
         }
@@ -986,7 +986,7 @@ class StockPurchaseOrderAdminAjax
                 $productDetail = $productsDetail[$product['id']];
 
                 // Nếu sản phẩm đã hoàn thành thì bỏ qua
-                if ($productDetail->status === \Stock\Status\PurchaseOrder::success->value)
+                if ($productDetail->status === \Skdepot\Status\PurchaseOrder::success->value)
                 {
                     unset($productsDetail[$product['id']]);
                     continue;
@@ -1001,7 +1001,7 @@ class StockPurchaseOrderAdminAjax
                     'product_attribute'         => $product['attribute_label'] ?? '',
                     'quantity'                  => $product['quantity'],
                     'price'                     => $product['price'],
-                    'status'                    => \Stock\Status\PurchaseOrder::success->value,
+                    'status'                    => \Skdepot\Status\PurchaseOrder::success->value,
                     'discount'                  => $discount,
                 ];
 
@@ -1018,12 +1018,12 @@ class StockPurchaseOrderAdminAjax
                 'product_attribute'  => $product['attribute_label'] ?? '',
                 'quantity'           => $product['quantity'],
                 'price'              => $product['price'],
-                'status'             => \Stock\Status\PurchaseOrder::success->value,
+                'status'             => \Skdepot\Status\PurchaseOrder::success->value,
                 'discount'           => $discount,
             ];
         }
 
-        $inventories = \Stock\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
+        $inventories = \Skdepot\Model\Inventory::select(['id', 'product_id', 'parent_id', 'branch_id', 'stock', 'status', 'price_cost'])
             ->whereIn('product_id', $productsId)
             ->where('branch_id', $branch->id)
             ->get();
@@ -1099,23 +1099,23 @@ class StockPurchaseOrderAdminAjax
     static function debt($supplier, $purchaseOrderId, $purchaseOrder): void
     {
         //Tạo công nợ cho đơn nhập hàng
-        \Stock\Model\Debt::create([
+        \Skdepot\Model\Debt::create([
             'before'        => ($supplier->debt)*-1,
             'amount'        => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'])*-1,
             'balance'       => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] + $supplier->debt)*-1,
             'partner_id'    => $supplier->id,
             'target_id'     => $purchaseOrderId,
             'target_code'   => $purchaseOrder['code'],
-            'target_type'   => \Stock\Prefix::purchaseOrder->value,
+            'target_type'   => \Skdepot\Prefix::purchaseOrder->value,
             'time'          => $purchaseOrder['purchase_date']
         ]);
 
         if($purchaseOrder['total_payment'] > 0)
         {
             //Tạo phiếu chi
-            $code = \Stock\Helper::code(\Stock\Prefix::cashFlowPurchaseOrder->value, $purchaseOrderId);
+            $code = \Skdepot\Helper::code(\Skdepot\Prefix::cashFlowPurchaseOrder->value, $purchaseOrderId);
 
-            $idCashFlow = \Stock\Model\CashFlow::create([
+            $idCashFlow = \Skdepot\Model\CashFlow::create([
                 'code'      => $code,
                 'branch_id' => $purchaseOrder['branch_id'],
                 'branch_name' => $purchaseOrder['branch_name'],
@@ -1131,34 +1131,34 @@ class StockPurchaseOrderAdminAjax
                 'partner_type' => 'S',
 
                 //Loại
-                'group_id'   => \Stock\CashFlowGroup\Transaction::supplierPayment->id(),
-                'group_name' => \Stock\CashFlowGroup\Transaction::supplierPayment->label(),
+                'group_id'   => \Skdepot\CashFlowGroup\Transaction::supplierPayment->id(),
+                'group_name' => \Skdepot\CashFlowGroup\Transaction::supplierPayment->label(),
                 'origin' => 'purchase',
                 'method' => 'cash',
                 'amount' => $purchaseOrder['total_payment']*-1,
 
                 'target_id'     => $purchaseOrderId,
                 'target_code'   => $purchaseOrder['code'],
-                'target_type'   => \Stock\Prefix::purchaseOrder->value,
+                'target_type'   => \Skdepot\Prefix::purchaseOrder->value,
                 'time'          => $purchaseOrder['purchase_date'],
-                'status'        => \Stock\Status\CashFlow::success->value,
+                'status'        => \Skdepot\Status\CashFlow::success->value,
                 'user_created'  => Auth::id()
             ]);
 
             //Tạo công nợ cho phiêu chi
-            \Stock\Model\Debt::create([
+            \Skdepot\Model\Debt::create([
                 'before'        => ($supplier->debt)*-1,
                 'amount'        => $purchaseOrder['total_payment'],
                 'balance'       => ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'] + $supplier->debt)*-1,
                 'partner_id'    => $supplier->id,
                 'target_id'     => $idCashFlow,
                 'target_code'   => $code,
-                'target_type'   => \Stock\Prefix::cashFlowPurchaseOrder->value,
+                'target_type'   => \Skdepot\Prefix::cashFlowPurchaseOrder->value,
                 'time'          => $purchaseOrder['purchase_date']
             ]);
         }
 
-        \Stock\Model\Suppliers::whereKey($supplier->id)
+        \Skdepot\Model\Suppliers::whereKey($supplier->id)
             ->update([
                 'total_invoiced' => DB::raw('total_invoiced + '. ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'])),
                 'debt' => DB::raw('debt + '. ($purchaseOrder['subtotal'] -  $purchaseOrder['discount'] - $purchaseOrder['total_payment'])),
@@ -1178,34 +1178,34 @@ class StockPurchaseOrderAdminAjax
 
         $id = $request->input('data');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
             response()->error('Phiếu nhập đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        if($object->status === \Stock\Status\PurchaseOrder::cancel->value)
+        if($object->status === \Skdepot\Status\PurchaseOrder::cancel->value)
         {
             response()->error('Phiếu nhập này đã được hủy');
         }
-        if($object->status === \Stock\Status\PurchaseOrder::success->value)
+        if($object->status === \Skdepot\Status\PurchaseOrder::success->value)
         {
             response()->error('Phiếu nhập này đã hoàn thành không thể hủy');
         }
 
-        \Stock\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
-            ->where('status', \Stock\Status\PurchaseOrder::draft->value)
+        \Skdepot\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)
+            ->where('status', \Skdepot\Status\PurchaseOrder::draft->value)
             ->update([
-                'status' => \Stock\Status\PurchaseOrder::cancel->value,
+                'status' => \Skdepot\Status\PurchaseOrder::cancel->value,
             ]);
 
-        \Stock\Model\PurchaseOrder::whereKey($object->id)->update([
-            'status' => \Stock\Status\PurchaseOrder::cancel->value,
+        \Skdepot\Model\PurchaseOrder::whereKey($object->id)->update([
+            'status' => \Skdepot\Status\PurchaseOrder::cancel->value,
         ]);
 
         response()->success('Hủy phiếu nhập hàng thành công', [
-            'status' => Admin::badge(\Stock\Status\PurchaseOrder::cancel->badge(), 'Đã hủy')
+            'status' => Admin::badge(\Skdepot\Status\PurchaseOrder::cancel->badge(), 'Đã hủy')
         ]);
     }
 
@@ -1222,7 +1222,7 @@ class StockPurchaseOrderAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
@@ -1238,7 +1238,7 @@ class StockPurchaseOrderAdminAjax
         $object->total_payment = Prd::price($object->total_payment);
         $object->payment = Prd::price($object->payment);
 
-        $products = \Stock\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)->get();
+        $products = \Skdepot\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)->get();
 
         response()->success('Dữ liệu print', [
             'purchase' => $object->toObject(),
@@ -1312,7 +1312,7 @@ class StockPurchaseOrderAdminAjax
             }
         }
 
-        $objects = \Stock\Model\PurchaseOrder::gets($query);
+        $objects = \Skdepot\Model\PurchaseOrder::gets($query);
 
         if(empty($objects))
         {
@@ -1325,7 +1325,7 @@ class StockPurchaseOrderAdminAjax
             $object->purchase_date = date('d/m/Y H:s', $object->purchase_date);
         }
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã nhập hàng', function($item) {
             return $item->code ?? '';
@@ -1385,16 +1385,16 @@ class StockPurchaseOrderAdminAjax
 
         $id = $request->input('id');
 
-        $object = \Stock\Model\PurchaseOrder::find($id);
+        $object = \Skdepot\Model\PurchaseOrder::find($id);
 
         if(empty($object))
         {
             response()->error('Phiếu nhập đã đóng cửa hoặc không còn trên hệ thống');
         }
 
-        $products = \Stock\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)->get();
+        $products = \Skdepot\Model\PurchaseOrderDetail::where('purchase_order_id', $object->id)->get();
 
-        $export = new \Stock\Export();
+        $export = new \Skdepot\Export();
 
         $export->header('code', 'Mã hàng', function($item) {
             return $item->product_code ?? '';
@@ -1440,7 +1440,7 @@ class StockPurchaseOrderAdminAjax
                 response()->error($validate->errors());
             }
 
-            $myPath = STOCK_NAME.'/assets/imports/purchase-order';
+            $myPath = SKDEPOT_NAME.'/assets/imports/purchase-order';
 
             $path = $request->file('file')->store($myPath, ['disk' => 'plugin']);
 
@@ -1514,7 +1514,7 @@ class StockPurchaseOrderAdminAjax
                 $rowDatas[] = $rowData;
             }
 
-            $branch = \Stock\Helper::getBranchCurrent();
+            $branch = \Skdepot\Helper::getBranchCurrent();
 
             $selected = [
                 'products.id',
@@ -1589,16 +1589,16 @@ class StockPurchaseOrderAdminAjax
     }
 }
 
-Ajax::admin('StockPurchaseOrderAdminAjax::detail');
-Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsDetail');
-Ajax::admin('StockPurchaseOrderAdminAjax::loadCashFlowDetail');
-Ajax::admin('StockPurchaseOrderAdminAjax::loadProductsEdit');
-Ajax::admin('StockPurchaseOrderAdminAjax::addDraft');
-Ajax::admin('StockPurchaseOrderAdminAjax::saveDraft');
-Ajax::admin('StockPurchaseOrderAdminAjax::add');
-Ajax::admin('StockPurchaseOrderAdminAjax::save');
-Ajax::admin('StockPurchaseOrderAdminAjax::cancel');
-Ajax::admin('StockPurchaseOrderAdminAjax::print');
-Ajax::admin('StockPurchaseOrderAdminAjax::export');
-Ajax::admin('StockPurchaseOrderAdminAjax::exportDetail');
-Ajax::admin('StockPurchaseOrderAdminAjax::import');
+Ajax::admin('PurchaseOrderAdminAjax::detail');
+Ajax::admin('PurchaseOrderAdminAjax::loadProductsDetail');
+Ajax::admin('PurchaseOrderAdminAjax::loadCashFlowDetail');
+Ajax::admin('PurchaseOrderAdminAjax::loadProductsEdit');
+Ajax::admin('PurchaseOrderAdminAjax::addDraft');
+Ajax::admin('PurchaseOrderAdminAjax::saveDraft');
+Ajax::admin('PurchaseOrderAdminAjax::add');
+Ajax::admin('PurchaseOrderAdminAjax::save');
+Ajax::admin('PurchaseOrderAdminAjax::cancel');
+Ajax::admin('PurchaseOrderAdminAjax::print');
+Ajax::admin('PurchaseOrderAdminAjax::export');
+Ajax::admin('PurchaseOrderAdminAjax::exportDetail');
+Ajax::admin('PurchaseOrderAdminAjax::import');

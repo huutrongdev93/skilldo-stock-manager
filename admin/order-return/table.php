@@ -1,20 +1,20 @@
 <?php
-namespace Stock\Table;
+namespace Skdepot\Table;
 
 use Admin;
-use Branch;
 use Qr;
 use SkillDo\Form\Form;
 use SkillDo\Http\Request;
 use SkillDo\Table\Columns\ColumnBadge;
 use SkillDo\Table\Columns\ColumnText;
 use SkillDo\Table\SKDObjectTable;
+use Url;
 
 class OrderReturn extends SKDObjectTable
 {
     protected string $module = 'orders_returns';
 
-    protected mixed $model = \Stock\Model\OrderReturn::class;
+    protected mixed $model = \Skdepot\Model\OrderReturn::class;
 
     function getColumns() {
 
@@ -56,10 +56,10 @@ class OrderReturn extends SKDObjectTable
             'label'  => trans('Trạng thái'),
             'column' => fn($item, $args) => ColumnBadge::make('status', $item, $args)
                 ->color(function (string $status) {
-                    return \Stock\Status\OrderReturn::tryFrom($status)->badge();
+                    return \Skdepot\Status\OrderReturn::tryFrom($status)->badge();
                 })
                 ->label(function (string $status) {
-                    return \Stock\Status\OrderReturn::tryFrom($status)->label();
+                    return \Skdepot\Status\OrderReturn::tryFrom($status)->label();
                 })
         ];
 
@@ -70,7 +70,7 @@ class OrderReturn extends SKDObjectTable
 
     function actionButton($item, $module, $table): array
     {
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         $buttons = [];
 
@@ -78,7 +78,7 @@ class OrderReturn extends SKDObjectTable
             ...$item->toArray(),
         ];
 
-        $data['status'] = Admin::badge(\Stock\Status\OrderReturn::tryFrom($item->status)->badge(), \Stock\Status\OrderReturn::tryFrom($item->status)->label());
+        $data['status'] = Admin::badge(\Skdepot\Status\OrderReturn::tryFrom($item->status)->badge(), \Skdepot\Status\OrderReturn::tryFrom($item->status)->label());
 
         $data['total_return'] = \Prd::price($item->total_return);
         $data['total_payment'] = \Prd::price($item->total_payment);
@@ -92,13 +92,13 @@ class OrderReturn extends SKDObjectTable
             'class' => 'js_order_return_btn_detail'
         ]);
 
-        if($item->status !== \Stock\Status\OrderReturn::cancel->value)
+        if($item->status !== \Skdepot\Status\OrderReturn::cancel->value)
         {
             $buttons['cancel'] = Admin::btnConfirm('red', [
                 'icon'      => Admin::icon('close'),
                 'tooltip'   => 'Đồng ý',
                 'id'        => $item->id,
-                'model'     =>  \Stock\Model\OrderReturn::class,
+                'model'     =>  \Skdepot\Model\OrderReturn::class,
                 'ajax'      => 'OrderReturnAdminAjax::cancel',
                 'heading'   => 'Đồng ý',
                 'description' => 'Bạn có chắc chắn muốn xác nhận hủy phiếu trả hàng này?',
@@ -108,7 +108,7 @@ class OrderReturn extends SKDObjectTable
             ]);
         }
 
-        $buttons['action'] = \Plugin::partial(STOCK_NAME, 'admin/order-return/table-action', ['item' => $item]);
+        $buttons['action'] = \Plugin::partial(SKDEPOT_NAME, 'admin/order-return/table-action', ['item' => $item]);
 
         return apply_filters('admin_'.$this->module.'_table_columns_action', $buttons);
     }
@@ -129,12 +129,31 @@ class OrderReturn extends SKDObjectTable
 
         $form->text('keyword', ['placeholder' => 'Mã phiếu'], $request->input('keyword'));
         $form->daterange('time', [], $time);
-        $form->select2('status', \Stock\Status\OrderReturn::options()
+        $form->select2('status', \Skdepot\Status\OrderReturn::options()
             ->pluck('label', 'value')
             ->prepend('Tất cả trạng thái', '')
             ->toArray(), [], $request->input('status'));
 
         return apply_filters('admin_'.$this->module.'_table_form_search', $form);
+    }
+
+    function headerButton(): array
+    {
+        $buttons[] = Admin::button('green', [
+            'icon' => Admin::icon('add'),
+            'text' => 'Tạo phiếu',
+            'href' => Url::route('admin.order.returns.new')
+        ]);
+
+        $buttons[] = Admin::button('blue', [
+            'icon' => Admin::icon('download'),
+            'text' => 'Xuất file',
+            'id' => 'js_btn_export_list'
+        ]);
+
+        $buttons[] = Admin::button('reload');
+
+        return $buttons;
     }
 
     public function queryFilter(Qr $query, \SkillDo\Http\Request $request): Qr
@@ -171,7 +190,7 @@ class OrderReturn extends SKDObjectTable
             $query->where('status', $status);
         }
 
-        $branch = \Stock\Helper::getBranchCurrent();
+        $branch = \Skdepot\Helper::getBranchCurrent();
 
         if(!empty($branch))
         {

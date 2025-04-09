@@ -17,9 +17,9 @@ Class CheckoutInventory {
      */
     static function checkAddToCart($error, $cart, $product, $variation)
     {
-        $branch = \Stock\Helper::getBranchWebsite();
+        $branch = \Skdepot\Helper::getBranchWebsite();
 
-        $stock = Inventory::where('product_id', (($product->hasVariation == 0) ? $product->id : $variation->id));
+        $stock = \Skdepot\Model\Inventory::where('product_id', (($product->hasVariation == 0) ? $product->id : $variation->id));
 
         if(have_posts($branch))
         {
@@ -47,7 +47,7 @@ Class CheckoutInventory {
     {
         if($item['qty'] < $qty) {
 
-            $branch = \Stock\Helper::getBranchWebsite();
+            $branch = \Skdepot\Helper::getBranchWebsite();
 
             if(!empty($item['variable']))
             {
@@ -58,7 +58,7 @@ Class CheckoutInventory {
                 $productId = (!empty($item['option']['product_id'])) ? $item['option']['product_id'] : $item['id'];
             }
 
-            $stock = Inventory::where('product_id', $productId);
+            $stock = \Skdepot\Model\Inventory::where('product_id', $productId);
 
             if(have_posts($branch))
             {
@@ -89,7 +89,7 @@ Class CheckoutInventory {
 
         if(have_posts($carts)) {
 
-            $branch = \Stock\Helper::getBranchWebsite();
+            $branch = \Skdepot\Helper::getBranchWebsite();
 
             foreach ($carts as $item) {
 
@@ -102,7 +102,7 @@ Class CheckoutInventory {
                     $productId = (!empty($item['option']['product_id'])) ? $item['option']['product_id'] : $item['id'];
                 }
 
-                $stock = Inventory::where('product_id', $productId);
+                $stock = \Skdepot\Model\Inventory::where('product_id', $productId);
 
                 if(have_posts($branch))
                 {
@@ -128,7 +128,7 @@ Class CheckoutInventory {
 
     static function updateOrderData($order, $metadata, $data, $cart): array
     {
-        $branch = \Stock\Helper::getBranchWebsite();
+        $branch = \Skdepot\Helper::getBranchWebsite();
 
         if(have_posts($branch))
         {
@@ -138,7 +138,7 @@ Class CheckoutInventory {
                 return $item['variable'] ?? $item['id'];
             }, $cart);
 
-            $inventories = \Stock\Model\Inventory::whereIn('product_id', $productsId)
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                 ->where('branch_id', $branch->id)
                 ->select('product_id', 'price_cost')
                 ->get()
@@ -174,7 +174,7 @@ Class CheckoutInventory {
                 $productsId[] = $item->product_id;
             }
 
-            $inventories = Inventory::whereIn('product_id', $productsId)
+            $inventories = \Skdepot\Model\Inventory::whereIn('product_id', $productsId)
                 ->where('branch_id', $order->branch_id)
                 ->get()
                 ->keyBy('product_id');

@@ -1,5 +1,5 @@
 <?php
-namespace Stock;
+namespace Skdepot;
 
 use Arr;
 use Option;
