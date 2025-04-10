@@ -108,25 +108,25 @@ class Inventories extends SKDObjectTable
                 ])),
                 'class'   => 'js_inventory_btn_edit'
             ]);
-
-            $listButton['purchaseOrder'] = Admin::button('green', [
-                'icon' => '<i class="fa-light fa-basket-shopping-plus"></i>',
-                'tooltip' => 'Nhập hàng',
-                'data-id' => $item->id,
-                'data-branch-id' => $item->branch_id,
-                'href' => Url::route('admin.purchase.orders.new').'?source=products',
-                'class' => 'js_inventory_btn_purchase_order'
-            ]);
-
-            $listButton['purchaseReturn'] = Admin::button('red', [
-                'icon' => '<i class="fa-light fa-basket-shopping-minus"></i>',
-                'tooltip' => 'Xuất hàng',
-                'data-id' => $item->id,
-                'data-branch-id' => $item->branch_id,
-                'href' => Url::route('admin.purchase.returns.new').'?source=products',
-                'class' => 'js_inventory_btn_purchase_return'
-            ]);
         }
+
+        $listButton['purchaseOrder'] = Admin::button('green', [
+            'icon' => '<i class="fa-light fa-basket-shopping-plus"></i>',
+            'tooltip' => 'Nhập hàng',
+            'data-id' => $item->id,
+            'data-branch-id' => $item->branch_id,
+            'href' => Url::route('admin.purchase.orders.new').'?source=products',
+            'class' => 'js_inventory_btn_purchase_order'
+        ]);
+
+        $listButton['purchaseReturn'] = Admin::button('red', [
+            'icon' => '<i class="fa-light fa-basket-shopping-minus"></i>',
+            'tooltip' => 'Xuất hàng',
+            'data-id' => $item->id,
+            'data-branch-id' => $item->branch_id,
+            'href' => Url::route('admin.purchase.returns.new').'?source=products',
+            'class' => 'js_inventory_btn_purchase_return'
+        ]);
         
         return apply_filters('admin_'.$this->module.'_table_columns_action', $listButton);
     }
@@ -396,7 +396,7 @@ class Inventories extends SKDObjectTable
             {
                 if(!empty($product->attribute_label))
                 {
-                    $product->attribute_label = '<span style="font-weight: bold;">' . $product->attribute_label . '</span>' . ' - ';
+                    $product->attribute_label = '<span style="font-weight: bold;">' . $product->attribute_label . '</span>';
                 }
 
                 $object->variations = [];

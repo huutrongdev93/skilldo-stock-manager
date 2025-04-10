@@ -113,12 +113,21 @@ class PurchaseReturnAdminAjax
                 'products.attribute_label',
                 'products.image',
                 'products.attribute_label',
+                'products.hasVariation',
+                'products.parent_id',
                 DB::raw("MAX(cle_inventories.price_cost) AS price_cost"),
                 DB::raw("MAX(cle_inventories.price_cost) AS price"),
                 DB::raw("SUM(cle_inventories.stock) AS quantity")
             ];
 
-            $products = Product::widthVariation()->where('products.id', $id)
+            $products = Product::widthVariation()
+                ->where(function ($query) use ($id) {
+                    $query->where('products.id', $id)
+                        ->orWhere(function ($q) use ($id) {
+                            $q->where('products.parent_id', $id)
+                                ->where('products.id', '<>', $id);
+                        });
+                })
                 ->leftJoin('inventories', function ($join) use ($branch) {
                     $join->on('products.id', '=', 'inventories.product_id');
                     $join->where('inventories.branch_id', $branch->id);
@@ -127,6 +136,10 @@ class PurchaseReturnAdminAjax
                 ->select($selected)
                 ->groupBy('products.id')
                 ->get();
+
+            $products = $products->filter(function ($item) {
+                return !($item->hasVariation == 1 && $item->parent_id == 0);
+            });
         }
         else if($type == 'purchase-orders')
         {

@@ -17,7 +17,7 @@ Class Suppliers extends Model {
         'phone'         => ['string'],
         'address'       => ['string'],
         'image'         => ['image'],
-        'status'        => ['string'],
+        'status'        => ['string', 'use'],
         'total_invoiced' => ['int', 0],
         'debt' => ['int', 0],
     ];
