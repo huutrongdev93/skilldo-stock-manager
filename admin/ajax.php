@@ -82,7 +82,6 @@ Class SkdepotAjax
                 ->get()
                 ->keyBy('product_id');
 
-
             foreach ($products as $key => $item)
             {
                 if(!$inventories->has($item->id))

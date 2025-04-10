@@ -93,7 +93,7 @@ class StockTakesController extends MY_Controller {
             ])
             ->popoverAdvance('user', [
                 'label' => 'Người kiểm kho',
-                'search' => 'user',
+                'search' => 'member',
                 'multiple' => false,
                 'noImage' => true,
             ], $object->user_id ?? Auth::id())

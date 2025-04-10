@@ -59,11 +59,11 @@ class CashFlowPartnerPopover extends PopoverHandle
 
     public function templateValueNoImg(): string
     {
-        return Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/popover/cash-flow-partner');
+        return Plugin::partial(SKDEPOT_NAME, 'popover/cash-flow-partner');
     }
 
     public function templateSearchNoImg(): string
     {
-        return Plugin::partial(SKDEPOT_NAME, 'admin/cash-flow/popover/cash-flow-partner');
+        return Plugin::partial(SKDEPOT_NAME, 'popover/cash-flow-partner');
     }
 }

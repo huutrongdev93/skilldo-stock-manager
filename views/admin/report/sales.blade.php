@@ -52,23 +52,6 @@
     table tr.column-total td {
         font-weight: bold;
     }
-
-    table.table > thead > tr > th {
-        font-size: calc(1rem * 1) !important;
-        line-height: calc(1.50rem * 1);
-        text-transform: none;
-        letter-spacing: normal;
-        padding: 12px;
-    }
-
-    table.table tr td {
-        font-size: calc(1rem * 1);
-        line-height: calc(1.50rem * 1);
-        text-transform: none;
-        letter-spacing: normal;
-        color: rgb(15, 24, 36);
-        padding: 12px;
-    }
 </style>
 
 <script id="js_order_report_item_template" type="text/x-custom-template">

@@ -133,7 +133,7 @@ class OrderReturnController extends MY_Controller {
         $form
             ->popoverAdvance('user_id', [
                 'label'     => 'Người trả hàng',
-                'search'    => 'user',
+                'search'    => 'member',
                 'multiple'  => false,
                 'noImage'   => true,
             ], $object->user_id ?? Auth::id())

@@ -3,7 +3,7 @@ class CustomerPayment
     constructor() {
 
         this.ajax = {
-            updateBalance: 'StockCustomerAdminAjax::updateBalance'
+            updateBalance: 'SkdepotCustomerAdminAjax::updateBalance'
         }
 
         this.data = {

@@ -103,7 +103,7 @@ class PurchaseReturnsController extends MY_Controller {
             ->addGroup(function ($f) use ($object) {
                 $f->popoverAdvance('purchase', [
                     'label' => 'Người trả hàng',
-                    'search' => 'user',
+                    'search' => 'member',
                     'multiple' => false,
                     'noImage' => true,
                     'start' => 6

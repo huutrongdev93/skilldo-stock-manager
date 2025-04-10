@@ -89,7 +89,7 @@ class DamageItemsController extends MY_Controller {
             ])
             ->popoverAdvance('damage', [
                 'label' => 'Người xuất hủy',
-                'search' => 'user',
+                'search' => 'member',
                 'multiple' => false,
                 'noImage' => true,
             ], $object->purchase_id ?? Auth::id())

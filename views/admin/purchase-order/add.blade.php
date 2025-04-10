@@ -9,7 +9,7 @@
             <div class="stock-page-header-action"></div>
         </div>
         <div class="stock-page-products box" id="js_purchase_order_products">
-            <div class="box-content">
+            <div class="box-content p-0">
                 <div class="stock-page-table js_purchase_order_table" style="display: none">
                     {!! $table->display() !!}
                 </div>

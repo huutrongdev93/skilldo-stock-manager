@@ -248,4 +248,19 @@
   font-size: var(--sd-empty-text-font-size);
   line-height: var(--sd-empty-text-line-height);
 }
+table.table > thead > tr > th {
+  font-size: calc(1rem * 1) !important;
+  line-height: calc(1.5rem * 1);
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 12px;
+}
+table.table tr td {
+  font-size: calc(1rem * 1);
+  line-height: calc(1.5rem * 1);
+  text-transform: none;
+  letter-spacing: normal;
+  color: #0f1824;
+  padding: 12px;
+}
 /*# sourceMappingURL=purchase-order.css.map */

@@ -94,18 +94,18 @@ class PurchaseOrdersController extends MY_Controller {
             ])
             ->addGroup(function ($f) use ($object) {
                 $f->popoverAdvance('purchase', [
-                    'label' => 'Người nhập hàng',
-                    'search' => 'user',
-                    'multiple' => false,
-                    'noImage' => true,
-                    'start' => 6
+                    'label'     => 'Người nhập hàng',
+                    'search'    => 'member',
+                    'multiple'  => false,
+                    'noImage'   => true,
+                    'start'     => 6
                 ], $object->purchase_id ?? Auth::id())
                 ->popoverAdvance('supplier', [
-                    'label' => 'Nhà cung cấp',
-                    'search' => 'suppliers',
-                    'multiple' => false,
-                    'noImage' => true,
-                    'start' => 6
+                    'label'     => 'Nhà cung cấp',
+                    'search'    => 'suppliers',
+                    'multiple'  => false,
+                    'noImage'   => true,
+                    'start'     => 6
                 ], $object->supplier_id ?? Auth::id());
             }, [
                 'start' => '<div class="form-group"><div class="row">',

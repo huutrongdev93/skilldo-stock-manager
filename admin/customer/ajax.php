@@ -3,7 +3,7 @@
 use SkillDo\DB;
 use SkillDo\Validate\Rule;
 
-class StockCustomerAdminAjax
+class SkdepotCustomerAdminAjax
 {
     static function updateBalance(\SkillDo\Http\Request $request): void
     {
@@ -73,6 +73,38 @@ class StockCustomerAdminAjax
             'debt' => $balance
         ]);
     }
+
+    static function toMember(\SkillDo\Http\Request $request): void
+    {
+        $validate = $request->validate([
+            'data' => Rule::make('Id khách hàng')->notEmpty()->integer()->min(1),
+        ]);
+
+        if ($validate->fails()) {
+            response()->error($validate->errors());
+        }
+
+        $id = (int)$request->input('data');
+
+        $object = \SkillDo\Model\User::whereKey($id)->first();
+
+        if(!have_posts($object))
+        {
+            response()->error('Khách hàng không tồn tại');
+        }
+
+        if($object->isMember === 1)
+        {
+            response()->error('Khách hàng này đã là nhân viên của bạn');
+        }
+
+        $object->isMember = 1;
+
+        $object->save();
+
+        response()->success(trans('ajax.update.success'));
+    }
 }
 
-Ajax::admin('StockCustomerAdminAjax::updateBalance');
+Ajax::admin('SkdepotCustomerAdminAjax::updateBalance');
+Ajax::admin('SkdepotCustomerAdminAjax::toMember');

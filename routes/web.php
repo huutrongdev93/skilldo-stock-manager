@@ -47,6 +47,11 @@ Route::middleware([AdminAuthMiddleware::class, AdminPermissionMiddleware::class]
     //thu - chi
     Route::get('/cash-flow', 'CashFlowController@index', ['namespace' => $controller])->name('admin.cashFlow');
 
+    //Nhân viên
+    Route::get('/member', 'MemberController@index', ['namespace' => $controller])->name('admin.member');
+    Route::get('/member/new', 'MemberController@add', ['namespace' => $controller])->name('admin.member.new');
+    Route::get('/member/edit/{num:id}', 'MemberController@edit', ['namespace' => $controller])->name('admin.member.edit');
+
     //Báo cáo
     Route::get('/report', 'ReportController@index', ['namespace' => $controller])->name('admin.report');
     Route::get('/report/sales/{any:id}', 'ReportController@sales', ['namespace' => $controller])->name('admin.report.sales');

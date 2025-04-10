@@ -74,7 +74,6 @@ return new class () extends Migration {
         {
             schema()->table('users', function (Blueprint $table) {
                 $table->integer('branch_id')->default(0);
-                $table->integer('debt')->default(0)->comment('Công nợ khách hàng');
             });
 
             $branch = Branch::where('isDefault', 1)->first();
@@ -100,9 +99,10 @@ return new class () extends Migration {
         {
             schema()->table('users', function (Blueprint $table) {
                 $table->integer('isMember')->default(0);
+                $table->integer('debt')->default(0)->comment('Công nợ khách hàng');
             });
 
-            User::where('role', 'administration')->update(['isMember' => 1]);
+            User::where('role', 'administrator')->update(['isMember' => 1]);
         }
 
         if(!schema()->hasTable('users_debt')) {

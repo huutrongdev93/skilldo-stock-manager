@@ -82,7 +82,7 @@ class CashFlowController extends MY_Controller {
 
         $form->popoverAdvance('user_id', [
             'label' => $labels[$type]['user'],
-            'search' => 'user',
+            'search' => 'member',
             'multiple' => false,
             'noImage' => true,
         ], Auth::id());
